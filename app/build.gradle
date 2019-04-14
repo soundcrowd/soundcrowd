@@ -37,6 +37,9 @@ android {
             useProguard false
         }
     }
+    lintOptions {
+        abortOnError false
+    }
 }
 
 dependencies {
