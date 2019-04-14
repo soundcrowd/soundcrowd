@@ -1,0 +1,3 @@
+[submodule "waveform"]
+	path = waveform
+	url = https://github.com/soundcrowd/soundcrowd-waveform
