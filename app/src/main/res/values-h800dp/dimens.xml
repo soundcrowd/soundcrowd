@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?><!--
+  ~ SPDX-License-Identifier: GPL-3.0-only
+  -->
+<resources>
+    <!-- media browser listview -->
+    <dimen name="media_item_height">240dp</dimen>
+</resources>

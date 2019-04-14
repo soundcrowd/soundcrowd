@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?><!--
+  ~ SPDX-License-Identifier: GPL-3.0-only
+  -->
+<set xmlns:android="http://schemas.android.com/apk/res/android"
+    android:interpolator="@android:interpolator/fast_out_slow_in">
+    <objectAnimator
+        android:propertyName="x"
+        android:valueFrom="2000"
+        android:valueTo="0"
+        android:valueType="floatType" />
+</set>

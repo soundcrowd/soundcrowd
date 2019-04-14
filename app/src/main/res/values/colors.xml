@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="utf-8"?><!--
+  ~ SPDX-License-Identifier: GPL-3.0-only
+  -->
+<resources>
+
+    <!-- SoundCrowd -->
+    <!-- Dark Theme -->
+    <color name="colorPrimary">#25383C</color>
+    <color name="colorAccent">#0096a6</color>
+
+    <!-- BASE -->
+    <color name="bt_accent">#00B8D4</color>
+    <color name="fullscreen_secondary_line_color">#E5CCCCCC</color>
+    <color name="fullscreen_line_color">#E5FFFFFF</color>
+
+    <!-- App Intro -->
+    <color name="intro_files">#01579B</color>
+
+    <!-- Main colors -->
+    <color name="white">#fafafa</color>
+    <color name="grey">#9e9e9e</color>
+    <color name="grey_dark">#616161</color>
+    <color name="purple">#9C27B0</color>
+    <color name="indigo">#673AB7</color>
+    <color name="green">#4CAF50</color>
+    <color name="red">#F44336</color>
+    <color name="orange">#FF5722</color>
+    <color name="brown">#795548</color>
+    <color name="teal">#009688</color>
+    <color name="blue">#3F51B5</color>
+    <color name="purple_dark">#7B1FA2</color>
+    <color name="indigo_dark">#512DA8</color>
+    <color name="green_dark">#388E3C</color>
+    <color name="red_dark">#D32F2F</color>
+    <color name="orange_dark">#F57C00</color>
+    <color name="brown_dark">#5D4037</color>
+    <color name="teal_dark">#00796B</color>
+    <color name="blue_dark">#303F9F</color>
+
+    <!-- Background colors for LetterTileDrawables definitions. -->
+    <color name="letter_tile_purple_color">@color/purple</color>
+    <color name="letter_tile_blue_color">@color/blue</color>
+    <color name="letter_tile_indigo_color">@color/indigo</color>
+    <color name="letter_tile_teal_color">@color/teal</color>
+    <color name="letter_tile_light_green_color">@color/green</color>
+    <color name="letter_tile_red_color">@color/red</color>
+    <color name="letter_tile_grey_color">@color/grey</color>
+    <color name="letter_tile_deep_orange_color">@color/orange</color>
+    <color name="letter_tile_brown_color">@color/brown</color>
+    <color name="letter_tile_purple_color_dark">@color/purple_dark</color>
+    <color name="letter_tile_blue_color_dark">@color/blue_dark</color>
+    <color name="letter_tile_indigo_color_dark">@color/indigo_dark</color>
+    <color name="letter_tile_teal_color_dark">@color/teal_dark</color>
+    <color name="letter_tile_light_green_color_dark">@color/green_dark</color>
+    <color name="letter_tile_red_color_dark">@color/red_dark</color>
+    <color name="letter_tile_grey_color_dark">@color/grey_dark</color>
+    <color name="letter_tile_deep_orange_color_dark">@color/orange_dark</color>
+    <color name="letter_tile_brown_color_dark">@color/brown_dark</color>
+
+    <!-- Letter tile colors -->
+    <array name="letter_tile_colors">
+        <item>@color/letter_tile_purple_color</item>
+        <item>@color/letter_tile_blue_color</item>
+        <item>@color/letter_tile_indigo_color</item>
+        <item>@color/letter_tile_teal_color</item>
+        <item>@color/letter_tile_light_green_color</item>
+        <item>@color/letter_tile_red_color</item>
+        <item>@color/letter_tile_grey_color</item>
+        <item>@color/letter_tile_deep_orange_color</item>
+        <item>@color/letter_tile_brown_color</item>
+    </array>
+
+    <array name="letter_tile_vibrant_dark_colors">
+        <item>@color/letter_tile_purple_color_dark</item>
+        <item>@color/letter_tile_blue_color_dark</item>
+        <item>@color/letter_tile_indigo_color_dark</item>
+        <item>@color/letter_tile_teal_color_dark</item>
+        <item>@color/letter_tile_light_green_color_dark</item>
+        <item>@color/letter_tile_red_color_dark</item>
+        <item>@color/letter_tile_grey_color_dark</item>
+        <item>@color/letter_tile_deep_orange_color_dark</item>
+        <item>@color/letter_tile_brown_color_dark</item>
+    </array>
+
+</resources>
