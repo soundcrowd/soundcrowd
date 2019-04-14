@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  ~ SPDX-License-Identifier: GPL-3.0-only
+  -->
+
+<resources>
+    <string name="search_title">Suchen</string>
+    <string name="no_media">Keine Musikdateien gefunden.</string>
+    <string name="no_cue_points">Drücke den Stern bei deinen Lieblingsstellen deiner Musik, um sie hier aufzulisten.</string>
+    <string name="permission">Berechtigung zum Lesen des Speichers wird benötigt, um die gesamte lokale Musik zu laden.</string>
+    <string name="drawer_allmusic_title">Lokale Musik</string>
+    <string name="last_position">Letzte Position</string>
+
+    <!-- AppIntro -->
+    <string name="intro_welcome_title">Willkommen beim SoundCrowd Music Player</string>
+    <string name="intro_welcome_text">SoundCrowd ist ein moderner Musik Player, speziell für sehr lange Musik Sets. Die Musik wird mittels einer Waveform visualisiert, die es dir erlaubt einfach und schnell zu navigieren.</string>
+    <string name="intro_welcome_cue_points_title">Cue Punkte</string>
+    <string name="intro_welcome_cue_points_text">Finde die besten Stellen in deinen lieblings Musik Sets immer wieder! SoundCrowd kann sich die Positionen merken, indem du einfach das Stern Symbol drückst, um einen Cue Punkt zu erstellen. Er wird auf der Waveform und in der Cue Punkt Liste angezeigt.</string>
+    <string name="intro_welcome_local_music_title">Spiele deine lokale Musik ab</string>
+    <string name="intro_welcome_local_music_text">SoundCrowd kann die Musik auf deinem Gerät abspielen. Dafür wird die Berechtigung zum Lesen des Speichers benötigt.</string>
+
+    <!-- ShowcaseView -->
+    <string name="showcase_sliding_up_title">Player öffnen</string>
+    <string name="showcase_sliding_up_text">Wische nach oben oder drücke hier, um zu den aktuell abgespielten Track zu gelagen.</string>
+    <string name="showcase_cue_points_title">Cue Punkte</string>
+    <string name="showcase_cue_points_text">Wenn du eine Stelle in der Musik besonderst magst, drücke den Stern um einen Cue Punkt zu setzen. Er erscheint auf der Waveform und wird in der Cue Punkt Liste angezeigt. Du kannst später einfach wieder dorthin springen.</string>
+    <string name="showcase_waveform_seek_title">Waveform Navigation</string>
+    <string name="showcase_waveform_seek_text">Wische nach links oder rechts, um in dem Track zu navigieren.</string>
+    <string name="showcase_search_title">Filtern and Suchen lokaler Musik</string>
+    <string name="showcase_search_text">Drücke hier, um nach Musik zu suchen. Die Liste wird dabei sofort gefiltert. Um auch in Gruppierungen zu suchen, drücke anschließend Eingabe.</string>
+</resources>

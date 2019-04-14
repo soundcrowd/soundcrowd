@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?><!--
+  ~ SPDX-License-Identifier: GPL-3.0-only
+  -->
+<animation-list xmlns:android="http://schemas.android.com/apk/res/android"
+    android:oneshot="false">
+    <item
+        android:drawable="@drawable/ic_equalizer1_white_36dp"
+        android:duration="200" />
+    <item
+        android:drawable="@drawable/ic_equalizer2_white_36dp"
+        android:duration="200" />
+    <item
+        android:drawable="@drawable/ic_equalizer3_white_36dp"
+        android:duration="200" />
+</animation-list>

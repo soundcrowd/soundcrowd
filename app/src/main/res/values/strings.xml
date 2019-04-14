@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?><!--
+  ~ SPDX-License-Identifier: GPL-3.0-only
+  -->
+<resources>
+    <string name="app_name">SoundCrowd</string>
+    <string name="favorite">Favorite</string>
+    <string name="error_no_metadata">Unable to retrieve metadata.</string>
+    <string name="browse_musics_by_genre_subtitle">%1$s songs</string>
+    <string name="random_queue_title">Random music</string>
+    <string name="currently_playing_song">Song currently playing</string>
+    <string name="currently_playing_artist">Artist of currently playing song</string>
+    <string name="currently_playing_extra_info">Extra info for currently playing song</string>
+    <string name="play_pause">play or pause</string>
+    <string name="skip_next">skip to next</string>
+    <string name="skip_prev">skip to previous</string>
+    <string name="open_content_drawer">Open the main menu</string>
+    <string name="close_content_drawer">Close the main menu</string>
+    <string name="background_image_str">Background image for album art</string>
+
+    <string name="drawer_allmusic_title">Local Music</string>
+    <string name="drawer_cue_points_title">Cue Points</string>
+    <string name="search_title">Search</string>
+    <string name="equalizer_title" translatable="false">Equalizer</string>
+    <string name="addons_title" translatable="false">Addons</string>
+    <string name="no_media">No music files found.</string>
+    <string name="no_cue_points">No Cue Points found. Hit the star button for your favorite positions in your tracks to list them here.</string>
+    <string name="permission">Need permission to read your storage to retrieve all your music.</string>
+    <string name="last_position">Last position</string>
+
+    <!-- Equalizer -->
+    <string name="reverb" translatable="false">Reverb</string>
+    <string name="bass_boost" translatable="false">Bass Boost</string>
+    <string name="loudness" translatable="false">Loudness</string>
+
+    <!-- AppIntro -->
+    <string name="intro_welcome_title">Welcome to SoundCrowd Music Player</string>
+    <string name="intro_welcome_text">SoundCrowd is a modern music player especially for long music sets. The music will be visualized with a waveform that allows you to easier navigate in the track.</string>
+    <string name="intro_welcome_cue_points_title">Cue Points</string>
+    <string name="intro_welcome_cue_points_text">Never forget the amazing parts in your favorite music sets! SoundCrowd can remember positions you like, simply tab the star button to add a cue point. It will be shown on the waveform and in the Cue Point list.</string>
+    <string name="intro_welcome_local_music_title">Play your local music</string>
+    <string name="intro_welcome_local_music_text">SoundCrowd can play your music stored on your device. For that the permission to read your storage is needed.</string>
+
+    <!-- ShowcaseView -->
+    <string name="showcase_sliding_up_title">Open music player</string>
+    <string name="showcase_sliding_up_text">Swipe up or click here to see the currently played track and media controls.</string>
+    <string name="showcase_cue_points_title">Cue Points</string>
+    <string name="showcase_cue_points_text">If you like the current part in the track, press this button to place a cue point that appears on the waveform and in the cue point list. You can quickly jump back to it later.</string>
+    <string name="showcase_waveform_seek_title">Waveform seeking</string>
+    <string name="showcase_waveform_seek_text">Seek the track by swiping left or right on the waveform.</string>
+    <string name="showcase_search_title">Filter and search your local music</string>
+    <string name="showcase_search_text">Click here to search in your local music. The list will filter immediately. If you want to search globally, hit enter afterwards.</string>
+
+    <string name="letter_tile_letter_font_family" translatable="false">roboto</string>
+    <string name="loading">Loading...</string>
+</resources>
