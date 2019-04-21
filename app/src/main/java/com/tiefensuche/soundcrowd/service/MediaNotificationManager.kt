@@ -37,7 +37,7 @@ import com.tiefensuche.soundcrowd.utils.Utils
 class MediaNotificationManager @Throws(RemoteException::class)
 constructor(private val mService: MusicService) : BroadcastReceiver() {
 
-    private var mNotificationManager: NotificationManager? = null
+    private lateinit var mNotificationManager: NotificationManager
     private val mPauseIntent: PendingIntent
     private val mPlayIntent: PendingIntent
     private val mPreviousIntent: PendingIntent
@@ -48,7 +48,7 @@ constructor(private val mService: MusicService) : BroadcastReceiver() {
     private var mSessionToken: MediaSessionCompat.Token? = null
 
     private var mController: MediaControllerCompat? = null
-    private var mTransportControls: MediaControllerCompat.TransportControls? = null
+    private lateinit var mTransportControls: MediaControllerCompat.TransportControls
     private var mPlaybackState: PlaybackStateCompat? = null
     private var mMetadata: MediaMetadataCompat? = null
     private var mStarted = false
@@ -57,16 +57,18 @@ constructor(private val mService: MusicService) : BroadcastReceiver() {
         override fun onPlaybackStateChanged(state: PlaybackStateCompat?) {
             mPlaybackState = state
             LogHelper.d(TAG, "Received new playback state", state)
-            if (state!!.state == PlaybackStateCompat.STATE_STOPPED || state.state == PlaybackStateCompat.STATE_NONE) {
-                stopNotification()
-            } else {
-                val notification = createNotification()
-                if (mPlaybackState!!.state >= PlaybackStateCompat.STATE_PLAYING) {
-                    LogHelper.d(TAG, "startForeground", state)
-                    mService.startForeground(NOTIFICATION_ID, notification)
+            state?.let {
+                if (state.state == PlaybackStateCompat.STATE_STOPPED || state.state == PlaybackStateCompat.STATE_NONE) {
+                    stopNotification()
                 } else {
-                    mService.stopForeground(false)
-                    mNotificationManager!!.notify(NOTIFICATION_ID, notification)
+                    val notification = createNotification()
+                    if (state.state >= PlaybackStateCompat.STATE_PLAYING) {
+                        LogHelper.d(TAG, "startForeground", state)
+                        mService.startForeground(NOTIFICATION_ID, notification)
+                    } else {
+                        mService.stopForeground(false)
+                        mNotificationManager.notify(NOTIFICATION_ID, notification)
+                    }
                 }
             }
         }
@@ -76,7 +78,7 @@ constructor(private val mService: MusicService) : BroadcastReceiver() {
             LogHelper.d(TAG, "Received new metadata ", metadata)
             val notification = createNotification()
             if (notification != null) {
-                mNotificationManager!!.notify(NOTIFICATION_ID, notification)
+                mNotificationManager.notify(NOTIFICATION_ID, notification)
             }
         }
 
@@ -114,7 +116,7 @@ constructor(private val mService: MusicService) : BroadcastReceiver() {
 
         // Cancel all notifications to handle the case where the Service was killed and
         // restarted by the system.
-        mNotificationManager!!.cancelAll()
+        mNotificationManager.cancelAll()
     }
 
     /**
@@ -124,13 +126,13 @@ constructor(private val mService: MusicService) : BroadcastReceiver() {
      */
     fun startNotification() {
         if (!mStarted) {
-            mMetadata = mController!!.metadata
-            mPlaybackState = mController!!.playbackState
+            mMetadata = mController?.metadata
+            mPlaybackState = mController?.playbackState
 
             // The notification must be updated after setting started to true
             val notification = createNotification()
             if (notification != null && Looper.myLooper() != null) {
-                mController!!.registerCallback(mCb)
+                mController?.registerCallback(mCb)
                 val filter = IntentFilter()
                 filter.addAction(ACTION_NEXT)
                 filter.addAction(ACTION_PAUSE)
@@ -151,9 +153,9 @@ constructor(private val mService: MusicService) : BroadcastReceiver() {
     fun stopNotification() {
         if (mStarted) {
             mStarted = false
-            mController!!.unregisterCallback(mCb)
+            mController?.unregisterCallback(mCb)
             try {
-                mNotificationManager!!.cancel(NOTIFICATION_ID)
+                mNotificationManager.cancel(NOTIFICATION_ID)
                 mService.unregisterReceiver(this)
             } catch (ex: IllegalArgumentException) {
                 // ignore if the receiver is not registered.
@@ -165,12 +167,12 @@ constructor(private val mService: MusicService) : BroadcastReceiver() {
 
     override fun onReceive(context: Context, intent: Intent) {
         val action = intent.action
-        LogHelper.d(TAG, "Received intent with action " + action!!)
+        LogHelper.d(TAG, "Received intent with action $action")
         when (action) {
-            ACTION_PAUSE -> mTransportControls!!.pause()
-            ACTION_PLAY -> mTransportControls!!.play()
-            ACTION_NEXT -> mTransportControls!!.skipToNext()
-            ACTION_PREV -> mTransportControls!!.skipToPrevious()
+            ACTION_PAUSE -> mTransportControls.pause()
+            ACTION_PLAY -> mTransportControls.play()
+            ACTION_NEXT -> mTransportControls.skipToNext()
+            ACTION_PREV -> mTransportControls.skipToPrevious()
             else -> LogHelper.w(TAG, "Unknown intent ignored. Action=", action)
         }
     }
@@ -182,20 +184,20 @@ constructor(private val mService: MusicService) : BroadcastReceiver() {
      */
     @Throws(RemoteException::class)
     private fun updateSessionToken() {
-        val freshToken = mService.sessionToken
-        if (mSessionToken == null && freshToken != null || mSessionToken != null && mSessionToken != freshToken) {
-            if (mController != null) {
-                mController!!.unregisterCallback(mCb)
-            }
-            mSessionToken = freshToken
-            if (mSessionToken != null) {
-                mController = MediaControllerCompat(mService, mSessionToken!!)
-                mTransportControls = mController!!.transportControls
+        mService.sessionToken?.let {
+            if (mSessionToken == null || mSessionToken != null && mSessionToken != it) {
+                mController?.unregisterCallback(mCb)
+
+                mSessionToken = it
+                val controller = MediaControllerCompat(mService, it)
+                mController = controller
+                mTransportControls = controller.transportControls
                 if (mStarted) {
-                    mController!!.registerCallback(mCb)
+                    controller.registerCallback(mCb)
                 }
             }
         }
+
     }
 
     private fun createContentIntent(description: MediaDescriptionCompat?): PendingIntent {
@@ -211,9 +213,9 @@ constructor(private val mService: MusicService) : BroadcastReceiver() {
 
     private fun createNotification(): Notification? {
         LogHelper.d(TAG, "updateNotificationMetadata. mMetadata=", mMetadata)
-        if (mMetadata == null || mPlaybackState == null) {
-            return null
-        }
+
+        val actions = mPlaybackState?.actions ?: return null
+        val description = mMetadata?.description ?: return null
 
         // Notification channels are only supported on Android O+.
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -224,7 +226,7 @@ constructor(private val mService: MusicService) : BroadcastReceiver() {
         var playPauseButtonPosition = 0
 
         // If skip to previous action is enabled
-        if (mPlaybackState!!.actions and PlaybackStateCompat.ACTION_SKIP_TO_PREVIOUS != 0L) {
+        if (actions and PlaybackStateCompat.ACTION_SKIP_TO_PREVIOUS != 0L) {
             notificationBuilder.addAction(R.drawable.ic_skip_previous_white_24dp,
                     mService.getString(R.string.label_previous), mPreviousIntent)
 
@@ -238,12 +240,10 @@ constructor(private val mService: MusicService) : BroadcastReceiver() {
         addPlayPauseAction(notificationBuilder)
 
         // If skip to next action is enabled
-        if (mPlaybackState!!.actions and PlaybackStateCompat.ACTION_SKIP_TO_NEXT != 0L) {
+        if (actions and PlaybackStateCompat.ACTION_SKIP_TO_NEXT != 0L) {
             notificationBuilder.addAction(R.drawable.ic_skip_next_white_24dp,
                     mService.getString(R.string.label_next), mNextIntent)
         }
-
-        val description = mMetadata!!.description
 
         notificationBuilder
                 .setStyle(android.support.v4.media.app.NotificationCompat.MediaStyle()
@@ -273,11 +273,11 @@ constructor(private val mService: MusicService) : BroadcastReceiver() {
      */
     @RequiresApi(Build.VERSION_CODES.O)
     private fun createNotificationChannel() {
-        if (mNotificationManager!!.getNotificationChannel(CHANNEL_ID) == null) {
+        if (mNotificationManager.getNotificationChannel(CHANNEL_ID) == null) {
             val mChannel = NotificationChannel(CHANNEL_ID,
                     mService.getString(R.string.app_name),
                     NotificationManager.IMPORTANCE_LOW)
-            mNotificationManager!!.createNotificationChannel(mChannel)
+            mNotificationManager.createNotificationChannel(mChannel)
         }
     }
 
@@ -286,7 +286,7 @@ constructor(private val mService: MusicService) : BroadcastReceiver() {
         val label: String
         val icon: Int
         val intent: PendingIntent
-        if (mPlaybackState!!.state == PlaybackStateCompat.STATE_PLAYING) {
+        if (mPlaybackState?.state == PlaybackStateCompat.STATE_PLAYING) {
             label = mService.getString(R.string.label_pause)
             icon = R.drawable.ic_pause_white_24dp
             intent = mPauseIntent
@@ -299,29 +299,31 @@ constructor(private val mService: MusicService) : BroadcastReceiver() {
     }
 
     private fun setNotificationPlaybackState(builder: NotificationCompat.Builder) {
-        LogHelper.d(TAG, "updateNotificationPlaybackState. mPlaybackState=" + mPlaybackState!!)
+        LogHelper.d(TAG, "updateNotificationPlaybackState. mPlaybackState=$mPlaybackState")
         if (mPlaybackState == null) {
             LogHelper.d(TAG, "updateNotificationPlaybackState. cancelling notification!")
             mService.stopForeground(true)
             return
         }
-        if (mPlaybackState!!.state == PlaybackStateCompat.STATE_PLAYING && mPlaybackState!!.position >= 0) {
-            LogHelper.d(TAG, "updateNotificationPlaybackState. updating playback position to ",
-                    (System.currentTimeMillis() - mPlaybackState!!.position) / 1000, " seconds")
-            builder
-                    .setWhen(System.currentTimeMillis() - mPlaybackState!!.position)
-                    .setShowWhen(true)
-                    .setUsesChronometer(true)
-        } else {
-            LogHelper.d(TAG, "updateNotificationPlaybackState. hiding playback position")
-            builder
-                    .setWhen(0)
-                    .setShowWhen(false)
-                    .setUsesChronometer(false)
-        }
+        mPlaybackState?.state.let {
+            if (it == PlaybackStateCompat.STATE_PLAYING && it >= 0) {
+                LogHelper.d(TAG, "updateNotificationPlaybackState. updating playback position to ",
+                        (System.currentTimeMillis() - it) / 1000, " seconds")
+                builder
+                        .setWhen(System.currentTimeMillis() - it)
+                        .setShowWhen(true)
+                        .setUsesChronometer(true)
+            } else {
+                LogHelper.d(TAG, "updateNotificationPlaybackState. hiding playback position")
+                builder
+                        .setWhen(0)
+                        .setShowWhen(false)
+                        .setUsesChronometer(false)
+            }
 
-        // Make sure that the notification can be dismissed by the user when we are not playing:
-        builder.setOngoing(mPlaybackState!!.state == PlaybackStateCompat.STATE_PLAYING)
+            // Make sure that the notification can be dismissed by the user when we are not playing:
+            builder.setOngoing(it == PlaybackStateCompat.STATE_PLAYING)
+        }
     }
 
     companion object {

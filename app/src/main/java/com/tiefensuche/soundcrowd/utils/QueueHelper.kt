@@ -4,11 +4,8 @@
 
 package com.tiefensuche.soundcrowd.utils
 
-import android.content.Context
 import android.net.Uri
-import android.support.v4.app.FragmentActivity
 import android.support.v4.media.MediaMetadataCompat
-import android.support.v4.media.session.MediaControllerCompat
 import android.support.v4.media.session.MediaSessionCompat
 import android.text.TextUtils
 import com.tiefensuche.soundcrowd.sources.MusicProvider
@@ -158,28 +155,5 @@ object QueueHelper {
             }
         }
         return true
-    }
-
-    /**
-     * Determine if queue item matches the currently playing queue item
-     *
-     * @param context   for retrieving the [MediaControllerCompat]
-     * @param queueItem to compare to currently playing [MediaSessionCompat.QueueItem]
-     * @return boolean indicating whether queue item matches currently playing queue item
-     */
-    fun isQueueItemPlaying(context: Context,
-                           queueItem: MediaSessionCompat.QueueItem): Boolean {
-        // Queue item is considered to be playing or paused based on both the controller's
-        // current media id and the controller's active queue item id
-        val controller = MediaControllerCompat.getMediaController(context as FragmentActivity)
-        if (controller != null && controller.playbackState != null) {
-            val currentPlayingQueueId = controller.playbackState.activeQueueItemId
-            val currentPlayingMediaId = controller.metadata.description.mediaId
-            val itemMusicId = MediaIDHelper.extractMusicIDFromMediaID(queueItem.description.mediaId!!)
-            return (queueItem.queueId == currentPlayingQueueId
-                    && currentPlayingMediaId != null
-                    && TextUtils.equals(currentPlayingMediaId, itemMusicId))
-        }
-        return false
     }
 }

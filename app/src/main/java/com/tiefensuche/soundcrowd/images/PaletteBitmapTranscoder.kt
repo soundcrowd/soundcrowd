@@ -22,8 +22,8 @@ internal class PaletteBitmapTranscoder : ResourceTranscoder<Bitmap, PaletteBitma
     override fun transcode(toTranscode: Resource<Bitmap>, options: Options): Resource<PaletteBitmap>? {
         val bitmap = toTranscode.get()
         val key = bitmap.hashCode()
-        if (colorCache.contains(key)) {
-            return PaletteBitmap(bitmap, colorCache.get(key)!!)
+        colorCache.get(key)?.let {
+            return PaletteBitmap(bitmap, it)
         }
         val palette = Palette.Builder(bitmap).generate()
         colorCache.put(key, palette)

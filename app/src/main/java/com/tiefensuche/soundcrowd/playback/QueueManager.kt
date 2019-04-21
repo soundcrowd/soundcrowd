@@ -29,19 +29,17 @@ class QueueManager(private val mMusicProvider: MusicProvider,
                    private val mContext: Context) {
 
     // "Now playing" queue:
-    private var mPlayingQueue: List<MediaSessionCompat.QueueItem>? = null
+    private var mPlayingQueue: List<MediaSessionCompat.QueueItem>
     private var mCurrentIndex: Int = 0
 
 
     val currentMusic: MediaSessionCompat.QueueItem?
         get() = if (!QueueHelper.isIndexPlayable(mCurrentIndex, mPlayingQueue)) {
             null
-        } else mPlayingQueue!![mCurrentIndex]
+        } else mPlayingQueue[mCurrentIndex]
 
     val currentQueueSize: Int
-        get() = if (mPlayingQueue == null) {
-            0
-        } else mPlayingQueue!!.size
+        get() = mPlayingQueue.size
 
     init {
         mPlayingQueue = Collections.synchronizedList<MediaSessionCompat.QueueItem>(ArrayList<MediaSessionCompat.QueueItem>())
@@ -50,15 +48,15 @@ class QueueManager(private val mMusicProvider: MusicProvider,
 
     private fun isSameBrowsingCategory(mediaId: String): Boolean {
         val newBrowseHierarchy = MediaIDHelper.getHierarchy(mediaId)
-        val current = currentMusic ?: return false
-        val currentBrowseHierarchy = MediaIDHelper.getHierarchy(
-                current.description.mediaId!!)
-
-        return Arrays.equals(newBrowseHierarchy, currentBrowseHierarchy)
+        currentMusic?.description?.mediaId?.let {
+            val currentBrowseHierarchy = MediaIDHelper.getHierarchy(it)
+            return Arrays.equals(newBrowseHierarchy, currentBrowseHierarchy)
+        }
+        return false
     }
 
     private fun setCurrentQueueIndex(index: Int) {
-        if (index >= 0 && index < mPlayingQueue!!.size) {
+        if (index >= 0 && index < mPlayingQueue.size) {
             mCurrentIndex = index
             mListener.onCurrentQueueIndexUpdated(mCurrentIndex)
         }
@@ -66,27 +64,27 @@ class QueueManager(private val mMusicProvider: MusicProvider,
 
     fun setCurrentQueueItem(queueId: Long): Boolean {
         // set the current index on queue from the queue Id:
-        val index = QueueHelper.getMusicIndexOnQueue(mPlayingQueue!!, queueId)
+        val index = QueueHelper.getMusicIndexOnQueue(mPlayingQueue, queueId)
         setCurrentQueueIndex(index)
         return index >= 0
     }
 
     private fun setCurrentQueueItem(mediaId: String): Boolean {
         // set the current index on queue from the music Id:
-        val index = QueueHelper.getMusicIndexOnQueue(mPlayingQueue!!, mediaId)
+        val index = QueueHelper.getMusicIndexOnQueue(mPlayingQueue, mediaId)
         setCurrentQueueIndex(index)
         return index >= 0
     }
 
     fun setCurrentQueueItem(uri: android.net.Uri): Boolean {
         // set the current index on queue from the music Id:
-        val index = QueueHelper.getMusicIndexOnQueue(mPlayingQueue!!, uri)
+        val index = QueueHelper.getMusicIndexOnQueue(mPlayingQueue, uri)
         setCurrentQueueIndex(index)
         return index >= 0
     }
 
     fun skipQueuePosition(amount: Int): Boolean {
-        if (mPlayingQueue!!.isEmpty() || mPlayingQueue!!.size == 1) {
+        if (mPlayingQueue.isEmpty() || mPlayingQueue.size == 1) {
             return false
         }
         var index = mCurrentIndex + amount
@@ -95,11 +93,11 @@ class QueueManager(private val mMusicProvider: MusicProvider,
             index = 0
         } else {
             // skip forwards when in last song will cycle back to start of the queue
-            index %= mPlayingQueue!!.size
+            index %= mPlayingQueue.size
         }
         if (!QueueHelper.isIndexPlayable(index, mPlayingQueue)) {
             LogHelper.e(TAG, "Cannot increment queue index by ", amount,
-                    ". Current=", mCurrentIndex, " queue length=", mPlayingQueue!!.size)
+                    ". Current=", mCurrentIndex, " queue length=", mPlayingQueue.size)
             return false
         }
         mCurrentIndex = index
@@ -151,21 +149,16 @@ class QueueManager(private val mMusicProvider: MusicProvider,
         mPlayingQueue = newQueue
         var index = 0
         if (initialMediaId != null) {
-            index = QueueHelper.getMusicIndexOnQueue(mPlayingQueue!!, initialMediaId)
+            index = QueueHelper.getMusicIndexOnQueue(mPlayingQueue, initialMediaId)
         }
         mCurrentIndex = Math.max(index, 0)
         mListener.onQueueUpdated(title, newQueue)
     }
 
     fun updateMetadata() {
-        val currentMusic = currentMusic
-        if (currentMusic == null) {
-            mListener.onMetadataRetrieveError()
-            return
-        }
-        val musicId = MediaIDHelper.extractMusicIDFromMediaID(
-                currentMusic.description.mediaId!!)
-        update(musicId)
+        currentMusic?.description?.mediaId?.let {
+            update(MediaIDHelper.extractMusicIDFromMediaID(it))
+        } ?: mListener.onMetadataRetrieveError()
     }
 
     fun update(musicId: String) {
@@ -189,11 +182,11 @@ class QueueManager(private val mMusicProvider: MusicProvider,
         mMusicProvider.updateMusicArt(musicId, bitmap, icon)
 
         // If we are still playing the same music, notify the listeners:
-        val currentMusic = currentMusic ?: return
-        val currentPlayingId = MediaIDHelper.extractMusicIDFromMediaID(
-                currentMusic.description.mediaId!!)
-        if (musicId == currentPlayingId) {
-            mListener.onMetadataChanged(mMusicProvider.getMusic(currentPlayingId))
+        currentMusic?.description?.mediaId?.let {
+            val currentPlayingId = MediaIDHelper.extractMusicIDFromMediaID(it)
+            if (musicId == currentPlayingId) {
+                mListener.onMetadataChanged(mMusicProvider.getMusic(currentPlayingId))
+            }
         }
     }
 

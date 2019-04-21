@@ -62,15 +62,17 @@ class LetterTileDrawable(context: Context) : Drawable() {
         }
 
         // Draw letter/digit only if the first character is an english letter
-        if (mDisplayName != null && !mDisplayName!!.isEmpty()
-                && isEnglishLetter(mDisplayName!![0])) {
+        mDisplayName?.let {
+            if (it.isEmpty() || !isEnglishLetter(it[0])) {
+                return@let
+            }
             var numChars = 1
 
             // Draw letter or digit.
-            sChars[0] = Character.toUpperCase(mDisplayName!![0])
+            sChars[0] = Character.toUpperCase(it[0])
 
-            if (mDisplayName!!.length > 1 && isEnglishLetter(mDisplayName!![1])) {
-                sChars[1] = Character.toLowerCase(mDisplayName!![1])
+            if (it.length > 1 && isEnglishLetter(it[1])) {
+                sChars[1] = Character.toLowerCase(it[1])
                 numChars = 2
             }
 
@@ -157,7 +159,7 @@ class LetterTileDrawable(context: Context) : Drawable() {
          * Letter tile
          */
         private var sColors: TypedArray? = null
-        private var sVibrantDarkColors: TypedArray? = null
+        private lateinit var sVibrantDarkColors: TypedArray
         private var sDefaultColor: Int = 0
         private var sTileFontColor: Int = 0
         private var sLetterToTileRatio: Float = 0.toFloat()
@@ -184,8 +186,7 @@ class LetterTileDrawable(context: Context) : Drawable() {
         private fun getColorIndex(identifier: String?): Int {
             return if (TextUtils.isEmpty(identifier)) {
                 -1
-            } else Math.abs(identifier!!.hashCode()) % sColors!!.length()
-
+            } else sColors?.let { Math.abs(identifier.hashCode()) % it.length() } ?: -1
         }
 
         /**
@@ -195,7 +196,7 @@ class LetterTileDrawable(context: Context) : Drawable() {
             val idx = getColorIndex(identifier)
             return if (idx == -1) {
                 sDefaultColor
-            } else sColors!!.getColor(idx, sDefaultColor)
+            } else sColors?.getColor(idx, sDefaultColor) ?: sDefaultColor
 
         }
 
@@ -206,7 +207,7 @@ class LetterTileDrawable(context: Context) : Drawable() {
             val idx = getColorIndex(identifier)
             return if (idx == -1) {
                 sDefaultColor
-            } else sVibrantDarkColors!!.getColor(idx, sDefaultColor)
+            } else sVibrantDarkColors.getColor(idx, sDefaultColor)
 
         }
 
@@ -225,7 +226,7 @@ class LetterTileDrawable(context: Context) : Drawable() {
 
         private fun getTrimmedName(name: String?): String? {
             var name = name
-            if (name == null || name.length == 0) {
+            if (name == null || name.isEmpty()) {
                 return name
             }
 

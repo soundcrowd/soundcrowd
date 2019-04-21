@@ -23,7 +23,7 @@ class ArtworkLoader(private val context: Context) : ModelLoader<MediaDescription
 
 
     override fun buildLoadData(model: MediaDescriptionCompat, width: Int, height: Int, options: Options): ModelLoader.LoadData<ByteBuffer>? {
-        return ModelLoader.LoadData(StringKey(model.mediaId!!), ArtworkExtractor(context, model))
+        return model.mediaId?.let { ModelLoader.LoadData(StringKey(it), ArtworkExtractor(context, model)) }
     }
 
     override fun handles(description: MediaDescriptionCompat): Boolean {

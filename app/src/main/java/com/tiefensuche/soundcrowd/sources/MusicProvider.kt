@@ -9,7 +9,6 @@ import android.net.Uri
 import android.os.AsyncTask
 import android.os.Bundle
 import android.support.v4.media.MediaBrowserCompat
-import android.support.v4.media.MediaDescriptionCompat
 import android.support.v4.media.MediaMetadataCompat
 import com.tiefensuche.soundcrowd.database.DatabaseHelper
 import com.tiefensuche.soundcrowd.plugins.PluginManager
@@ -98,20 +97,21 @@ class MusicProvider(context: MusicService) {
 
     fun resolveMusic(mediaId: String, callback: com.tiefensuche.soundcrowd.plugins.Callback<String>) {
         AsyncTask.execute(Runnable {
-            val metadata = getMusic(MediaIDHelper.extractMusicIDFromMediaID(mediaId))
-            if (!mediaId.contains(MEDIA_ID_ROOT)) {
-                callback.onResult(metadata!!.getString(MusicProviderSource.CUSTOM_METADATA_TRACK_SOURCE))
-                return@Runnable
-            }
-            for (plugin in pluginManager.plugins) {
-                if (plugin.mediaCategories().contains(mediaId.split(CATEGORY_SEPARATOR)[1])) {
-                    plugin.getMediaUrl(metadata!!.getString(MusicProviderSource.CUSTOM_METADATA_TRACK_SOURCE), callback)
+            getMusic(MediaIDHelper.extractMusicIDFromMediaID(mediaId))?.let {
+                if (!mediaId.contains(MEDIA_ID_ROOT)) {
+                    callback.onResult(it.getString(MusicProviderSource.CUSTOM_METADATA_TRACK_SOURCE))
                     return@Runnable
                 }
-            }
+                for (plugin in pluginManager.plugins) {
+                    if (plugin.mediaCategories().contains(mediaId.split(CATEGORY_SEPARATOR)[1])) {
+                        plugin.getMediaUrl(it.getString(MusicProviderSource.CUSTOM_METADATA_TRACK_SOURCE), callback)
+                        return@Runnable
+                    }
+                }
 
-            // no plugin found, pass-though the source from metadata
-            callback.onResult(metadata!!.getString(MusicProviderSource.CUSTOM_METADATA_TRACK_SOURCE))
+                // no plugin found, pass-though the source from metadata
+                callback.onResult(it.getString(MusicProviderSource.CUSTOM_METADATA_TRACK_SOURCE))
+            }
         })
     }
 
@@ -138,18 +138,6 @@ class MusicProvider(context: MusicService) {
         AsyncTask.execute { retrieveMedia(mediaId, extras.getString(ACTION), callback) }
     }
 
-    private fun buildListsByArtist(local: List<MediaMetadataCompat>) {
-        for (item in local) {
-            addToCategory(MediaMetadataCompat.METADATA_KEY_ARTIST, MEDIA_ID_ROOT, item)
-        }
-    }
-
-    private fun buildListsByAlbum(local: List<MediaMetadataCompat>) {
-        for (item in local) {
-            addToCategory(MediaMetadataCompat.METADATA_KEY_ALBUM, MEDIA_ID_ROOT, item)
-        }
-    }
-
     private fun addToCategory(key: String, category: String, item: MediaMetadataCompat) {
         if (item.getString(key) != null) {
             val value = item.getString(key).toLowerCase()
@@ -165,18 +153,21 @@ class MusicProvider(context: MusicService) {
     }
 
     private fun cleanCategories() {
+        val root: MutableList<MediaMetadataCompat> = ArrayList()
+
+        // remove categories that contain only one single item and add the item for root
         for (key in musicByCategory.keys) {
-            if (musicByCategory[key]!!.size == 1) {
-                if (!musicByCategory[MEDIA_ID_ROOT]!!.contains(musicByCategory[key]!![0])) {
-                    musicByCategory[MEDIA_ID_ROOT]!!.add(musicByCategory[key]!![0])
+            musicByCategory[key]?.let {
+                if (it.size == 1) {
+                    if (!root.contains(it[0])) {
+                        root.add(it[0])
+                    }
+                    musicByCategory.remove(key)
                 }
-                musicByCategory.remove(key)
             }
         }
-        test()
-    }
 
-    private fun test() {
+        // create browsable categories for root
         for (key in musicByCategory.keys) {
             LogHelper.d(TAG, "key=", key)
             val values = key.split(CATEGORY_SEPARATOR)
@@ -187,8 +178,10 @@ class MusicProvider(context: MusicService) {
                     .putString(MediaMetadataCompat.METADATA_KEY_ARTIST, "" + getMusicByCategory(key).size + " Tracks")
                     .putLong(MediaMetadataCompat.METADATA_KEY_DURATION, getDurationSum(getMusicByCategory(key)))
                     .putString(MusicProviderSource.CUSTOM_METADATA_MEDIA_KIND, "artist")
-            musicByCategory[MEDIA_ID_ROOT]!!.add(builder.build())
+            root.add(builder.build())
         }
+
+        musicByCategory[MEDIA_ID_ROOT] = root
     }
 
     private fun exists(list: List<MediaMetadataCompat>, newItem: MediaMetadataCompat): Boolean {
@@ -342,43 +335,35 @@ class MusicProvider(context: MusicService) {
 
     @Synchronized
     fun updateMusicArt(musicId: String, albumArt: Bitmap, icon: Bitmap) {
-        var metadata = getMusic(musicId)
-        metadata = MediaMetadataCompat.Builder(metadata!!)
+        getMusic(musicId)?.let {
+            val metadata = MediaMetadataCompat.Builder(it)
 
-                // set high resolution bitmap in METADATA_KEY_ALBUM_ART. This is used, for
-                // example, on the lockscreen background when the media session is active.
-                .putBitmap(MediaMetadataCompat.METADATA_KEY_ALBUM_ART, albumArt)
+                    // set high resolution bitmap in METADATA_KEY_ALBUM_ART. This is used, for
+                    // example, on the lockscreen background when the media session is active.
+                    .putBitmap(MediaMetadataCompat.METADATA_KEY_ALBUM_ART, albumArt)
 
-                // set small version of the album art in the DISPLAY_ICON. This is used on
-                // the MediaDescription and thus it should be small to be serialized if
-                // necessary
-                .putBitmap(MediaMetadataCompat.METADATA_KEY_DISPLAY_ICON, icon)
+                    // set small version of the album art in the DISPLAY_ICON. This is used on
+                    // the MediaDescription and thus it should be small to be serialized if
+                    // necessary
+                    .putBitmap(MediaMetadataCompat.METADATA_KEY_DISPLAY_ICON, icon)
 
-                .build()
+                    .build()
 
-        val mutableMetadata = mMusicListById[musicId]
-                ?: throw IllegalStateException("Unexpected error: Inconsistent data structures in " + "MusicProvider")
+            val mutableMetadata = mMusicListById[musicId]
+                    ?: throw IllegalStateException("Unexpected error: Inconsistent data structures in " + "MusicProvider")
 
-        mutableMetadata.metadata = metadata
-    }
-
-    fun addItem(mediaId: String, item: MediaMetadataCompat) {
-        musicByCategory[mediaId]!!.add(item)
-        addToCategory(MediaMetadataCompat.METADATA_KEY_ARTIST, MEDIA_ID_MUSICS_BY_ARTIST, item)
-        addToCategory(MediaMetadataCompat.METADATA_KEY_ALBUM, MEDIA_ID_MUSICS_BY_ALBUM, item)
-    }
-
-    fun removeItem(mediaId: String, item: MediaMetadataCompat) {
-        musicByCategory[mediaId]!!.remove(item)
+            mutableMetadata.metadata = metadata
+        }
     }
 
     private fun retrieveMedia(mediaId: String, action: String?, callback: Callback?) {
         // Local files
         if (mediaId.startsWith(MEDIA_ID_ROOT) && !mediaId.contains(MEDIA_ID_MUSICS_BY_SEARCH)) {
             val addedTracks = addMusic(localSource.iterator())
-            musicByCategory[MEDIA_ID_ROOT] = ArrayList()
-            buildListsByArtist(addedTracks)
-            buildListsByAlbum(addedTracks)
+            for (item in addedTracks) {
+                addToCategory(MediaMetadataCompat.METADATA_KEY_ARTIST, MEDIA_ID_ROOT, item)
+                addToCategory(MediaMetadataCompat.METADATA_KEY_ALBUM, MEDIA_ID_ROOT, item)
+            }
             cleanCategories()
             loadCuePoints()
             mCurrentState = State.INITIALIZED
@@ -394,7 +379,7 @@ class MusicProvider(context: MusicService) {
             callback?.onMusicCatalogReady(true)
         } else if (MEDIA_ID_PLUGINS == mediaId) {
             pluginManager.init()
-            musicByCategory[MEDIA_ID_PLUGINS] = ArrayList()
+            val plugins: MutableList<MediaMetadataCompat> = ArrayList()
             for (plugin in pluginManager.plugins) {
                 for (category in plugin.mediaCategories()) {
                     val builder = MediaMetadataCompat.Builder()
@@ -404,9 +389,10 @@ class MusicProvider(context: MusicService) {
                             .putString(MusicProviderSource.CUSTOM_METADATA_MEDIA_KIND, "plugin")
                             .putString("stream", "true")
                             .putBitmap(MediaMetadataCompat.METADATA_KEY_ALBUM_ART, pluginManager.icons[plugin.name()])
-                    musicByCategory[MEDIA_ID_PLUGINS]!!.add(builder.build())
+                    plugins.add(builder.build())
                 }
             }
+            musicByCategory[MEDIA_ID_PLUGINS] = plugins
             callback?.onMusicCatalogReady(true)
         } else if (mediaId.startsWith(MEDIA_ID_PLUGINS)) { // Plugins
             val category = MediaIDHelper.getHierarchy(mediaId)
@@ -453,7 +439,7 @@ class MusicProvider(context: MusicService) {
 
         result = addMusic(result.iterator())
         if (musicByCategory.containsKey(mediaId)) {
-            musicByCategory[mediaId]!!.addAll(result)
+            musicByCategory[mediaId]?.addAll(result)
         } else {
             musicByCategory[mediaId] = result
         }
@@ -477,9 +463,12 @@ class MusicProvider(context: MusicService) {
 
     fun resolve(uri: Uri): String {
         val track = localSource.resolve(uri)
-        mMusicListById[track.description.mediaId!!] = MutableMediaMetadata(track.description.mediaId!!, track)
-        musicByCategory[MEDIA_ID_TEMP] = mutableListOf(track)
-        return MEDIA_ID_TEMP + LEAF_SEPARATOR + track.description.mediaId
+        track.description.mediaId?.let {
+            mMusicListById[it] = MutableMediaMetadata(it, track)
+            musicByCategory[MEDIA_ID_TEMP] = mutableListOf(track)
+            return MEDIA_ID_TEMP + LEAF_SEPARATOR + it
+        }
+        return ""
     }
 
     enum class Source {

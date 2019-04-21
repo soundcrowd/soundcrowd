@@ -194,9 +194,9 @@ class PlaybackManager(private val mServiceCallback: PlaybackServiceCallback, pri
     }
 
     private fun updateLastPosition() {
-        if (mQueueManager.currentMusic != null) {
-            DatabaseHelper.instance.updatePosition(extractMusicIDFromMediaID(mQueueManager.currentMusic!!.description.mediaId!!), playback.currentStreamPosition)
-            mPreferences.edit().putString("last_media_id", mQueueManager.currentMusic!!.description.mediaId).apply()
+        mQueueManager.currentMusic?.description?.mediaId?.let {
+            DatabaseHelper.instance.updatePosition(extractMusicIDFromMediaID(it), playback.currentStreamPosition)
+            mPreferences.edit().putString("last_media_id", it).apply()
         }
     }
 
@@ -209,8 +209,8 @@ class PlaybackManager(private val mServiceCallback: PlaybackServiceCallback, pri
         }
     }
 
-    private fun playAtPosition(mediaId: String?, position: Int) {
-        if (mMusicProvider.getMusic(extractMusicIDFromMediaID(mediaId!!)) != null) {
+    private fun playAtPosition(mediaId: String, position: Int) {
+        if (mMusicProvider.getMusic(extractMusicIDFromMediaID(mediaId)) != null) {
             setCurrentMediaId(mediaId)
             handlePlayRequestAtPosition(position)
         }
@@ -248,9 +248,9 @@ class PlaybackManager(private val mServiceCallback: PlaybackServiceCallback, pri
 
         override fun onPlayFromMediaId(mediaId: String, extras: Bundle?) {
             LogHelper.d(TAG, "playFromMediaId mediaId:", mediaId, "  extras=", extras)
-            if (mQueueManager.currentMusic != null) {
-                if (mediaId == mQueueManager.currentMusic!!.description.mediaId) {
-                    return
+            mQueueManager.currentMusic?.let {
+                if (mediaId == it.description.mediaId) {
+                    return@let
                 }
                 updateLastPosition()
             }
@@ -316,7 +316,7 @@ class PlaybackManager(private val mServiceCallback: PlaybackServiceCallback, pri
                     // custom action will change to reflect the new favorite state.
                     updatePlaybackState(null)
                 }
-                CUSTOM_ACTION_PLAY_SEEK == action -> playAtPosition(extras!!.getString("mediaId"), extras.getInt("position"))
+                CUSTOM_ACTION_PLAY_SEEK == action -> extras?.getString("mediaId")?.let { playAtPosition(it, extras.getInt("position")) }
                 else -> LogHelper.e(TAG, "Unsupported action: ", action)
             }
         }

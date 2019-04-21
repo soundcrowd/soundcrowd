@@ -86,12 +86,11 @@ import java.util.*
 class MusicService : MediaBrowserServiceCompat(), PlaybackManager.PlaybackServiceCallback {
     private val mDelayedStopHandler = DelayedStopHandler(this)
     private lateinit var mPlaybackManager: PlaybackManager
-    private var mSession: MediaSessionCompat? = null
-    private var mMediaNotificationManager: MediaNotificationManager? = null
-    private var mQueueManager: QueueManager? = null
-    private var databaseHelper: DatabaseHelper? = null
-    var preferences: SharedPreferences? = null
-        private set
+    private lateinit var mSession: MediaSessionCompat
+    private lateinit var mMediaNotificationManager: MediaNotificationManager
+    private lateinit var mQueueManager: QueueManager
+    private lateinit var databaseHelper: DatabaseHelper
+    lateinit var preferences: SharedPreferences
 
     /*
      * (non-Javadoc)
@@ -101,18 +100,15 @@ class MusicService : MediaBrowserServiceCompat(), PlaybackManager.PlaybackServic
         super.onCreate()
         LogHelper.d(TAG, "create service")
 
-        if (preferences == null) {
-            preferences = PreferenceManager.getDefaultSharedPreferences(this)
-        }
-        if (databaseHelper == null) {
-            databaseHelper = DatabaseHelper(this)
-        }
+        preferences = PreferenceManager.getDefaultSharedPreferences(this)
+        databaseHelper = DatabaseHelper(this)
+
         mMusicProvider = MusicProvider(this)
 
         mQueueManager = QueueManager(mMusicProvider, resources,
                 object : QueueManager.MetadataUpdateListener {
                     override fun onMetadataChanged(metadata: MediaMetadataCompat?) {
-                        mSession!!.setMetadata(metadata)
+                        mSession.setMetadata(metadata)
                     }
 
                     override fun onMetadataRetrieveError() {
@@ -126,19 +122,19 @@ class MusicService : MediaBrowserServiceCompat(), PlaybackManager.PlaybackServic
 
                     override fun onQueueUpdated(title: String,
                                                 newQueue: List<MediaSessionCompat.QueueItem>) {
-                        mSession!!.setQueue(newQueue)
-                        mSession!!.setQueueTitle(title)
+                        mSession.setQueue(newQueue)
+                        mSession.setQueueTitle(title)
                     }
                 }, this)
 
-        mPlaybackManager = PlaybackManager(this, resources, mMusicProvider, mQueueManager!!,
-                LocalPlayback(this, mMusicProvider), preferences!!)
+        mPlaybackManager = PlaybackManager(this, resources, mMusicProvider, mQueueManager,
+                LocalPlayback(this, mMusicProvider), preferences)
 
         // Start a new MediaSession
         mSession = MediaSessionCompat(this, "MusicService")
-        sessionToken = mSession!!.sessionToken
-        mSession!!.setCallback(mPlaybackManager.mediaSessionCallback)
-        mSession!!.setFlags(MediaSessionCompat.FLAG_HANDLES_MEDIA_BUTTONS or MediaSessionCompat.FLAG_HANDLES_TRANSPORT_CONTROLS)
+        sessionToken = mSession.sessionToken
+        mSession.setCallback(mPlaybackManager.mediaSessionCallback)
+        mSession.setFlags(MediaSessionCompat.FLAG_HANDLES_MEDIA_BUTTONS or MediaSessionCompat.FLAG_HANDLES_TRANSPORT_CONTROLS)
 
         mPlaybackManager.updatePlaybackState(null)
 
@@ -148,7 +144,7 @@ class MusicService : MediaBrowserServiceCompat(), PlaybackManager.PlaybackServic
             throw IllegalStateException("Could not create a MediaNotificationManager", e)
         }
 
-        if (started && mQueueManager!!.currentMusic == null) {
+        if (started && mQueueManager.currentMusic == null) {
 //            mPlaybackManager.loadLastTrack()
         }
     }
@@ -197,9 +193,9 @@ class MusicService : MediaBrowserServiceCompat(), PlaybackManager.PlaybackServic
         LogHelper.d(TAG, "onDestroy")
         // Service is being killed, so make sure we release our resources
         mPlaybackManager.handleStopRequest(null)
-        mMediaNotificationManager!!.stopNotification()
+        mMediaNotificationManager.stopNotification()
         mDelayedStopHandler.removeCallbacksAndMessages(null)
-        mSession!!.release()
+        mSession.release()
     }
 
     override fun onGetRoot(clientPackageName: String, clientUid: Int,
@@ -231,7 +227,7 @@ class MusicService : MediaBrowserServiceCompat(), PlaybackManager.PlaybackServic
                 override fun onMusicCatalogReady(success: Boolean) {
                     if (success) {
                         LogHelper.d(TAG, "getChildren parentMediaId=", parentMediaId)
-                        if (mQueueManager!!.currentMusic == null) {
+                        if (mQueueManager.currentMusic == null) {
                             try {
                                 mPlaybackManager.loadLastTrack()
                             } catch (e: IllegalArgumentException) {
@@ -270,7 +266,7 @@ class MusicService : MediaBrowserServiceCompat(), PlaybackManager.PlaybackServic
      */
     override fun onPlaybackStart() {
         LogHelper.d(TAG, "onPlaybackStart")
-        mSession!!.isActive = true
+        mSession.isActive = true
         mDelayedStopHandler.removeCallbacksAndMessages(null)
 
         // The service needs to continue running even after the bound client (usually a
@@ -288,23 +284,23 @@ class MusicService : MediaBrowserServiceCompat(), PlaybackManager.PlaybackServic
      * Callback method called from PlaybackManager whenever the music stops playing.
      */
     override fun onPlaybackStop() {
-        mSession!!.isActive = false
+        mSession.isActive = false
         // Reset the delayed stop handler, so after STOP_DELAY it will be executed again,
         // potentially stopping the service.
         mDelayedStopHandler.removeCallbacksAndMessages(null)
         mDelayedStopHandler.sendEmptyMessageDelayed(0, STOP_DELAY.toLong())
-        if (mQueueManager!!.currentMusic != null) {
-            preferences!!.edit().putString("last_media_id", mQueueManager!!.currentMusic!!.description.mediaId).apply()
+        mQueueManager.currentMusic?.description?.mediaId.let {
+            preferences.edit().putString("last_media_id", it).apply()
         }
     }
 
     override fun onNotificationRequired() {
-        mMediaNotificationManager!!.startNotification()
+        mMediaNotificationManager.startNotification()
     }
 
     override fun onPlaybackStateUpdated(newState: PlaybackStateCompat) {
         try {
-            mSession!!.setPlaybackState(newState)
+            mSession.setPlaybackState(newState)
         } catch (e: IllegalStateException) {
             LogHelper.e(TAG, "error while updating playback state", e)
         }

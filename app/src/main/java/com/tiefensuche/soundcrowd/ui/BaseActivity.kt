@@ -32,13 +32,13 @@ abstract class BaseActivity : ActionBarCastActivity(), MediaBrowserProvider {
             if (shouldShowControls()) {
                 showPlaybackControls()
             } else {
-                LogHelper.d(TAG, "mediaControllerCallback.onPlaybackStateChanged: " + "hiding controls because state is ", state!!.state)
+                LogHelper.d(TAG, "mediaControllerCallback.onPlaybackStateChanged: " + "hiding controls because state is ", state?.state)
                 hidePlaybackControls()
             }
             mControlsFragment?.onPlaybackStateChanged(state)
         }
 
-        override fun onMetadataChanged(metadata: MediaMetadataCompat?) {
+        override fun onMetadataChanged(metadata: MediaMetadataCompat) {
             if (shouldShowControls()) {
                 showPlaybackControls()
             } else {
@@ -64,7 +64,7 @@ abstract class BaseActivity : ActionBarCastActivity(), MediaBrowserProvider {
         }
     }
 
-    public override fun onCreate(savedInstanceState: Bundle?) {
+    override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         LogHelper.d(TAG, "Activity onCreate")

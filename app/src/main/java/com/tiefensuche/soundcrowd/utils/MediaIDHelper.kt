@@ -4,11 +4,6 @@
 
 package com.tiefensuche.soundcrowd.utils
 
-import android.content.Context
-import android.support.v4.app.FragmentActivity
-import android.support.v4.media.MediaBrowserCompat
-import android.support.v4.media.session.MediaControllerCompat
-import android.text.TextUtils
 import java.util.*
 
 /**
@@ -121,27 +116,5 @@ object MediaIDHelper {
 
     fun getPath(mediaID: String): String {
         return mediaID.substring(0, mediaID.indexOf(LEAF_SEPARATOR))
-    }
-
-    /**
-     * Determine if media item is playing (matches the currently playing media item).
-     *
-     * @param context   for retrieving the [MediaControllerCompat]
-     * @param mediaItem to compare to currently playing [MediaBrowserCompat.MediaItem]
-     * @return boolean indicating whether media item matches currently playing media item
-     */
-    fun isMediaItemPlaying(context: Context,
-                           mediaItem: MediaBrowserCompat.MediaItem): Boolean {
-        // Media item is considered to be playing or paused based on the controller's current
-        // media id
-        val controller = MediaControllerCompat.getMediaController(context as FragmentActivity)
-        if (controller != null && controller.metadata != null) {
-            val currentPlayingMediaId = controller.metadata.description
-                    .mediaId
-            val itemMusicId = MediaIDHelper.extractMusicIDFromMediaID(
-                    mediaItem.description.mediaId!!)
-            return currentPlayingMediaId != null && TextUtils.equals(currentPlayingMediaId, itemMusicId)
-        }
-        return false
     }
 }

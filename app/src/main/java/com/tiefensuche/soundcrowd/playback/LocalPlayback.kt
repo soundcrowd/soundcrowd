@@ -21,7 +21,6 @@ import com.tiefensuche.soundcrowd.plugins.Callback
 import com.tiefensuche.soundcrowd.plugins.ExtensionLoader
 import com.tiefensuche.soundcrowd.service.MusicService
 import com.tiefensuche.soundcrowd.sources.MusicProvider
-import com.tiefensuche.soundcrowd.ui.preferences.EqualizerFragment
 import com.tiefensuche.soundcrowd.utils.LogHelper
 import java.io.IOException
 
@@ -68,13 +67,10 @@ class LocalPlayback(private val mContext: Context, private val mMusicProvider: M
         get() = true
 
     override val isPlaying: Boolean
-        get() = mPlayOnFocusGain || mMediaPlayer != null && mMediaPlayer!!.isPlaying
+        get() = mPlayOnFocusGain || mMediaPlayer?.isPlaying ?: false
 
     override val currentStreamPosition: Int
-        get() = if (mMediaPlayer != null)
-            mMediaPlayer!!.currentPosition
-        else
-            mCurrentPosition
+        get() = mMediaPlayer?.currentPosition ?: mCurrentPosition
 
     init {
         // Create the Wifi lock (this does not acquire the lock, this just creates it)
@@ -91,8 +87,8 @@ class LocalPlayback(private val mContext: Context, private val mMusicProvider: M
 
     override fun stop(notifyListeners: Boolean) {
         state = PlaybackStateCompat.STATE_STOPPED
-        if (notifyListeners && mCallback != null) {
-            mCallback!!.onPlaybackStatusChanged(state)
+        if (notifyListeners) {
+            mCallback?.onPlaybackStatusChanged(state)
         }
         mCurrentPosition = currentStreamPosition
         // Give up Audio focus
@@ -103,8 +99,8 @@ class LocalPlayback(private val mContext: Context, private val mMusicProvider: M
     }
 
     override fun updateLastKnownStreamPosition() {
-        if (mMediaPlayer != null) {
-            mCurrentPosition = mMediaPlayer!!.currentPosition
+        mMediaPlayer?.let {
+            mCurrentPosition = it.currentPosition
         }
     }
 
@@ -113,10 +109,13 @@ class LocalPlayback(private val mContext: Context, private val mMusicProvider: M
     }
 
     override fun play(item: QueueItem, position: Int) {
+        if (item.description.mediaId == null) {
+            return
+        }
         mPlayOnFocusGain = true
         tryToGetAudioFocus()
         registerAudioNoisyReceiver()
-        val mediaId = item.description.mediaId!!
+        val mediaId = item.description.mediaId as String
         val mediaHasChanged = !TextUtils.equals(mediaId, currentMediaId)
         if (mediaHasChanged) {
             mCurrentPosition = position
@@ -131,38 +130,35 @@ class LocalPlayback(private val mContext: Context, private val mMusicProvider: M
             state = PlaybackStateCompat.STATE_STOPPED
             relaxResources(false) // release everything except MediaPlayer
 
-            mMusicProvider.resolveMusic(item.description.mediaId!!, object: Callback<String> {
+            mMusicProvider.resolveMusic(mediaId, object: Callback<String> {
                 override fun onResult(result: String) {
                     urlResolver.getMediaUrl(result, object: Callback<String> {
                         override fun onResult(result: String) {
                             try {
                                 createMediaPlayerIfNeeded()
 
-                                state = PlaybackStateCompat.STATE_BUFFERING
+                                mMediaPlayer?.let {
+                                    state = PlaybackStateCompat.STATE_BUFFERING
 
-                                mMediaPlayer!!.setDataSource(mContext, Uri.parse(result))
+                                    it.setDataSource(mContext, Uri.parse(result))
 
-                                // Starts preparing the media player in the background. When
-                                // it's done, it will call our OnPreparedListener (that is,
-                                // the onPrepared() method on this class, since we set the
-                                // listener to 'this'). Until the media player is prepared,
-                                // we *cannot* call start() on it!
-                                mMediaPlayer!!.prepareAsync()
+                                    // Starts preparing the media player in the background. When
+                                    // it's done, it will call our OnPreparedListener (that is,
+                                    // the onPrepared() method on this class, since we set the
+                                    // listener to 'this'). Until the media player is prepared,
+                                    // we *cannot* call start() on it!
+                                    it.prepareAsync()
 
-                                // If we are streaming from the internet, we want to hold a
-                                // Wifi lock, which prevents the Wifi radio from going to
-                                // sleep while the song is playing.
-                                mWifiLock.acquire()
+                                    // If we are streaming from the internet, we want to hold a
+                                    // Wifi lock, which prevents the Wifi radio from going to
+                                    // sleep while the song is playing.
+                                    mWifiLock.acquire()
 
-                                if (mCallback != null) {
-                                    mCallback!!.onPlaybackStatusChanged(state)
+                                    mCallback?.onPlaybackStatusChanged(state)
                                 }
-
                             } catch (ex: IOException) {
                                 LogHelper.e(TAG, ex, "Exception playing song")
-                                if (mCallback != null) {
-                                    mCallback!!.onError(ex.message!!)
-                                }
+                                mCallback?.onError(ex.message?.let { ex.message } ?: "")
                             }
                         }
                     })
@@ -174,17 +170,17 @@ class LocalPlayback(private val mContext: Context, private val mMusicProvider: M
     override fun pause() {
         if (state == PlaybackStateCompat.STATE_PLAYING) {
             // Pause media player and cancel the 'foreground service' state.
-            if (mMediaPlayer != null && mMediaPlayer!!.isPlaying) {
-                mMediaPlayer!!.pause()
-                mCurrentPosition = mMediaPlayer!!.currentPosition
+            if (mMediaPlayer?.isPlaying == true) {
+                mMediaPlayer?.let {
+                    it.pause()
+                    mCurrentPosition = it.currentPosition
+                }
             }
             // while paused, retain the MediaPlayer but give up audio focus
             relaxResources(false)
         }
         state = PlaybackStateCompat.STATE_PAUSED
-        if (mCallback != null) {
-            mCallback!!.onPlaybackStatusChanged(state)
-        }
+        mCallback?.onPlaybackStatusChanged(state)
         unregisterAudioNoisyReceiver()
     }
 
@@ -195,14 +191,12 @@ class LocalPlayback(private val mContext: Context, private val mMusicProvider: M
             // If we do not have a current media player, simply update the current position
             mCurrentPosition = position
         } else {
-            if (mMediaPlayer!!.isPlaying) {
+            if (mMediaPlayer?.isPlaying == true) {
                 state = PlaybackStateCompat.STATE_BUFFERING
             }
             registerAudioNoisyReceiver()
-            mMediaPlayer!!.seekTo(position)
-            if (mCallback != null) {
-                mCallback!!.onPlaybackStatusChanged(state)
-            }
+            mMediaPlayer?.seekTo(position)
+            mCallback?.onPlaybackStatusChanged(state)
         }
     }
 
@@ -254,31 +248,30 @@ class LocalPlayback(private val mContext: Context, private val mMusicProvider: M
         } else {  // we have audio focus:
             registerAudioNoisyReceiver()
             if (mAudioFocus == AUDIO_NO_FOCUS_CAN_DUCK) {
-                mMediaPlayer!!.setVolume(VOLUME_DUCK, VOLUME_DUCK) // we'll be relatively quiet
+                mMediaPlayer?.setVolume(VOLUME_DUCK, VOLUME_DUCK) // we'll be relatively quiet
             } else {
-                if (mMediaPlayer != null) {
-                    mMediaPlayer!!.setVolume(VOLUME_NORMAL, VOLUME_NORMAL) // we can be loud again
-                } // else do something for remote client.
-            }
+                mMediaPlayer?.setVolume(VOLUME_NORMAL, VOLUME_NORMAL) // we can be loud again
+            } // else do something for remote client.
             // If we were playing when we lost focus, we need to resume playing.
             if (mPlayOnFocusGain) {
-                if (mMediaPlayer != null && !mMediaPlayer!!.isPlaying) {
+                mMediaPlayer?.let {
+                    if (it.isPlaying) {
+                        return@let
+                    }
                     LogHelper.d(TAG, "configMediaPlayerState startMediaPlayer. seeking to ",
                             mCurrentPosition)
-                    state = if (mCurrentPosition == mMediaPlayer!!.currentPosition) {
-                        mMediaPlayer!!.start()
+                    state = if (mCurrentPosition == it.currentPosition) {
+                        it.start()
                         PlaybackStateCompat.STATE_PLAYING
                     } else {
-                        mMediaPlayer!!.seekTo(mCurrentPosition)
+                        it.seekTo(mCurrentPosition)
                         PlaybackStateCompat.STATE_BUFFERING
                     }
                 }
                 mPlayOnFocusGain = false
             }
         }
-        if (mCallback != null) {
-            mCallback!!.onPlaybackStatusChanged(state)
-        }
+        mCallback?.onPlaybackStatusChanged(state)
     }
 
     /**
@@ -322,12 +315,10 @@ class LocalPlayback(private val mContext: Context, private val mMusicProvider: M
         mCurrentPosition = mp.currentPosition
         if (state == PlaybackStateCompat.STATE_BUFFERING) {
             registerAudioNoisyReceiver()
-            mMediaPlayer!!.start()
+            mMediaPlayer?.start()
             state = PlaybackStateCompat.STATE_PLAYING
         }
-        if (mCallback != null) {
-            mCallback!!.onPlaybackStatusChanged(state)
-        }
+        mCallback?.onPlaybackStatusChanged(state)
     }
 
     /**
@@ -339,9 +330,7 @@ class LocalPlayback(private val mContext: Context, private val mMusicProvider: M
         LogHelper.d(TAG, "onCompletion from MediaPlayer")
         // The media player finished playing the current song, so we go ahead
         // and start the next.
-        if (mCallback != null) {
-            mCallback!!.onCompletion()
-        }
+        mCallback?.onCompletion()
     }
 
     /**
@@ -365,9 +354,7 @@ class LocalPlayback(private val mContext: Context, private val mMusicProvider: M
      */
     override fun onError(mp: MediaPlayer, what: Int, extra: Int): Boolean {
         LogHelper.e(TAG, "Media player error: what=$what, extra=$extra")
-        if (mCallback != null) {
-            mCallback!!.onError("MediaPlayer error $what ($extra)")
-        }
+        mCallback?.onError("MediaPlayer error $what ($extra)")
         return true // true indicates we handled the error
     }
 
@@ -380,22 +367,24 @@ class LocalPlayback(private val mContext: Context, private val mMusicProvider: M
         LogHelper.d(TAG, "createMediaPlayerIfNeeded. needed? ", mMediaPlayer == null)
         if (mMediaPlayer == null) {
             mMediaPlayer = MediaPlayer()
-            EqualizerFragment.setupEqualizerFX(mMediaPlayer!!.audioSessionId, mContext)
+            mMediaPlayer?.let {
+                EqualizerControl.setupEqualizerFX(it.audioSessionId, mContext)
 
-            // Make sure the media player will acquire a wake-lock while
-            // playing. If we don't do that, the CPU might go to sleep while the
-            // song is playing, causing playback to stop.
-            mMediaPlayer!!.setWakeMode(mContext.applicationContext,
-                    PowerManager.PARTIAL_WAKE_LOCK)
+                // Make sure the media player will acquire a wake-lock while
+                // playing. If we don't do that, the CPU might go to sleep while the
+                // song is playing, causing playback to stop.
+                it.setWakeMode(mContext.applicationContext,
+                        PowerManager.PARTIAL_WAKE_LOCK)
 
-            // we want the media player to notify us when it's ready preparing,
-            // and when it's done playing:
-            mMediaPlayer!!.setOnPreparedListener(this)
-            mMediaPlayer!!.setOnCompletionListener(this)
-            mMediaPlayer!!.setOnErrorListener(this)
-            mMediaPlayer!!.setOnSeekCompleteListener(this)
+                // we want the media player to notify us when it's ready preparing,
+                // and when it's done playing:
+                it.setOnPreparedListener(this)
+                it.setOnCompletionListener(this)
+                it.setOnErrorListener(this)
+                it.setOnSeekCompleteListener(this)
+            }
         } else {
-            mMediaPlayer!!.reset()
+            mMediaPlayer?.reset()
         }
     }
 
@@ -410,10 +399,12 @@ class LocalPlayback(private val mContext: Context, private val mMusicProvider: M
         LogHelper.d(TAG, "relaxResources. releaseMediaPlayer=", releaseMediaPlayer)
 
         // stop and release the Media Player, if it's available
-        if (releaseMediaPlayer && mMediaPlayer != null) {
-            mMediaPlayer!!.reset()
-            mMediaPlayer!!.release()
-            mMediaPlayer = null
+        if (releaseMediaPlayer) {
+            mMediaPlayer?.let {
+                it.reset()
+                it.release()
+                mMediaPlayer = null
+            }
         }
 
         // we can also release the Wifi lock, if we're holding it
