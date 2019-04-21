@@ -28,9 +28,8 @@ import java.io.IOException
  * A class that implements local media playback using [android.media.MediaPlayer]
  */
 class LocalPlayback(private val mContext: Context, private val mMusicProvider: MusicProvider) : Playback, AudioManager.OnAudioFocusChangeListener, OnCompletionListener, OnErrorListener, OnPreparedListener, OnSeekCompleteListener {
-    private val mWifiLock: WifiManager.WifiLock = (mContext.applicationContext.getSystemService(Context.WIFI_SERVICE) as WifiManager)
-            .createWifiLock(WifiManager.WIFI_MODE_FULL, "soundcrowd_lock")
-    private val mAudioManager: AudioManager = mContext.getSystemService(Context.AUDIO_SERVICE) as AudioManager
+    private val mWifiLock: WifiManager.WifiLock = (mContext.applicationContext.getSystemService(Context.WIFI_SERVICE) as? WifiManager)?.createWifiLock(WifiManager.WIFI_MODE_FULL, "soundcrowd_lock") ?: throw RuntimeException()
+    private val mAudioManager: AudioManager = mContext.getSystemService(Context.AUDIO_SERVICE) as? AudioManager ?: throw RuntimeException()
     private val mAudioNoisyIntentFilter = IntentFilter(AudioManager.ACTION_AUDIO_BECOMING_NOISY)
     override var state: Int = 0
     private var mPlayOnFocusGain: Boolean = false
@@ -109,13 +108,11 @@ class LocalPlayback(private val mContext: Context, private val mMusicProvider: M
     }
 
     override fun play(item: QueueItem, position: Int) {
-        if (item.description.mediaId == null) {
-            return
-        }
+        val mediaId = item.description.mediaId ?: return
         mPlayOnFocusGain = true
         tryToGetAudioFocus()
         registerAudioNoisyReceiver()
-        val mediaId = item.description.mediaId as String
+
         val mediaHasChanged = !TextUtils.equals(mediaId, currentMediaId)
         if (mediaHasChanged) {
             mCurrentPosition = position
@@ -158,7 +155,7 @@ class LocalPlayback(private val mContext: Context, private val mMusicProvider: M
                                 }
                             } catch (ex: IOException) {
                                 LogHelper.e(TAG, ex, "Exception playing song")
-                                mCallback?.onError(ex.message?.let { ex.message } ?: "")
+                                mCallback?.onError(ex.message ?: "")
                             }
                         }
                     })
@@ -256,7 +253,7 @@ class LocalPlayback(private val mContext: Context, private val mMusicProvider: M
             if (mPlayOnFocusGain) {
                 mMediaPlayer?.let {
                     if (it.isPlaying) {
-                        return@let
+                        return
                     }
                     LogHelper.d(TAG, "configMediaPlayerState startMediaPlayer. seeking to ",
                             mCurrentPosition)

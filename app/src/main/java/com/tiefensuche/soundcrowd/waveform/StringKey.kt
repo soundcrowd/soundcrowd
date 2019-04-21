@@ -22,7 +22,7 @@ class StringKey(val key: String) : Key {
         if (this === other) return true
         if (other == null || javaClass != other.javaClass) return false
 
-        val that = other as StringKey?
+        val that = other as? StringKey
 
         return key == that?.key
     }

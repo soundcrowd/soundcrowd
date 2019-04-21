@@ -6,6 +6,7 @@ package com.tiefensuche.soundcrowd.ui.intro
 
 import android.app.Activity
 import android.graphics.Point
+import android.preference.PreferenceManager
 import android.view.MotionEvent
 import android.view.View
 import com.github.amlcurran.showcaseview.OnShowcaseEventListener
@@ -13,7 +14,6 @@ import com.github.amlcurran.showcaseview.ShowcaseView
 import com.github.amlcurran.showcaseview.targets.Target
 import com.github.amlcurran.showcaseview.targets.ViewTarget
 import com.tiefensuche.soundcrowd.R
-import com.tiefensuche.soundcrowd.ui.MusicPlayerActivity
 
 /**
  * Introduces some of the features of the app
@@ -37,7 +37,7 @@ object ShowcaseViewManager {
     }
 
     private fun introduce(function: ShowcaseFunction, target: Target, activity: Activity) {
-        val prefs = (activity as MusicPlayerActivity).preferences
+        val prefs = PreferenceManager.getDefaultSharedPreferences(activity)
         if (!blocked && !prefs.getBoolean(function.function, false)) {
             blocked = true
             ShowcaseView.Builder(activity)

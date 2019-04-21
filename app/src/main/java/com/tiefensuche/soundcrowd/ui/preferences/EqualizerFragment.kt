@@ -6,10 +6,11 @@ package com.tiefensuche.soundcrowd.ui.preferences
 
 import android.app.Activity
 import android.content.ContentValues.TAG
+import android.content.Context
 import android.content.SharedPreferences
-import android.media.audiofx.Equalizer
 import android.os.Build
 import android.os.Bundle
+import android.preference.PreferenceManager
 import android.support.annotation.RequiresApi
 import android.support.v4.app.Fragment
 import android.view.Gravity
@@ -35,7 +36,6 @@ import com.tiefensuche.soundcrowd.playback.EqualizerControl.Companion.releaseAud
 import com.tiefensuche.soundcrowd.playback.EqualizerControl.Companion.setBassBoost
 import com.tiefensuche.soundcrowd.playback.EqualizerControl.Companion.setLoudness
 import com.tiefensuche.soundcrowd.ui.MediaBrowserFragment
-import com.tiefensuche.soundcrowd.ui.MusicPlayerActivity
 import com.tiefensuche.soundcrowd.utils.LogHelper
 import java.util.*
 
@@ -51,7 +51,7 @@ class EqualizerFragment : Fragment() {
     private var bandBars: MutableList<SeekBar> = ArrayList()
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
-        mPreferences = (activity as MusicPlayerActivity).preferences
+        mPreferences = PreferenceManager.getDefaultSharedPreferences(context)
         val rootView = inflater.inflate(R.layout.fragment_equalizer, container, false)
         setupEqualizer(rootView.findViewById(R.id.spinnerPreset), rootView.findViewById(R.id.checkBoxEqualizer), rootView.findViewById(R.id.layoutEqualizer))
         setupBassBoost(rootView.findViewById(R.id.checkBoxBassBoost), rootView.findViewById(R.id.seekBarBassBoost))
@@ -65,15 +65,16 @@ class EqualizerFragment : Fragment() {
 
     override fun onStart() {
         super.onStart()
-        val mediaFragmentListener = activity as MediaBrowserFragment.MediaFragmentListener
-        mediaFragmentListener.setToolbarTitle(getString(R.string.equalizer_title))
-        mediaFragmentListener.showSearchButton(false)
+
+        (activity as? MediaBrowserFragment.MediaFragmentListener)?.let {
+            it.setToolbarTitle(getString(R.string.equalizer_title))
+            it.showSearchButton(false)
+        }
     }
 
     override fun onAttach(activity: Activity) {
         super.onAttach(activity)
-        val mMediaFragmentListener = activity as MediaBrowserFragment.MediaFragmentListener
-        mMediaFragmentListener.enableCollapse(false)
+        (activity as? MediaBrowserFragment.MediaFragmentListener)?.enableCollapse(false)
     }
 
     private fun setupBands(layout: LinearLayout) {
@@ -150,96 +151,45 @@ class EqualizerFragment : Fragment() {
         }
     }
 
-    private fun loadPresets(spinner: Spinner) {
+    private fun loadPresets(context: Context): ArrayAdapter<String> {
+        val adapter = ArrayAdapter<String>(context, android.R.layout.simple_spinner_item)
         mEqualizer?.let {
-            val adapter = ArrayAdapter<String>(spinner.context, android.R.layout.simple_spinner_item)
             for (i in 0 until it.numberOfPresets) {
                 LogHelper.d(TAG, "preset available: ", it.getPresetName(i.toShort()))
                 adapter.add(it.getPresetName(i.toShort()))
             }
-            spinner.adapter = adapter
-            spinner.setSelection(mPreferences.getInt(CONFIG_PRESET, 0))
         }
+        return adapter
     }
 
     private fun setupEqualizer(spinner: Spinner, checkBox: CheckBox, layout: LinearLayout) {
-        setupViews(checkBox, spinner, CONFIG_EQUALIZER_ENABLED, CONFIG_PRESET) { enabled, value ->
+        setupBands(layout)
+        setEnabledBands(checkBox.isChecked)
+
+        setupViews(checkBox, spinner, loadPresets(spinner.context), CONFIG_EQUALIZER_ENABLED, CONFIG_PRESET) { enabled, value ->
             setEnabledBands(enabled)
             if (enabled) {
                 EqualizerControl.setEqualizer(value.toShort())
+                mEqualizer?.let {
+                    val minEQLevel = it.bandLevelRange[0]
+                    for (i in bandBars.indices) {
+                        bandBars[i].progress = it.getBandLevel(i.toShort()) - minEQLevel
+                    }
+                }
             } else {
                 releaseAudioEffect(mEqualizer)
             }
         }
-
-        spinner.isEnabled = checkBox.isChecked
-        try {
-            if (mEqualizer == null) {
-                mEqualizer = Equalizer(0, 0)
-            }
-            setupBands(layout)
-            setEnabledBands(checkBox.isChecked)
-            loadPresets(spinner)
-            spinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
-                override fun onItemSelected(adapterView: AdapterView<*>, view: View, i: Int, l: Long) {
-                    try {
-                        mEqualizer?.let {
-                            if (!it.enabled) {
-                                return
-                            }
-                            LogHelper.d(TAG, "use preset: ", it.getPresetName(i.toShort()))
-                            mPreferences.edit().putInt(CONFIG_PRESET, i).apply()
-                            it.usePreset(i.toShort())
-                            val minEQLevel = it.bandLevelRange[0]
-                            for (i in bandBars.indices) {
-                                bandBars[i].progress = it.getBandLevel(i.toShort()) - minEQLevel
-                            }
-                        }
-
-                    } catch (e: RuntimeException) {
-                        LogHelper.e(TAG, "can not set preset for equalizer", e)
-                    }
-
-                }
-
-                override fun onNothingSelected(adapterView: AdapterView<*>) {
-
-                }
-            }
-        } catch (e: Exception) {
-            LogHelper.e(TAG, e)
-        }
-
     }
 
     private fun setupReverb(spinner: Spinner, checkBox: CheckBox) {
-        setupViews(checkBox, spinner, CONFIG_REVERB_ENABLED, CONFIG_REVERB_PRESET) { enabled, value ->
+        val adapter = ArrayAdapter<String>(spinner.context, android.R.layout.simple_spinner_item)
+        adapter.addAll("NONE", "SMALLROOM", "MEDIUMROOM", "LARGEROOM", "MEDIUMHALL", "LARGEHALL", "PLATE")
+        setupViews(checkBox, spinner, adapter, CONFIG_REVERB_ENABLED, CONFIG_REVERB_PRESET) { enabled, value ->
             if (enabled) {
                 EqualizerControl.setReverb(value.toShort())
             } else {
                 releaseAudioEffect(mPresetReverb)
-            }
-        }
-        val adapter = ArrayAdapter<String>(spinner.context, android.R.layout.simple_spinner_item)
-        adapter.addAll("NONE", "SMALLROOM", "MEDIUMROOM", "LARGEROOM", "MEDIUMHALL", "LARGEHALL", "PLATE")
-        spinner.adapter = adapter
-        spinner.setSelection(mPreferences.getInt(CONFIG_REVERB_PRESET, 0))
-        spinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
-            override fun onItemSelected(adapterView: AdapterView<*>, view: View, i: Int, l: Long) {
-                mPreferences.edit().putInt(CONFIG_REVERB_PRESET, i).apply()
-                try {
-                    mPresetReverb?.let {
-                        if (!it.enabled) return
-                        it.preset = i.toShort()
-                    }
-                } catch (e: RuntimeException) {
-                    LogHelper.e(TAG, "can not set preset for reverb", e)
-                }
-
-            }
-
-            override fun onNothingSelected(adapterView: AdapterView<*>) {
-
             }
         }
     }
@@ -266,33 +216,51 @@ class EqualizerFragment : Fragment() {
         }
     }
 
-    private fun setupViews(checkBox: CheckBox, seekBar: View, keyEnabled: String, keyValue: String, checkboxFunc: (enabled: Boolean, value: Int) -> Unit) {
+    private fun setupViews(checkBox: CheckBox, controlView: View, keyEnabled: String, keyValue: String, checkboxFunc: (enabled: Boolean, value: Int) -> Unit) {
         checkBox.isChecked = mPreferences.getBoolean(keyEnabled, false)
+        controlView.isEnabled = checkBox.isChecked
         checkBox.setOnCheckedChangeListener { _, b ->
             mPreferences.edit().putBoolean(keyEnabled, b).apply()
-            seekBar.isEnabled = b
+            controlView.isEnabled = b
             checkboxFunc.invoke(b, mPreferences.getInt(keyValue, 0))
         }
+    }
 
-        if (seekBar is SeekBar) {
-            seekBar.progress = mPreferences.getInt(keyValue, 0)
-            seekBar.isEnabled = checkBox.isChecked
-            seekBar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
-                override fun onProgressChanged(seekBar: SeekBar, i: Int, b: Boolean) {
-                    mPreferences.edit().putInt(keyValue, i).apply()
-                    try {
-                        checkboxFunc.invoke(true, i)
-                    } catch (e: RuntimeException) {
-                        LogHelper.e(TAG, "can not set loudness enhancer target gain", e)
-                    }
+    private fun setupViews(checkBox: CheckBox, seekBar: SeekBar, keyEnabled: String, keyValue: String, checkboxFunc: (enabled: Boolean, value: Int) -> Unit) {
+        setupViews(checkBox, seekBar as View, keyEnabled, keyValue, checkboxFunc)
+        seekBar.progress = mPreferences.getInt(keyValue, 0)
+        seekBar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+            override fun onProgressChanged(seekBar: SeekBar, i: Int, b: Boolean) {
+                mPreferences.edit().putInt(keyValue, i).apply()
+                try {
+                    checkboxFunc.invoke(true, i)
+                } catch (e: RuntimeException) {
+                    LogHelper.e(TAG, "can not set audio effect value", e)
                 }
+            }
 
-                override fun onStartTrackingTouch(seekBar: SeekBar) = Unit
+            override fun onStartTrackingTouch(seekBar: SeekBar) = Unit
 
-                override fun onStopTrackingTouch(seekBar: SeekBar) = Unit
-            })
-        } else if (seekBar is Spinner) {
+            override fun onStopTrackingTouch(seekBar: SeekBar) = Unit
+        })
+    }
 
+    private fun setupViews(checkBox: CheckBox, spinner: Spinner, adapter: ArrayAdapter<String>, keyEnabled: String, keyValue: String, checkboxFunc: (enabled: Boolean, value: Int) -> Unit) {
+        setupViews(checkBox, spinner as View, keyEnabled, keyValue, checkboxFunc)
+        spinner.adapter = adapter
+        spinner.setSelection(mPreferences.getInt(keyValue, 0))
+        spinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+            override fun onItemSelected(adapterView: AdapterView<*>, view: View, i: Int, l: Long) {
+                mPreferences.edit().putInt(keyValue, i).apply()
+                try {
+                    checkboxFunc.invoke(true, i)
+                } catch (e: RuntimeException) {
+                    LogHelper.e(TAG, "can not set audio effect value", e)
+                }
+            }
+
+            override fun onNothingSelected(adapterView: AdapterView<*>) = Unit
         }
     }
+
 }

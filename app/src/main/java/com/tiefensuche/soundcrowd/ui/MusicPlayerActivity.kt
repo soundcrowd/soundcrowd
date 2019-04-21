@@ -115,7 +115,7 @@ class MusicPlayerActivity : BaseActivity(), MediaBrowserFragment.MediaFragmentLi
             }
         })
 
-        searchView = MenuItemCompat.getActionView(searchItem) as SearchView
+        searchView = MenuItemCompat.getActionView(searchItem) as? SearchView ?: throw RuntimeException()
         searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
             override fun onQueryTextSubmit(query: String): Boolean {
                 LogHelper.d(TAG, "onQueryTextSubmit, query=", query)

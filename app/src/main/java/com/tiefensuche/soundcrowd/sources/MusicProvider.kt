@@ -96,23 +96,24 @@ class MusicProvider(context: MusicService) {
     }
 
     fun resolveMusic(mediaId: String, callback: com.tiefensuche.soundcrowd.plugins.Callback<String>) {
-        AsyncTask.execute(Runnable {
-            getMusic(MediaIDHelper.extractMusicIDFromMediaID(mediaId))?.let {
-                if (!mediaId.contains(MEDIA_ID_ROOT)) {
-                    callback.onResult(it.getString(MusicProviderSource.CUSTOM_METADATA_TRACK_SOURCE))
-                    return@Runnable
-                }
-                for (plugin in pluginManager.plugins) {
-                    if (plugin.mediaCategories().contains(mediaId.split(CATEGORY_SEPARATOR)[1])) {
-                        plugin.getMediaUrl(it.getString(MusicProviderSource.CUSTOM_METADATA_TRACK_SOURCE), callback)
-                        return@Runnable
-                    }
-                }
-
-                // no plugin found, pass-though the source from metadata
+        getMusic(MediaIDHelper.extractMusicIDFromMediaID(mediaId))?.let {
+            if (!mediaId.contains(MEDIA_ID_ROOT)) {
                 callback.onResult(it.getString(MusicProviderSource.CUSTOM_METADATA_TRACK_SOURCE))
+                return
             }
-        })
+
+            for (plugin in pluginManager.plugins) {
+                if (plugin.mediaCategories().contains(mediaId.split(CATEGORY_SEPARATOR)[1])) {
+                    AsyncTask.execute {
+                        plugin.getMediaUrl(it.getString(MusicProviderSource.CUSTOM_METADATA_TRACK_SOURCE), callback)
+                    }
+                    return
+                }
+            }
+
+            // no plugin found, pass-though the source from metadata
+            callback.onResult(it.getString(MusicProviderSource.CUSTOM_METADATA_TRACK_SOURCE))
+        }
     }
 
     fun hasItems(mediaId: String, options: Bundle): Boolean =
@@ -152,7 +153,7 @@ class MusicProvider(context: MusicService) {
         }
     }
 
-    private fun cleanCategories() {
+    private fun buildRootCategory() {
         val root: MutableList<MediaMetadataCompat> = ArrayList()
 
         // remove categories that contain only one single item and add the item for root
@@ -318,7 +319,7 @@ class MusicProvider(context: MusicService) {
     private fun loadCuePoints() {
         val cuePoints = DatabaseHelper.instance.cuePointItems
         addMusic(cuePoints.iterator())
-        musicByCategory[MEDIA_ID_MUSICS_CUE_POINTS] = cuePoints as MutableList<MediaMetadataCompat>
+        musicByCategory[MEDIA_ID_MUSICS_CUE_POINTS] = cuePoints
     }
 
     fun isFavorite(musicId: String): Boolean {
@@ -364,7 +365,7 @@ class MusicProvider(context: MusicService) {
                 addToCategory(MediaMetadataCompat.METADATA_KEY_ARTIST, MEDIA_ID_ROOT, item)
                 addToCategory(MediaMetadataCompat.METADATA_KEY_ALBUM, MEDIA_ID_ROOT, item)
             }
-            cleanCategories()
+            buildRootCategory()
             loadCuePoints()
             mCurrentState = State.INITIALIZED
             callback?.onMusicCatalogReady(true)

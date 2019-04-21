@@ -4,7 +4,7 @@ import android.content.Context
 import android.content.pm.PackageManager
 import java.util.*
 
-object PackageUtil {
+internal object PackageUtil {
 
     fun getPackageContext(context: Context, packageName: String): Context? {
         return try {

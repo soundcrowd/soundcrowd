@@ -66,8 +66,8 @@ class EqualizerControl {
             if (mBassBoost == null) {
                 mBassBoost = BassBoost(Integer.MAX_VALUE, audioSessionId)
             }
-            mBassBoost?.setStrength(strength)
             mBassBoost?.enabled = true
+            mBassBoost?.setStrength(strength)
         }
 
         fun setReverb(preset: Short) {

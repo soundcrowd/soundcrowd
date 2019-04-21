@@ -75,14 +75,17 @@ class FullScreenPlayerFragment : Fragment() {
     private var mPlayDrawable: Drawable? = null
     private lateinit var mBackgroundImage: ImageView
     private lateinit var mWaveformHandler: WaveformHandler
-    private var vibrantColor: Int = 0
-    private var textColor: Int = 0
+
+    // current colors, used as from values in the transition to the new color
+    private var mVibrantColor: Int = 0
+    private var mTextColor: Int = 0
+
     private var mScheduleFuture: ScheduledFuture<*>? = null
     private var mScheduleFutureWaveform: ScheduledFuture<*>? = null
 
 
-    private val mButtonListener = View.OnClickListener { view ->
-        val activity = activity ?: return@OnClickListener
+    private val mButtonListener = View.OnClickListener(function = fun(view: View) {
+        val activity = activity ?: return
         val controller = MediaControllerCompat.getMediaController(activity)
         val state = controller.playbackState?.state ?: PlaybackStateCompat.STATE_NONE
         LogHelper.d(TAG, "Button pressed, in state $state")
@@ -100,7 +103,7 @@ class FullScreenPlayerFragment : Fragment() {
                 }
             }
         }
-    }
+    })
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         val rootView = inflater.inflate(R.layout.playback_controls, container, false)
@@ -154,9 +157,10 @@ class FullScreenPlayerFragment : Fragment() {
             }
 
             override fun onWaveformLoaded() {
-                if ((activity as MusicPlayerActivity).slidingUpPanelLayout.panelState == SlidingUpPanelLayout.PanelState.EXPANDED) {
-                    ShowcaseViewManager.introduce(ShowcaseViewManager.ShowcaseFunction.WAVEFORM_SEEKING, activity as MusicPlayerActivity)
-                    ShowcaseViewManager.introduce(ShowcaseViewManager.ShowcaseFunction.CUE_POINT, activity as MusicPlayerActivity)
+                val activity = activity
+                if (activity is MusicPlayerActivity && activity.slidingUpPanelLayout.panelState == SlidingUpPanelLayout.PanelState.EXPANDED) {
+                    ShowcaseViewManager.introduce(ShowcaseViewManager.ShowcaseFunction.WAVEFORM_SEEKING, activity)
+                    ShowcaseViewManager.introduce(ShowcaseViewManager.ShowcaseFunction.CUE_POINT, activity)
                 }
             }
         })
@@ -335,36 +339,46 @@ class FullScreenPlayerFragment : Fragment() {
         ArtworkHelper.loadArtwork(requests, description, mBackgroundImage, object : ArtworkHelper.ColorsListener {
             override fun onColorsReady(colors: IntArray) {
                 val vibrantColor = colors[0]
-                val colorAnimator = ValueAnimator.ofObject(ArgbEvaluator(), this@FullScreenPlayerFragment.vibrantColor, vibrantColor)
+                val colorAnimator = ValueAnimator.ofObject(ArgbEvaluator(), mVibrantColor, vibrantColor)
                 colorAnimator.addUpdateListener { valueAnimator ->
-                    val color = valueAnimator.animatedValue as Int
-                    mSeekbar.progressDrawable.setColorFilter(color, PorterDuff.Mode.SRC_IN)
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
-                        mSeekbar.thumb.setColorFilter(color, PorterDuff.Mode.SRC_IN)
+                    val color = valueAnimator.animatedValue
+                    if (color is Int) {
+                        mSeekbar.progressDrawable.setColorFilter(color, PorterDuff.Mode.SRC_IN)
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
+                            mSeekbar.thumb.setColorFilter(color, PorterDuff.Mode.SRC_IN)
+                        }
+                        mPlayPause.setColorFilter(color)
+                        mSkipNext.setColorFilter(color)
+                        mSkipPrev.setColorFilter(color)
+                        waveformView.colorizeWaveform(color)
+
+                        val activity = activity
+                        if (activity is MusicPlayerActivity) {
+                            activity.collapsingToolbarLayout.setBackgroundColor(color)
+                            activity.mNavigationView.setBackgroundColor(color)
+                            activity.controls.setBackgroundColor(color)
+                            activity.slidingUpPanelLayout.setBackgroundColor(color)
+                        }
                     }
-                    mPlayPause.setColorFilter(color)
-                    mSkipNext.setColorFilter(color)
-                    mSkipPrev.setColorFilter(color)
-                    waveformView.colorizeWaveform(color)
-                    val activity = activity as MusicPlayerActivity
-                    activity.collapsingToolbarLayout.setBackgroundColor(color)
-                    activity.mNavigationView.setBackgroundColor(color)
-                    activity.controls.setBackgroundColor(color)
-                    activity.slidingUpPanelLayout.setBackgroundColor(color)
                 }
                 colorAnimator.start()
-                this@FullScreenPlayerFragment.vibrantColor = vibrantColor
+                mVibrantColor = vibrantColor
 
                 val textColor = colors[1]
-                val textAnimator = ValueAnimator.ofObject(ArgbEvaluator(), this@FullScreenPlayerFragment.textColor, textColor)
+                val textAnimator = ValueAnimator.ofObject(ArgbEvaluator(), mTextColor, textColor)
                 textAnimator.addUpdateListener { valueAnimator ->
-                    val color = valueAnimator.animatedValue as Int
-                    (activity as MusicPlayerActivity).mToolbar.setTitleTextColor(color)
-                    mTitle.setTextColor(color)
-                    mSubtitle.setTextColor(color)
+                    val color = valueAnimator.animatedValue
+                    if (color is Int) {
+                        mTitle.setTextColor(color)
+                        mSubtitle.setTextColor(color)
+                        val activity = activity
+                        if (activity is MusicPlayerActivity) {
+                            activity.mToolbar.setTitleTextColor(color)
+                        }
+                    }
                 }
                 textAnimator.start()
-                this@FullScreenPlayerFragment.textColor = textColor
+                mTextColor = textColor
             }
 
             override fun onError() {

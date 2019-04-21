@@ -46,8 +46,8 @@ class CueListFragment : Fragment() {
             adapter = ArrayAdapter(it, android.R.layout.simple_list_item_1, cuePoints)
             listView.adapter = adapter
             listView.setOnItemClickListener { _, _, i, _ ->
-                val point = listView.getItemAtPosition(i) as CuePoint
-                if (MediaControllerCompat.getMediaController(it) != null) {
+                val point = listView.getItemAtPosition(i)
+                if (point is CuePoint && MediaControllerCompat.getMediaController(it) != null) {
                     val bundle = Bundle()
                     bundle.putString("mediaId", point.mediaId)
                     bundle.putInt("position", point.position)
@@ -62,9 +62,9 @@ class CueListFragment : Fragment() {
     override fun onAttach(activity: Activity) {
         super.onAttach(activity)
 
-        // If used on an activity that doesn't implement MediaFragmentListener, it
-        // will throw an exception as expected:
-        mMediaFragmentListener = activity as MediaBrowserFragment.MediaFragmentListener
+        if (activity is MediaBrowserFragment.MediaFragmentListener) {
+            mMediaFragmentListener = activity
+        }
     }
 
     override fun onStart() {

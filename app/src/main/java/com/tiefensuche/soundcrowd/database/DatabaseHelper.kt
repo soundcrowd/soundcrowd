@@ -25,7 +25,7 @@ import java.util.*
  */
 class DatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME, null, DATABASE_VERSION) {
 
-    val cuePointItems: List<MediaMetadataCompat>
+    val cuePointItems: MutableList<MediaMetadataCompat>
         get() {
             val items = ArrayList<MediaMetadataCompat>()
             val mediaIds = ArrayList<String>()

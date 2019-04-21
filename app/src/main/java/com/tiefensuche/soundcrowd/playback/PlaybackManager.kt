@@ -250,7 +250,7 @@ class PlaybackManager(private val mServiceCallback: PlaybackServiceCallback, pri
             LogHelper.d(TAG, "playFromMediaId mediaId:", mediaId, "  extras=", extras)
             mQueueManager.currentMusic?.let {
                 if (mediaId == it.description.mediaId) {
-                    return@let
+                    return
                 }
                 updateLastPosition()
             }

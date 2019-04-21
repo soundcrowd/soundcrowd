@@ -162,10 +162,12 @@ class MediaItemAdapter(private val requests: GlideRequests, private val listener
     }
 
     override fun getFilter(): Filter {
-        if (mFilter == null) {
-            mFilter = ArrayFilter()
+        var filter = mFilter
+        if (filter == null) {
+            filter = ArrayFilter()
+            mFilter = filter
         }
-        return mFilter as Filter
+        return filter
     }
 
     interface OnItemClickListener {

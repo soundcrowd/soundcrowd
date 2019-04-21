@@ -13,7 +13,7 @@ import java.lang.reflect.InvocationHandler
 import java.lang.reflect.Method
 import java.lang.reflect.Proxy
 
-object PluginLoader {
+internal object PluginLoader {
 
     fun loadPlugin(context: Context, classpath: String): IPlugin? {
         try {
@@ -31,8 +31,7 @@ object PluginLoader {
             // it is not possible to cast instantiated plugin class to the interface.
             // In the following a proxy instance is created from this context
             return Proxy.newProxyInstance(PluginLoader::class.java.classLoader, arrayOf<Class<*>>(IPlugin::class.java)) { _, method, objects ->
-                // Get the parameter types from the invoked method
-                // and swap the callback classes
+                // Get the parameter types from the invoked method and swap the callback classes
                 val parameterTypes = arrayOfNulls<Class<*>>(method.parameterTypes.size)
                 for (i in 0 until parameterTypes.size) {
                     if (method.parameterTypes[i].name == "com.tiefensuche.soundcrowd.plugins.Callback") {
@@ -50,8 +49,8 @@ object PluginLoader {
                 if (objects != null) {
                     for (i in objects.indices) {
                         // search in the objects for the callback class
-                        if (objects[i] is Callback<*>) {
-                            val clb = objects[i] as Callback<*>
+                        val clb = objects[i]
+                        if (clb is Callback<*>) {
                             // Proxy the other way around, now from the foreign context and with the
                             // previously loaded foreign callback class and replace it with the proxy
                             objects[i] = Proxy.newProxyInstance(pluginContext.classLoader, arrayOf(callbackClass), object: InvocationHandler {
@@ -76,7 +75,7 @@ object PluginLoader {
                 } else {
                     m.invoke(instance, *objects)
                 }
-            } as IPlugin
+            } as? IPlugin
         } catch (e: Exception) {
             LogHelper.e(PluginLoader::class.java.simpleName, e, "error loading plugin")
         }

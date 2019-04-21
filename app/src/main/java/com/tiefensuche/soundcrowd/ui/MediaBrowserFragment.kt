@@ -177,9 +177,10 @@ class MediaBrowserFragment : Fragment() {
 
     override fun onAttach(activity: Activity) {
         super.onAttach(activity)
-        // If used on an activity that doesn't implement MediaFragmentListener, it
-        // will throw an exception as expected:
-        mMediaFragmentListener = activity as MediaFragmentListener
+
+        if (activity is MediaFragmentListener) {
+            mMediaFragmentListener = activity
+        }
     }
 
     fun onConnected() {
@@ -253,18 +254,13 @@ class MediaBrowserFragment : Fragment() {
     }
 
     private fun updateDescription() {
-        if (mDescription == null) {
-            mMediaFragmentListener.enableCollapse(false)
-            return
-        }
-
         activity?.let { activity ->
             mDescription?.let {
                 ArtworkHelper.loadArtwork(requests, it, activity.findViewById(R.id.container_image))
-                (activity.findViewById<View>(R.id.header_line2) as TextView).text = it.subtitle
+                (activity.findViewById<View>(R.id.header_line2) as? TextView)?.text = it.subtitle
                 mMediaFragmentListener.enableCollapse(true)
                 mMediaFragmentListener.setToolbarTitle(it.title)
-        }}
+        } ?: mMediaFragmentListener.enableCollapse(false) }
     }
 
     internal interface MediaFragmentListener : MediaBrowserProvider {

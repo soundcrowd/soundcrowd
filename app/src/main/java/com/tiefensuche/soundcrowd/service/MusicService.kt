@@ -237,7 +237,7 @@ class MusicService : MediaBrowserServiceCompat(), PlaybackManager.PlaybackServic
                         try {
                             result.sendResult(mMusicProvider.getChildren(parentMediaId, options))
                         } catch (e: Exception) {
-
+                            LogHelper.w(TAG, e, "can not send result")
                         }
                     } else {
                         result.sendResult(buildError("error"))

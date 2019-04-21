@@ -62,7 +62,7 @@ abstract class ActionBarCastActivity : AppCompatActivity() {
     private var mToolbarInitialized: Boolean = false
 
     internal val browseFragment: MediaBrowserFragment?
-        get() = supportFragmentManager.findFragmentByTag(MediaBrowserFragment::class.java.name) as MediaBrowserFragment?
+        get() = supportFragmentManager.findFragmentByTag(MediaBrowserFragment::class.java.name) as? MediaBrowserFragment
 
     public override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -137,7 +137,7 @@ abstract class ActionBarCastActivity : AppCompatActivity() {
                         R.animator.slide_in_from_right, R.animator.slide_out_to_left,
                         R.animator.slide_in_from_left, R.animator.slide_out_to_right)
                         .replace(R.id.container, MediaBrowserFragment(), MediaBrowserFragment::class.java.name).commit()
-                (findViewById<View>(R.id.nav_view) as NavigationView).setCheckedItem(R.id.navigation_allmusic)
+                mNavigationView.setCheckedItem(R.id.navigation_allmusic)
             }
             else -> // Lastly, it will rely on the system behavior for back
                 super.onBackPressed()
@@ -174,10 +174,10 @@ abstract class ActionBarCastActivity : AppCompatActivity() {
     }
 
     private fun populateDrawerItems(navigationView: NavigationView) {
-        navigationView.setNavigationItemSelectedListener { menuItem ->
+        navigationView.setNavigationItemSelectedListener(fun(menuItem: MenuItem): Boolean {
             if (menuItem.isChecked) {
                 mDrawerLayout.closeDrawers()
-                return@setNavigationItemSelectedListener true
+                return true
             }
             supportFragmentManager.popBackStack()
             menuItem.isChecked = true
@@ -196,8 +196,8 @@ abstract class ActionBarCastActivity : AppCompatActivity() {
                 slidingUpPanelLayout.panelState = SlidingUpPanelLayout.PanelState.COLLAPSED
             }
             mDrawerLayout.closeDrawers()
-            true
-        }
+            return true
+        })
     }
 
     private fun setFragment(fragment: Fragment) {

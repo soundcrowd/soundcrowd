@@ -64,7 +64,7 @@ class LetterTileDrawable(context: Context) : Drawable() {
         // Draw letter/digit only if the first character is an english letter
         mDisplayName?.let {
             if (it.isEmpty() || !isEnglishLetter(it[0])) {
-                return@let
+                return
             }
             var numChars = 1
 

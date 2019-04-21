@@ -23,7 +23,7 @@ object Utils {
     fun fetchFromUrl(url: String, post: String?): String {
         var reader: BufferedReader? = null
         try {
-            val urlConnection = URL(url).openConnection() as HttpURLConnection
+            val urlConnection = URL(url).openConnection() as? HttpURLConnection ?: throw IOException()
             if (post != null) {
                 urlConnection.requestMethod = "POST"
                 urlConnection.outputStream.write(post.toByteArray())

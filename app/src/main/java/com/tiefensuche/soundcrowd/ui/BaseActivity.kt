@@ -91,7 +91,7 @@ abstract class BaseActivity : ActionBarCastActivity(), MediaBrowserProvider {
         super.onStart()
         LogHelper.d(TAG, "Activity onStart")
 
-        mControlsFragment = supportFragmentManager.findFragmentById(R.id.fragment_playback_controls) as FullScreenPlayerFragment?
+        mControlsFragment = supportFragmentManager.findFragmentById(R.id.fragment_playback_controls) as? FullScreenPlayerFragment
 
         mediaBrowser.connect()
     }

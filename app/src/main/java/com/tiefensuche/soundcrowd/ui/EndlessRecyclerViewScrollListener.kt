@@ -14,7 +14,7 @@ import android.support.v7.widget.StaggeredGridLayoutManager
  */
 abstract class EndlessRecyclerViewScrollListener : RecyclerView.OnScrollListener {
 
-    private var mLayoutManager: RecyclerView.LayoutManager
+    private val mLayoutManager: RecyclerView.LayoutManager
     // The minimum amount of items to have below your current scroll position
     // before loading more.
     private var visibleThreshold = 5
@@ -62,12 +62,12 @@ abstract class EndlessRecyclerViewScrollListener : RecyclerView.OnScrollListener
 
         when (mLayoutManager) {
             is StaggeredGridLayoutManager -> {
-                val lastVisibleItemPositions = (mLayoutManager as StaggeredGridLayoutManager).findLastVisibleItemPositions(null)
+                val lastVisibleItemPositions = mLayoutManager.findLastVisibleItemPositions(null)
                 // get maximum element within the list
                 lastVisibleItemPosition = getLastVisibleItem(lastVisibleItemPositions)
             }
-            is GridLayoutManager -> lastVisibleItemPosition = (mLayoutManager as GridLayoutManager).findLastVisibleItemPosition()
-            is LinearLayoutManager -> lastVisibleItemPosition = (mLayoutManager as LinearLayoutManager).findLastVisibleItemPosition()
+            is GridLayoutManager -> lastVisibleItemPosition = mLayoutManager.findLastVisibleItemPosition()
+            is LinearLayoutManager -> lastVisibleItemPosition = mLayoutManager.findLastVisibleItemPosition()
         }
 
             // If the total item count is zero and the previous isn't, assume the

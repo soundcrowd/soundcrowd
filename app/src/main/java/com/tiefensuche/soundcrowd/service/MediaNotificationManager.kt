@@ -23,7 +23,6 @@ import android.support.v4.media.MediaMetadataCompat
 import android.support.v4.media.session.MediaControllerCompat
 import android.support.v4.media.session.MediaSessionCompat
 import android.support.v4.media.session.PlaybackStateCompat
-
 import com.tiefensuche.soundcrowd.R
 import com.tiefensuche.soundcrowd.ui.MusicPlayerActivity
 import com.tiefensuche.soundcrowd.utils.LogHelper
@@ -100,7 +99,7 @@ constructor(private val mService: MusicService) : BroadcastReceiver() {
         mNotificationColor = Utils.getThemeColor(mService, R.attr.colorPrimary,
                 Color.DKGRAY)
 
-        mNotificationManager = mService.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        mNotificationManager = mService.getSystemService(Context.NOTIFICATION_SERVICE) as? NotificationManager ?: throw RuntimeException()
 
         val pkg = mService.packageName
         mPauseIntent = PendingIntent.getBroadcast(mService, REQUEST_CODE,
