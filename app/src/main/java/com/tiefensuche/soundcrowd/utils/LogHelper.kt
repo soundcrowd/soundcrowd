@@ -6,7 +6,7 @@ package com.tiefensuche.soundcrowd.utils
 import android.util.Log
 import com.tiefensuche.soundcrowd.BuildConfig
 
-object LogHelper {
+internal object LogHelper {
 
     private const val LOG_PREFIX = "soundcrowd_"
     private const val LOG_PREFIX_LENGTH = LOG_PREFIX.length
@@ -22,42 +22,42 @@ object LogHelper {
     /**
      * Don't use this when obfuscating class names!
      */
-    fun makeLogTag(cls: Class<*>): String {
+    internal fun makeLogTag(cls: Class<*>): String {
         return makeLogTag(cls.simpleName)
     }
 
 
-    fun v(tag: String, vararg messages: Any?) {
+    internal fun v(tag: String, vararg messages: Any?) {
         // Only log VERBOSE if build type is DEBUG
         if (BuildConfig.DEBUG) {
             log(tag, Log.VERBOSE, null, *messages)
         }
     }
 
-    fun d(tag: String, vararg messages: Any?) {
+    internal fun d(tag: String, vararg messages: Any?) {
         // Only log DEBUG if build type is DEBUG
         if (BuildConfig.DEBUG) {
             log(tag, Log.INFO, null, *messages)
         }
     }
 
-    fun i(tag: String, vararg messages: Any?) {
+    internal fun i(tag: String, vararg messages: Any?) {
         log(tag, Log.INFO, null, *messages)
     }
 
-    fun w(tag: String, vararg messages: Any?) {
+    internal fun w(tag: String, vararg messages: Any?) {
         log(tag, Log.WARN, null, *messages)
     }
 
-    fun w(tag: String, t: Throwable, vararg messages: Any?) {
+    internal fun w(tag: String, t: Throwable, vararg messages: Any?) {
         log(tag, Log.WARN, t, *messages)
     }
 
-    fun e(tag: String, vararg messages: Any?) {
+    internal fun e(tag: String, vararg messages: Any?) {
         log(tag, Log.ERROR, null, *messages)
     }
 
-    fun e(tag: String, t: Throwable, vararg messages: Any?) {
+    internal fun e(tag: String, t: Throwable, vararg messages: Any?) {
         log(tag, Log.ERROR, t, *messages)
     }
 

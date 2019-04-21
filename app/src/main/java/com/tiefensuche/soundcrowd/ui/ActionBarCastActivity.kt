@@ -6,6 +6,7 @@ package com.tiefensuche.soundcrowd.ui
 import android.content.res.Configuration
 import android.os.Bundle
 import android.support.design.widget.NavigationView
+import android.support.v4.app.Fragment
 import android.support.v4.app.FragmentManager
 import android.support.v4.view.GravityCompat
 import android.support.v4.widget.DrawerLayout
@@ -35,33 +36,38 @@ import com.tiefensuche.soundcrowd.utils.MediaIDHelper
  */
 abstract class ActionBarCastActivity : AppCompatActivity() {
 
-    lateinit var mToolbar: Toolbar
-    lateinit var mNavigationView: NavigationView
-    internal var mDrawerLayout: DrawerLayout? = null
+    internal lateinit var mToolbar: Toolbar
+    internal lateinit var mNavigationView: NavigationView
+    private lateinit var mDrawerLayout: DrawerLayout
     internal lateinit var slidingUpPanelLayout: SlidingUpPanelLayout
-    private var mDrawerToggle: ActionBarDrawerToggle? = null
+    private lateinit var mDrawerToggle: ActionBarDrawerToggle
     private val mBackStackChangedListener = FragmentManager.OnBackStackChangedListener { this.updateDrawerToggle() }
     private val mDrawerListener = object : DrawerLayout.DrawerListener {
         override fun onDrawerClosed(drawerView: View) {
-            if (mDrawerToggle != null) mDrawerToggle!!.onDrawerClosed(drawerView)
+            mDrawerToggle.onDrawerClosed(drawerView)
         }
 
         override fun onDrawerStateChanged(newState: Int) {
-            if (mDrawerToggle != null) mDrawerToggle!!.onDrawerStateChanged(newState)
+            mDrawerToggle.onDrawerStateChanged(newState)
         }
 
         override fun onDrawerSlide(drawerView: View, slideOffset: Float) {
-            if (mDrawerToggle != null) mDrawerToggle!!.onDrawerSlide(drawerView, slideOffset)
+            mDrawerToggle.onDrawerSlide(drawerView, slideOffset)
         }
 
         override fun onDrawerOpened(drawerView: View) {
-            if (mDrawerToggle != null) mDrawerToggle!!.onDrawerOpened(drawerView)
+            mDrawerToggle.onDrawerOpened(drawerView)
         }
     }
     private var mToolbarInitialized: Boolean = false
 
     internal val browseFragment: MediaBrowserFragment?
-        get() = supportFragmentManager.findFragmentByTag(MediaBrowserFragment::class.java.name) as MediaBrowserFragment?
+        get() = supportFragmentManager.findFragmentByTag(MediaBrowserFragment::class.java.name) as? MediaBrowserFragment
+
+    public override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_player)
+    }
 
     override fun onStart() {
         super.onStart()
@@ -72,9 +78,7 @@ abstract class ActionBarCastActivity : AppCompatActivity() {
 
     override fun onPostCreate(savedInstanceState: Bundle?) {
         super.onPostCreate(savedInstanceState)
-        if (mDrawerToggle != null) {
-            mDrawerToggle!!.syncState()
-        }
+        mDrawerToggle.syncState()
     }
 
     public override fun onResume() {
@@ -88,9 +92,7 @@ abstract class ActionBarCastActivity : AppCompatActivity() {
 
     override fun onConfigurationChanged(newConfig: Configuration) {
         super.onConfigurationChanged(newConfig)
-        if (mDrawerToggle != null) {
-            mDrawerToggle!!.onConfigurationChanged(newConfig)
-        }
+        mDrawerToggle.onConfigurationChanged(newConfig)
     }
 
     public override fun onPause() {
@@ -105,7 +107,7 @@ abstract class ActionBarCastActivity : AppCompatActivity() {
     }
 
     override fun onOptionsItemSelected(item: MenuItem?): Boolean {
-        if (mDrawerToggle != null && mDrawerToggle!!.onOptionsItemSelected(item)) {
+        if (mDrawerToggle.onOptionsItemSelected(item)) {
             return true
         }
         // If not handled by drawerToggle, home needs to be handled by returning to previous
@@ -118,8 +120,8 @@ abstract class ActionBarCastActivity : AppCompatActivity() {
 
     override fun onBackPressed() {
         // If the drawer is open, back will close it
-        if (mDrawerLayout != null && mDrawerLayout!!.isDrawerOpen(GravityCompat.START)) {
-            mDrawerLayout!!.closeDrawers()
+        if (mDrawerLayout.isDrawerOpen(GravityCompat.START)) {
+            mDrawerLayout.closeDrawers()
             return
         }
         // If panel is expanded, collapse it
@@ -128,14 +130,14 @@ abstract class ActionBarCastActivity : AppCompatActivity() {
             return
         }
         // Otherwise, it may return to the previous fragment stack
-        val fragmentManager = supportFragmentManager
         when {
-            fragmentManager.backStackEntryCount > 0 -> fragmentManager.popBackStack()
-            browseFragment?.mediaId != MediaIDHelper.MEDIA_ID_ROOT -> {
+            supportFragmentManager.backStackEntryCount > 0 -> supportFragmentManager.popBackStack()
+            browseFragment?.mMediaId != MediaIDHelper.MEDIA_ID_ROOT -> {
                 supportFragmentManager.beginTransaction().setCustomAnimations(
                         R.animator.slide_in_from_right, R.animator.slide_out_to_left,
-                        R.animator.slide_in_from_left, R.animator.slide_out_to_right).replace(R.id.container, MediaBrowserFragment(), MediaBrowserFragment::class.java.name).commit()
-                (findViewById<View>(R.id.nav_view) as NavigationView).setCheckedItem(R.id.navigation_allmusic)
+                        R.animator.slide_in_from_left, R.animator.slide_out_to_right)
+                        .replace(R.id.container, MediaBrowserFragment(), MediaBrowserFragment::class.java.name).commit()
+                mNavigationView.setCheckedItem(R.id.navigation_allmusic)
             }
             else -> // Lastly, it will rely on the system behavior for back
                 super.onBackPressed()
@@ -157,71 +159,63 @@ abstract class ActionBarCastActivity : AppCompatActivity() {
         mToolbar.inflateMenu(R.menu.main)
 
         mDrawerLayout = findViewById(R.id.drawer_layout)
-        if (mDrawerLayout != null) {
-            mNavigationView = findViewById(R.id.nav_view)
 
-            // Create an ActionBarDrawerToggle that will handle opening/closing of the drawer:
-            mDrawerToggle = ActionBarDrawerToggle(this, mDrawerLayout,
-                    mToolbar, R.string.open_content_drawer, R.string.close_content_drawer)
-            mDrawerLayout!!.setDrawerListener(mDrawerListener)
-            populateDrawerItems(mNavigationView)
-            setSupportActionBar(mToolbar)
-            updateDrawerToggle()
-        } else {
-            setSupportActionBar(mToolbar)
-        }
+        mNavigationView = findViewById(R.id.nav_view)
+
+        // Create an ActionBarDrawerToggle that will handle opening/closing of the drawer:
+        mDrawerToggle = ActionBarDrawerToggle(this, mDrawerLayout,
+                mToolbar, R.string.open_content_drawer, R.string.close_content_drawer)
+        mDrawerLayout.setDrawerListener(mDrawerListener)
+        populateDrawerItems(mNavigationView)
+        setSupportActionBar(mToolbar)
+        updateDrawerToggle()
 
         mToolbarInitialized = true
     }
 
     private fun populateDrawerItems(navigationView: NavigationView) {
-        navigationView.setNavigationItemSelectedListener { menuItem ->
+        navigationView.setNavigationItemSelectedListener(fun(menuItem: MenuItem): Boolean {
             if (menuItem.isChecked) {
-                mDrawerLayout!!.closeDrawers()
-                return@setNavigationItemSelectedListener true
+                mDrawerLayout.closeDrawers()
+                return true
             }
             supportFragmentManager.popBackStack()
             menuItem.isChecked = true
 
             when (menuItem.itemId) {
-                R.id.navigation_allmusic -> supportFragmentManager.beginTransaction().setCustomAnimations(
-                        R.animator.slide_in_from_right, R.animator.slide_out_to_left,
-                        R.animator.slide_in_from_left, R.animator.slide_out_to_right).replace(R.id.container, MediaBrowserFragment(), MediaBrowserFragment::class.java.name).commit()
-                R.id.navigation_cue_points -> supportFragmentManager.beginTransaction().setCustomAnimations(
-                        R.animator.slide_in_from_right, R.animator.slide_out_to_left,
-                        R.animator.slide_in_from_left, R.animator.slide_out_to_right).replace(R.id.container, CueListFragment(), CueListFragment.FRAGMENT_TAG).commit()
-                R.id.navigation_equalizer -> supportFragmentManager.beginTransaction().setCustomAnimations(
-                        R.animator.slide_in_from_right, R.animator.slide_out_to_left,
-                        R.animator.slide_in_from_left, R.animator.slide_out_to_right).replace(R.id.container, EqualizerFragment(), EqualizerFragment.FRAGMENT_TAG).commit()
+                R.id.navigation_allmusic -> setFragment(MediaBrowserFragment())
+                R.id.navigation_cue_points -> setFragment(CueListFragment())
+                R.id.navigation_equalizer -> setFragment(EqualizerFragment())
                 R.id.navigation_addons -> {
                     val fragment = MediaBrowserFragment()
-                    fragment.mediaId = MediaIDHelper.MEDIA_ID_PLUGINS
-                    supportFragmentManager.beginTransaction().setCustomAnimations(
-                            R.animator.slide_in_from_right, R.animator.slide_out_to_left,
-                            R.animator.slide_in_from_left, R.animator.slide_out_to_right).replace(R.id.container, fragment, MediaBrowserFragment::class.java.name).commit()
+                    fragment.mMediaId = MediaIDHelper.MEDIA_ID_PLUGINS
+                    setFragment(fragment)
                 }
             }
             if (slidingUpPanelLayout.panelState == SlidingUpPanelLayout.PanelState.EXPANDED) {
                 slidingUpPanelLayout.panelState = SlidingUpPanelLayout.PanelState.COLLAPSED
             }
-            mDrawerLayout!!.closeDrawers()
-            true
-        }
+            mDrawerLayout.closeDrawers()
+            return true
+        })
+    }
+
+    private fun setFragment(fragment: Fragment) {
+        supportFragmentManager.beginTransaction().setCustomAnimations(
+                R.animator.slide_in_from_right, R.animator.slide_out_to_left,
+                R.animator.slide_in_from_left, R.animator.slide_out_to_right).replace(R.id.container, fragment, fragment::class.java.name).commit()
     }
 
     private fun updateDrawerToggle() {
-        if (mDrawerToggle == null) {
-            return
-        }
         val isRoot = supportFragmentManager.backStackEntryCount == 0
-        mDrawerToggle!!.isDrawerIndicatorEnabled = isRoot
-        if (supportActionBar != null) {
-            supportActionBar!!.setDisplayShowHomeEnabled(!isRoot)
-            supportActionBar!!.setDisplayHomeAsUpEnabled(!isRoot)
-            supportActionBar!!.setHomeButtonEnabled(!isRoot)
+        mDrawerToggle.isDrawerIndicatorEnabled = isRoot
+        supportActionBar?.let {
+            it.setDisplayShowHomeEnabled(!isRoot)
+            it.setDisplayHomeAsUpEnabled(!isRoot)
+            it.setHomeButtonEnabled(!isRoot)
         }
         if (isRoot) {
-            mDrawerToggle!!.syncState()
+            mDrawerToggle.syncState()
         }
     }
 

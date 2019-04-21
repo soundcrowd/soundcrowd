@@ -23,9 +23,9 @@ import java.util.*
  *
  * Created by tiefensuche on 23.09.16.
  */
-class DatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME, null, DATABASE_VERSION) {
+internal class DatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME, null, DATABASE_VERSION) {
 
-    val cuePointItems: List<MediaMetadataCompat>
+    internal val cuePointItems: MutableList<MediaMetadataCompat>
         get() {
             val items = ArrayList<MediaMetadataCompat>()
             val mediaIds = ArrayList<String>()
@@ -73,41 +73,7 @@ class DatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME
 
     }
 
-    fun getAlbumArtUrl(mediaId: String): String? {
-        var result: String? = null
-        try {
-            val cursor = readableDatabase.query(DATABASE_MEDIA_ITEMS_METADATA_NAME, arrayOf("album_art_url"), "id=?", arrayOf(mediaId), null, null, null)
-            if (cursor.moveToFirst()) {
-                result = cursor.getString(cursor.getColumnIndex("album_art_url"))
-            }
-            cursor.close()
-        } catch (e: Exception) {
-            LogHelper.e(TAG, e, "error while loading album art url")
-        }
-
-        return result
-    }
-
-    fun updateAlbumArtUrl(mediaId: String, albumArtUrl: String) {
-        LogHelper.d(TAG, "mediaId: ", mediaId, ", albumArtUrl: ", albumArtUrl)
-        val values = ContentValues()
-        values.put("id", mediaId)
-        values.put("album_art_url", albumArtUrl)
-        try {
-            writableDatabase.insertOrThrow(DATABASE_MEDIA_ITEMS_METADATA_NAME, null, values)
-        } catch (e: SQLException) {
-            values.remove("id")
-            try {
-                writableDatabase.update(DATABASE_MEDIA_ITEMS_METADATA_NAME, values, "id=?", arrayOf(mediaId))
-            } catch (e1: SQLiteException) {
-                LogHelper.e(TAG, e1, "error while updating album art url")
-            }
-
-        }
-
-    }
-
-    fun getLastPosition(mediaId: String?): Long {
+    internal fun getLastPosition(mediaId: String?): Long {
         var result: Long = 0
         if (mediaId == null) {
             return 0
@@ -125,7 +91,7 @@ class DatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME
         return result
     }
 
-    fun updatePosition(mediaId: String, position: Int) {
+    internal fun updatePosition(mediaId: String, position: Int) {
         val values = ContentValues()
         values.put("id", mediaId)
         values.put("position", position)
@@ -156,7 +122,7 @@ class DatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME
                 .build()
     }
 
-    fun addCuePoint(metadata: MediaMetadataCompat, position: Int) {
+    internal fun addCuePoint(metadata: MediaMetadataCompat, position: Int) {
         addMediaItem(metadata)
         val values = ContentValues()
         values.put("media_id", metadata.description.mediaId)
@@ -164,40 +130,40 @@ class DatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME
         try {
             writableDatabase.insertOrThrow(DATABASE_MEDIA_ITEM_CUE_POINTS_NAME, null, values)
         } catch (e: SQLException) {
-            LogHelper.e(TAG, e, "error while adding star")
+            LogHelper.e(TAG, e, "error while adding cue point")
         }
 
     }
 
-    fun deleteCuePoint(mediaId: String, position: Int) {
+    internal fun deleteCuePoint(mediaId: String, position: Int) {
         try {
             writableDatabase.delete(DATABASE_MEDIA_ITEM_CUE_POINTS_NAME, "media_id=? AND position=?", arrayOf(mediaId, Integer.toString(position)))
         } catch (e: SQLException) {
-            LogHelper.e(TAG, e, "error while removing star")
+            LogHelper.e(TAG, e, "error while removing cue point")
         }
 
     }
 
-    fun getCuePoints(mediaId: String?): Collection<CuePoint> {
-        val stars = ArrayList<CuePoint>()
+    internal fun getCuePoints(mediaId: String?): Collection<CuePoint> {
+        val result = ArrayList<CuePoint>()
         if (mediaId == null) {
-            return stars
+            return result
         }
         try {
             val cursor = readableDatabase.query(DATABASE_MEDIA_ITEM_CUE_POINTS_NAME, arrayOf("media_id", "position", "description"), "media_id=?", arrayOf(mediaId), null, null, null)
             while (cursor.moveToNext()) {
                 val cuePoint = CuePoint(cursor.getString(cursor.getColumnIndex("media_id")), cursor.getInt(cursor.getColumnIndex("position")), cursor.getString(cursor.getColumnIndex("description")))
-                stars.add(cuePoint)
+                result.add(cuePoint)
             }
             cursor.close()
         } catch (e: SQLException) {
             LogHelper.e(TAG, e, "error while querying cue points")
         }
 
-        return stars
+        return result
     }
 
-    fun setDescription(mediaId: String, position: Int, text: String) {
+    internal fun setDescription(mediaId: String, position: Int, text: String) {
         val values = ContentValues()
         values.put("description", text)
         try {

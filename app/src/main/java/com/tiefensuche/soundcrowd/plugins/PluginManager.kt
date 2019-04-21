@@ -9,12 +9,12 @@ import android.graphics.Bitmap
 import com.tiefensuche.soundcrowd.utils.LogHelper
 import java.util.*
 
-class PluginManager(private val context: Context) {
+internal class PluginManager(private val context: Context) {
 
     val plugins = ArrayList<IPlugin>()
     var icons: MutableMap<String, Bitmap> = HashMap()
 
-    fun init() {
+    internal fun init() {
 
         // Load all plugin classes from different packages that have the package prefix
         val pluginPackages = PackageUtil.getAppsByPrefix(context, PLUGIN_PACKAGE)

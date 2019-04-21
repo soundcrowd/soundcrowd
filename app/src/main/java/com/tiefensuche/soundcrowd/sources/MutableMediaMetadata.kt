@@ -21,9 +21,9 @@ internal class MutableMediaMetadata(private val trackId: String, var metadata: M
             return false
         }
 
-        val that = other as MutableMediaMetadata?
+        val that = other as? MutableMediaMetadata
 
-        return TextUtils.equals(trackId, that!!.trackId)
+        return TextUtils.equals(trackId, that?.trackId)
     }
 
     override fun hashCode(): Int {

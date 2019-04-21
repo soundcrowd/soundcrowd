@@ -19,7 +19,7 @@ import com.tiefensuche.soundcrowd.images.GlideRequests
 import com.tiefensuche.soundcrowd.sources.MusicProviderSource
 import java.util.*
 
-class MediaItemAdapter(private val requests: GlideRequests, private val listener: OnItemClickListener, private val defaultColor: Int) : RecyclerView.Adapter<MediaItemAdapter.ViewHolder>(), Filterable, SectionIndexer {
+internal class MediaItemAdapter(private val requests: GlideRequests, private val listener: OnItemClickListener, private val defaultColor: Int) : RecyclerView.Adapter<MediaItemAdapter.ViewHolder>(), Filterable, SectionIndexer {
     private val mLock = Any()
 
     private var mDataset: MutableList<MediaBrowserCompat.MediaItem> = ArrayList()
@@ -33,17 +33,17 @@ class MediaItemAdapter(private val requests: GlideRequests, private val listener
 
     private var positionForSection: List<Int> = ArrayList()
 
-    val isEmpty: Boolean
+    internal val isEmpty: Boolean
         get() = mDataset.isEmpty()
 
-    val count: Int
+    internal val count: Int
         get() = itemCount
 
-    fun add(item: MediaBrowserCompat.MediaItem) {
+    internal fun add(item: MediaBrowserCompat.MediaItem) {
         mDataset.add(item)
     }
 
-    fun clear() {
+    internal fun clear() {
         mDataset.clear()
     }
 
@@ -54,14 +54,15 @@ class MediaItemAdapter(private val requests: GlideRequests, private val listener
     }
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
-        holder.mediaItem = mDataset[position]
-        val description = holder.mediaItem!!.description
+        val mediaItem = mDataset[position]
+        holder.mediaItem = mediaItem
+        val description = mediaItem.description
         holder.mTitleView.text = description.title
         holder.mArtistView.text = description.subtitle
         holder.mImageViewSource.setColorFilter(Color.WHITE)
 
         if (description.extras != null) {
-            val duration = description.extras!!.getLong(MediaMetadataCompat.METADATA_KEY_DURATION)
+            val duration = description.extras?.getLong(MediaMetadataCompat.METADATA_KEY_DURATION) ?: 0
             if (duration > 0) {
                 holder.mDuration.text = DateUtils.formatElapsedTime(duration / 1000)
             } else {
@@ -104,7 +105,7 @@ class MediaItemAdapter(private val requests: GlideRequests, private val listener
         return mDataset.size
     }
 
-    fun notifyDataChanged() {
+    internal fun notifyDataChanged() {
         mObjects = ArrayList<MediaBrowserCompat.MediaItem>(mDataset)
         notifyItemsChanged()
     }
@@ -161,10 +162,12 @@ class MediaItemAdapter(private val requests: GlideRequests, private val listener
     }
 
     override fun getFilter(): Filter {
-        if (mFilter == null) {
-            mFilter = ArrayFilter()
+        var filter = mFilter
+        if (filter == null) {
+            filter = ArrayFilter()
+            mFilter = filter
         }
-        return mFilter as Filter
+        return filter
     }
 
     interface OnItemClickListener {
@@ -202,14 +205,14 @@ class MediaItemAdapter(private val requests: GlideRequests, private val listener
 
                 for (i in 0 until count) {
                     val value = values[i]
-                    var valueText = value.description.title!!.toString().toLowerCase()
+                    var valueText = value.description.title?.toString()?.toLowerCase()
                     if (value.description.subtitle != null) {
-                        valueText = value.description.subtitle!!.toString().toLowerCase() + " " + valueText
+                        valueText = value.description.subtitle?.toString()?.toLowerCase() + " " + valueText
                     }
                     val keywords = prefixString.split(" ".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
                     var add = true
                     for (keyword in keywords) {
-                        if (!valueText.contains(keyword)) {
+                        if ((valueText?.contains(keyword)) == false) {
                             add = false
                             break
                         }
@@ -232,7 +235,7 @@ class MediaItemAdapter(private val requests: GlideRequests, private val listener
         }
     }
 
-    inner class ViewHolder internal constructor(holder: View) : RecyclerView.ViewHolder(holder) {
+    internal inner class ViewHolder internal constructor(holder: View) : RecyclerView.ViewHolder(holder) {
 
         val mImageViewArtwork: ImageView = holder.findViewById(R.id.album_art)
         val mTitleView: TextView = holder.findViewById(R.id.title)
@@ -242,7 +245,7 @@ class MediaItemAdapter(private val requests: GlideRequests, private val listener
         var mediaItem: MediaBrowserCompat.MediaItem? = null
 
         init {
-            holder.setOnClickListener { listener.onItemClick(mediaItem!!) }
+            holder.setOnClickListener { mediaItem?.let { listener.onItemClick(it) } }
         }
 
     }

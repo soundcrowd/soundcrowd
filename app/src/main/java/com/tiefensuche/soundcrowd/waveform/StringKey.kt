@@ -12,7 +12,7 @@ import java.security.MessageDigest
  * Created by tiefensuche on 6/29/17.
  */
 
-class StringKey(val key: String) : Key {
+internal class StringKey(val key: String) : Key {
 
     override fun updateDiskCacheKey(messageDigest: MessageDigest) {
         messageDigest.update(key.toByteArray())
@@ -22,7 +22,7 @@ class StringKey(val key: String) : Key {
         if (this === other) return true
         if (other == null || javaClass != other.javaClass) return false
 
-        val that = other as StringKey?
+        val that = other as? StringKey
 
         return key == that?.key
     }

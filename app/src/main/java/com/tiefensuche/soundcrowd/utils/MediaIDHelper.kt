@@ -4,30 +4,23 @@
 
 package com.tiefensuche.soundcrowd.utils
 
-import android.content.Context
-import android.support.v4.app.FragmentActivity
-import android.support.v4.media.MediaBrowserCompat
-import android.support.v4.media.session.MediaControllerCompat
-import android.text.TextUtils
-import java.util.*
-
 /**
  * Utility class to help on queue related tasks.
  */
-object MediaIDHelper {
+internal object MediaIDHelper {
 
     // Media IDs used on browseable items of MediaBrowser
-    const val MEDIA_ID_ROOT = "__ROOT__"
-    const val MEDIA_ID_PLUGINS = "__PLUGINS__"
-    const val MEDIA_ID_MUSICS_BY_SEARCH = "__BY_SEARCH__"
-    const val MEDIA_ID_MUSICS_BY_ARTIST = "__BY_ARTIST__"
-    const val MEDIA_ID_MUSICS_BY_ALBUM = "__BY_ALBUM__"
+    internal const val MEDIA_ID_ROOT = "__ROOT__"
+    internal const val MEDIA_ID_PLUGINS = "__PLUGINS__"
+    internal const val MEDIA_ID_MUSICS_BY_SEARCH = "__BY_SEARCH__"
+    internal const val MEDIA_ID_MUSICS_BY_ARTIST = "__BY_ARTIST__"
+    internal const val MEDIA_ID_MUSICS_BY_ALBUM = "__BY_ALBUM__"
 
-    const val MEDIA_ID_MUSICS_CUE_POINTS = "__CUE_POINTS__"
-    const val MEDIA_ID_TEMP = "__TEMP__"
+    internal const val MEDIA_ID_MUSICS_CUE_POINTS = "__CUE_POINTS__"
+    internal const val MEDIA_ID_TEMP = "__TEMP__"
 
-    const val CATEGORY_SEPARATOR = '/'
-    const val LEAF_SEPARATOR = '|'
+    internal const val CATEGORY_SEPARATOR = '/'
+    internal const val LEAF_SEPARATOR = '|'
 
     /**
      * Create a String value that represents a playable or a browsable media.
@@ -47,7 +40,7 @@ object MediaIDHelper {
      * @param categories hierarchy of categories representing this item's browsing parents
      * @return a hierarchy-aware media ID
     </musicUniqueId></categoryValue></categoryType> */
-    fun createMediaID(musicID: String?, vararg categories: String): String {
+    internal fun createMediaID(musicID: String?, vararg categories: String): String {
         val sb = StringBuilder()
         for (i in categories.indices) {
             sb.append(categories[i])
@@ -71,7 +64,7 @@ object MediaIDHelper {
      * @return musicID
      */
 
-    fun extractMusicIDFromMediaID(mediaID: String): String {
+    internal fun extractMusicIDFromMediaID(mediaID: String): String {
         val pos = mediaID.indexOf(LEAF_SEPARATOR)
         return if (pos >= 0) {
             mediaID.substring(pos + 1)
@@ -86,7 +79,7 @@ object MediaIDHelper {
      *
      * @param mediaID that contains a category and categoryValue.
      */
-    fun getHierarchy(mediaID: String): Array<String> {
+    internal fun getHierarchy(mediaID: String): Array<String> {
         var mediaID = mediaID
         val pos = mediaID.indexOf(LEAF_SEPARATOR)
         if (pos >= 0) {
@@ -95,53 +88,18 @@ object MediaIDHelper {
         return mediaID.split(CATEGORY_SEPARATOR.toString().toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
     }
 
-    fun extractBrowseCategoryValueFromMediaID(mediaID: String): String? {
+    internal fun extractBrowseCategoryValueFromMediaID(mediaID: String): String? {
         val hierarchy = getHierarchy(mediaID)
         return if (hierarchy.size == 2) {
             hierarchy[1]
         } else null
     }
 
-    fun isBrowseable(mediaID: String): Boolean {
+    internal fun isBrowseable(mediaID: String): Boolean {
         return mediaID.indexOf(LEAF_SEPARATOR) < 0
     }
 
-
-    fun getParentMediaID(mediaID: String): String {
-        val hierarchy = getHierarchy(mediaID)
-        if (!isBrowseable(mediaID)) {
-            return createMediaID(null, *hierarchy)
-        }
-        if (hierarchy.size <= 1) {
-            return MEDIA_ID_ROOT
-        }
-        val parentHierarchy = Arrays.copyOf(hierarchy, hierarchy.size - 1)
-        return createMediaID(null, *parentHierarchy)
-    }
-
-    fun getPath(mediaID: String): String {
+    internal fun getPath(mediaID: String): String {
         return mediaID.substring(0, mediaID.indexOf(LEAF_SEPARATOR))
-    }
-
-    /**
-     * Determine if media item is playing (matches the currently playing media item).
-     *
-     * @param context   for retrieving the [MediaControllerCompat]
-     * @param mediaItem to compare to currently playing [MediaBrowserCompat.MediaItem]
-     * @return boolean indicating whether media item matches currently playing media item
-     */
-    fun isMediaItemPlaying(context: Context,
-                           mediaItem: MediaBrowserCompat.MediaItem): Boolean {
-        // Media item is considered to be playing or paused based on the controller's current
-        // media id
-        val controller = MediaControllerCompat.getMediaController(context as FragmentActivity)
-        if (controller != null && controller.metadata != null) {
-            val currentPlayingMediaId = controller.metadata.description
-                    .mediaId
-            val itemMusicId = MediaIDHelper.extractMusicIDFromMediaID(
-                    mediaItem.description.mediaId!!)
-            return currentPlayingMediaId != null && TextUtils.equals(currentPlayingMediaId, itemMusicId)
-        }
-        return false
     }
 }

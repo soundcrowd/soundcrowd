@@ -39,10 +39,9 @@ import com.tiefensuche.soundcrowd.utils.MediaIDHelper
  * Once connected, the fragment subscribes to get all the children.
  * All [MediaBrowserCompat.MediaItem]'s that can be browsed are shown in a ListView.
  */
-class MediaBrowserFragment : Fragment() {
+internal class MediaBrowserFragment : Fragment() {
     private lateinit var mBrowserAdapter: MediaItemAdapter
 
-    private var mMediaId: String? = null
     private var mDescription: MediaDescriptionCompat? = null
 
     private lateinit var mMediaFragmentListener: MediaFragmentListener
@@ -71,8 +70,11 @@ class MediaBrowserFragment : Fragment() {
             updateTitle()
             showNoMedia(mBrowserAdapter.isEmpty)
 
-            val view = activity!!.findViewById<View>(R.id.toolbar)
-            ShowcaseViewManager.introduce(ShowcaseViewManager.ShowcaseFunction.SEARCH_VIEW, Point(view.width - view.height / 2, view.height / 2), activity!!)
+            activity?.let {
+                val view = it.findViewById<View>(R.id.toolbar)
+                ShowcaseViewManager.introduce(ShowcaseViewManager.ShowcaseFunction.SEARCH_VIEW, Point(view.width - view.height / 2, view.height / 2), it)
+            }
+
         }
 
         override fun onError(id: String) {
@@ -82,14 +84,14 @@ class MediaBrowserFragment : Fragment() {
     private lateinit var requests: GlideRequests
 
 
-    var mediaId: String
+    internal var mMediaId: String
         get() {
             val args = arguments
             return args?.getString(ARG_MEDIA_ID) ?: MediaIDHelper.MEDIA_ID_ROOT
         }
-        set(mediaId) {
+        set(mMediaId) {
             val args = Bundle(1)
-            args.putString(MediaBrowserFragment.ARG_MEDIA_ID, mediaId)
+            args.putString(MediaBrowserFragment.ARG_MEDIA_ID, mMediaId)
             arguments = args
         }
 
@@ -112,13 +114,13 @@ class MediaBrowserFragment : Fragment() {
                 mMediaFragmentListener.onMediaItemSelected(item)
                 mMediaFragmentListener.closeSearchMenu()
             }
-        }, ContextCompat.getColor(activity!!, R.color.colorPrimary))
+        }, ContextCompat.getColor(rootView.context, R.color.colorPrimary))
         mNoMediaView = rootView.findViewById(R.id.error_no_media)
         mProgressBar = rootView.findViewById(R.id.progressBar1)
 
         mSwipeRefreshLayout = rootView.findViewById(R.id.swipeContainer)
         mRecyclerView = rootView.findViewById(R.id.list_view)
-        val mLayoutManager = GridLayoutManager(activity, calculateNoOfColumns(activity!!))
+        val mLayoutManager = GridLayoutManager(rootView.context, calculateNoOfColumns(rootView.context))
         mRecyclerView.layoutManager = mLayoutManager
         mRecyclerView.adapter = mBrowserAdapter
 
@@ -169,27 +171,24 @@ class MediaBrowserFragment : Fragment() {
         return rootView
     }
 
-    fun setFilter(filter: CharSequence?) {
+    internal fun setFilter(filter: CharSequence?) {
         mBrowserAdapter.filter.filter(filter)
     }
 
     override fun onAttach(activity: Activity) {
         super.onAttach(activity)
-        // If used on an activity that doesn't implement MediaFragmentListener, it
-        // will throw an exception as expected:
-        mMediaFragmentListener = activity as MediaFragmentListener
+
+        if (activity is MediaFragmentListener) {
+            mMediaFragmentListener = activity
+        }
     }
 
-    fun onConnected() {
+    internal fun onConnected() {
         mBrowserAdapter.clear()
         onConnected(Bundle())
     }
 
-    fun onConnected(bundle: Bundle) {
-        mMediaId = mediaId
-        if (mMediaId == null) {
-            mMediaId = mMediaFragmentListener.mediaBrowser!!.root
-        }
+    internal fun onConnected(bundle: Bundle) {
         updateTitle()
 
         // Unsubscribing before subscribing is required if this mediaId already has a subscriber
@@ -201,8 +200,8 @@ class MediaBrowserFragment : Fragment() {
         // subscriber or not. Currently this only happens if the mediaID has no previous
         // subscriber or if the media content changes on the service side, so we need to
         // unsubscribe first.
-        mMediaFragmentListener.mediaBrowser!!.unsubscribe(mMediaId!!)
-        mMediaFragmentListener.mediaBrowser!!.subscribe(mMediaId!!, bundle, mSubscriptionCallback)
+        mMediaFragmentListener.mediaBrowser?.unsubscribe(mMediaId)
+        mMediaFragmentListener.mediaBrowser?.subscribe(mMediaId, bundle, mSubscriptionCallback)
     }
 
     override fun onStart() {
@@ -212,9 +211,9 @@ class MediaBrowserFragment : Fragment() {
         val mediaBrowser = mMediaFragmentListener.mediaBrowser
 
         LogHelper.d(TAG, "fragment.onStart, mediaId=", mMediaId,
-                "  onConnected=" + mediaBrowser!!.isConnected)
+                "  onConnected=" + mediaBrowser?.isConnected)
 
-        if (mediaBrowser.isConnected) {
+        if (mediaBrowser?.isConnected == true) {
             onConnected()
         }
     }
@@ -222,12 +221,12 @@ class MediaBrowserFragment : Fragment() {
     override fun onStop() {
         super.onStop()
         val mediaBrowser = mMediaFragmentListener.mediaBrowser
-        if (mediaBrowser != null && mediaBrowser.isConnected && mMediaId != null) {
-            mediaBrowser.unsubscribe(mMediaId!!)
+        if (mediaBrowser != null && mediaBrowser.isConnected) {
+            mediaBrowser.unsubscribe(mMediaId)
         }
     }
 
-    fun setDescription(description: MediaDescriptionCompat?) {
+    internal fun setDescription(description: MediaDescriptionCompat?) {
         mDescription = description
     }
 
@@ -246,23 +245,22 @@ class MediaBrowserFragment : Fragment() {
         }
 
         val mediaBrowser = mMediaFragmentListener.mediaBrowser
-        mediaBrowser!!.getItem(mMediaId!!, object : MediaBrowserCompat.ItemCallback() {
+        mediaBrowser?.getItem(mMediaId, object : MediaBrowserCompat.ItemCallback() {
             override fun onItemLoaded(item: MediaBrowserCompat.MediaItem?) {
                 mMediaFragmentListener.setToolbarTitle(
-                        item!!.description.title)
+                        item?.description?.title)
             }
         })
     }
 
     private fun updateDescription() {
-        if (mDescription == null) {
-            mMediaFragmentListener.enableCollapse(false)
-            return
-        }
-        ArtworkHelper.loadArtwork(requests, mDescription!!, activity!!.findViewById(R.id.container_image))
-        (activity!!.findViewById<View>(R.id.header_line2) as TextView).text = mDescription!!.subtitle
-        mMediaFragmentListener.enableCollapse(true)
-        mMediaFragmentListener.setToolbarTitle(mDescription!!.title)
+        activity?.let { activity ->
+            mDescription?.let {
+                ArtworkHelper.loadArtwork(requests, it, activity.findViewById(R.id.container_image))
+                (activity.findViewById<View>(R.id.header_line2) as? TextView)?.text = it.subtitle
+                mMediaFragmentListener.enableCollapse(true)
+                mMediaFragmentListener.setToolbarTitle(it.title)
+        } ?: mMediaFragmentListener.enableCollapse(false) }
     }
 
     internal interface MediaFragmentListener : MediaBrowserProvider {

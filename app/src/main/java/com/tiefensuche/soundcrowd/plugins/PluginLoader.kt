@@ -13,14 +13,14 @@ import java.lang.reflect.InvocationHandler
 import java.lang.reflect.Method
 import java.lang.reflect.Proxy
 
-object PluginLoader {
+internal object PluginLoader {
 
-    fun loadPlugin(context: Context, classpath: String): IPlugin? {
+    internal fun loadPlugin(context: Context, classpath: String): IPlugin? {
         try {
             // Get the package context
-            val pluginContext = PackageUtil.getPackageContext(context, classpath)
+            val pluginContext = PackageUtil.getPackageContext(context, classpath) ?: return null
             // Load the plugin class in the package
-            val pluginClass = pluginContext!!.classLoader.loadClass("$classpath.Plugin")
+            val pluginClass = pluginContext.classLoader.loadClass("$classpath.Plugin")
             // Instantiate the plugin from the class
             val instance = pluginClass.newInstance()
 
@@ -30,9 +30,8 @@ object PluginLoader {
             // Since the class loaders from this context and the foreign context are different
             // it is not possible to cast instantiated plugin class to the interface.
             // In the following a proxy instance is created from this context
-            return Proxy.newProxyInstance(PluginLoader::class.java.classLoader, arrayOf<Class<*>>(IPlugin::class.java)) { o, method, objects ->
-                // Get the parameter types from the invoked method
-                // and swap the callback classes
+            return Proxy.newProxyInstance(PluginLoader::class.java.classLoader, arrayOf<Class<*>>(IPlugin::class.java)) { _, method, objects ->
+                // Get the parameter types from the invoked method and swap the callback classes
                 val parameterTypes = arrayOfNulls<Class<*>>(method.parameterTypes.size)
                 for (i in 0 until parameterTypes.size) {
                     if (method.parameterTypes[i].name == "com.tiefensuche.soundcrowd.plugins.Callback") {
@@ -50,20 +49,20 @@ object PluginLoader {
                 if (objects != null) {
                     for (i in objects.indices) {
                         // search in the objects for the callback class
-                        if (objects[i] is Callback<*>) {
-                            val clb = objects[i] as Callback<*>
+                        val clb = objects[i]
+                        if (clb is Callback<*>) {
                             // Proxy the other way around, now from the foreign context and with the
                             // previously loaded foreign callback class and replace it with the proxy
                             objects[i] = Proxy.newProxyInstance(pluginContext.classLoader, arrayOf(callbackClass), object: InvocationHandler {
-                                override fun invoke(o: Any?, method: Method?, objects: Array<out Any>?): Any? {
+                                override fun invoke(o: Any?, method: Method?, objects: Array<out Any>?) {
                                     // simply invoke in sole callback method
-                                    val result = objects!![0]
-                                    if (result is JSONArray) {
-                                        (clb as Callback<JSONArray>).onResult(result)
-                                    } else if (result is String) {
-                                        (clb as Callback<String>).onResult(result)
+                                    objects?.get(0).let {
+                                        if (it is JSONArray) {
+                                            (clb as Callback<JSONArray>).onResult(it)
+                                        } else if (it is String) {
+                                            (clb as Callback<String>).onResult(it)
+                                        }
                                     }
-                                    return null
                                 }
                             })
                         }
@@ -76,7 +75,7 @@ object PluginLoader {
                 } else {
                     m.invoke(instance, *objects)
                 }
-            } as IPlugin
+            } as? IPlugin
         } catch (e: Exception) {
             LogHelper.e(PluginLoader::class.java.simpleName, e, "error loading plugin")
         }

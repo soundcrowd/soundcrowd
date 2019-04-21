@@ -29,11 +29,11 @@ import java.util.*
  *
  * Created by tiefensuche on 6/19/17.
  */
-class CueListFragment : Fragment() {
-    private var adapter: ArrayAdapter<CuePoint>? = null
+internal class CueListFragment : Fragment() {
+    private lateinit var adapter: ArrayAdapter<CuePoint>
 
     private val cuePoints = ArrayList<CuePoint>()
-    private var mNoMediaView: View? = null
+    private lateinit var mNoMediaView: View
     private lateinit var mMediaFragmentListener: MediaBrowserFragment.MediaFragmentListener
 
 
@@ -42,32 +42,35 @@ class CueListFragment : Fragment() {
         val listView = rootView.findViewById<ListView>(R.id.cue_list_view)
         mNoMediaView = rootView.findViewById(R.id.error_no_media)
 
-        adapter = ArrayAdapter(activity, android.R.layout.simple_list_item_1, cuePoints)
-        listView.adapter = adapter
-        listView.setOnItemClickListener { _, _, i, _ ->
-            val point = listView.getItemAtPosition(i) as CuePoint
-            if (MediaControllerCompat.getMediaController(activity!!) != null) {
-                val bundle = Bundle()
-                bundle.putString("mediaId", point.mediaId)
-                bundle.putInt("position", point.position)
-                MediaControllerCompat.getMediaController(activity!!).transportControls.sendCustomAction(CUSTOM_ACTION_PLAY_SEEK, bundle)
+        activity?.let {
+            adapter = ArrayAdapter(it, android.R.layout.simple_list_item_1, cuePoints)
+            listView.adapter = adapter
+            listView.setOnItemClickListener { _, _, i, _ ->
+                val point = listView.getItemAtPosition(i)
+                if (point is CuePoint && MediaControllerCompat.getMediaController(it) != null) {
+                    val bundle = Bundle()
+                    bundle.putString("mediaId", point.mediaId)
+                    bundle.putInt("position", point.position)
+                    MediaControllerCompat.getMediaController(it).transportControls.sendCustomAction(CUSTOM_ACTION_PLAY_SEEK, bundle)
+                }
             }
         }
+
         return rootView
     }
 
     override fun onAttach(activity: Activity) {
         super.onAttach(activity)
 
-        // If used on an activity that doesn't implement MediaFragmentListener, it
-        // will throw an exception as expected:
-        mMediaFragmentListener = activity as MediaBrowserFragment.MediaFragmentListener
+        if (activity is MediaBrowserFragment.MediaFragmentListener) {
+            mMediaFragmentListener = activity
+        }
     }
 
     override fun onStart() {
         super.onStart()
         val mediaBrowser = mMediaFragmentListener.mediaBrowser
-        if (mediaBrowser!!.isConnected) {
+        if (mediaBrowser?.isConnected == true) {
             loadItems()
         }
         mMediaFragmentListener.setToolbarTitle(getString(R.string.drawer_cue_points_title))
@@ -75,37 +78,35 @@ class CueListFragment : Fragment() {
         mMediaFragmentListener.showSearchButton(true)
     }
 
-    fun loadItems() {
-        mMediaFragmentListener.mediaBrowser!!.unsubscribe(MEDIA_ID_MUSICS_CUE_POINTS)
-        mMediaFragmentListener.mediaBrowser!!.subscribe(MEDIA_ID_MUSICS_CUE_POINTS, object : MediaBrowserCompat.SubscriptionCallback() {
+    internal fun loadItems() {
+        mMediaFragmentListener.mediaBrowser?.unsubscribe(MEDIA_ID_MUSICS_CUE_POINTS)
+        mMediaFragmentListener.mediaBrowser?.subscribe(MEDIA_ID_MUSICS_CUE_POINTS, object : MediaBrowserCompat.SubscriptionCallback() {
             override fun onChildrenLoaded(parentId: String, children: List<MediaBrowserCompat.MediaItem>) {
                 cuePoints.clear()
                 for (item in children) {
-                    if (!MediaIDHelper.isBrowseable(item.description.mediaId!!)) {
-                        for (cuePoint in DatabaseHelper.instance.getCuePoints(MediaIDHelper.extractMusicIDFromMediaID(item.description.mediaId!!))) {
-                            cuePoint.mediaId = item.mediaId!!
-                            cuePoint.description = item.description.subtitle.toString() + " - " + item.description.title.toString() + " @ " + DateUtils.formatElapsedTime((cuePoint.position / 1000).toLong()) + if (cuePoint.description != null) ": " + cuePoint.description else ""
-                            cuePoints.add(cuePoint)
+                    item.mediaId?.let { musicId ->
+                        item.description.mediaId?.let {
+                            if (!MediaIDHelper.isBrowseable(it)) {
+                                for (cuePoint in DatabaseHelper.instance.getCuePoints(MediaIDHelper.extractMusicIDFromMediaID(it))) {
+                                    cuePoint.mediaId = musicId
+                                    cuePoint.description = item.description.subtitle.toString() + " - " + item.description.title.toString() + " @ " + DateUtils.formatElapsedTime((cuePoint.position / 1000).toLong()) + if (cuePoint.description != null) ": " + cuePoint.description else ""
+                                    cuePoints.add(cuePoint)
+                                }
+                                adapter.notifyDataSetChanged()
+                            }
                         }
-                        adapter!!.notifyDataSetChanged()
                     }
                 }
-                if (cuePoints.isEmpty()) {
-                    mNoMediaView!!.visibility = View.VISIBLE
-                } else {
-                    mNoMediaView!!.visibility = View.GONE
-                }
+                mNoMediaView.visibility = if (cuePoints.isEmpty()) View.VISIBLE else View.GONE
             }
         })
     }
 
-    fun setFilter(filter: CharSequence?) {
-        adapter?.filter?.filter(filter)
+    internal fun setFilter(filter: CharSequence?) {
+        adapter.filter.filter(filter)
     }
 
     companion object {
-
-        const val FRAGMENT_TAG = "soundcrowd_cue_list_container"
         private val TAG = LogHelper.makeLogTag(CueListFragment::class.java)
     }
 }

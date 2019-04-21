@@ -4,11 +4,8 @@
 
 package com.tiefensuche.soundcrowd.utils
 
-import android.content.Context
 import android.net.Uri
-import android.support.v4.app.FragmentActivity
 import android.support.v4.media.MediaMetadataCompat
-import android.support.v4.media.session.MediaControllerCompat
 import android.support.v4.media.session.MediaSessionCompat
 import android.text.TextUtils
 import com.tiefensuche.soundcrowd.sources.MusicProvider
@@ -21,14 +18,14 @@ import java.util.*
 /**
  * Utility class to help on queue related tasks.
  */
-object QueueHelper {
+internal object QueueHelper {
 
     private val TAG = LogHelper.makeLogTag(QueueHelper::class.java)
 
     private const val RANDOM_QUEUE_SIZE = 10
 
 
-    fun getPlayingQueue(mediaId: String,
+    internal fun getPlayingQueue(mediaId: String,
                         musicProvider: MusicProvider): List<MediaSessionCompat.QueueItem> {
 
         // extract the browsing hierarchy from the media ID:
@@ -50,7 +47,7 @@ object QueueHelper {
         return convertToQueue(tracks, MediaIDHelper.getPath(mediaId))
     }
 
-    fun getMusicIndexOnQueue(queue: Iterable<MediaSessionCompat.QueueItem>,
+    internal fun getMusicIndexOnQueue(queue: Iterable<MediaSessionCompat.QueueItem>,
                              mediaId: String): Int {
         for ((index, item) in queue.withIndex()) {
             if (mediaId == item.description.mediaId) {
@@ -60,7 +57,7 @@ object QueueHelper {
         return -1
     }
 
-    fun getMusicIndexOnQueue(queue: Iterable<MediaSessionCompat.QueueItem>,
+    internal fun getMusicIndexOnQueue(queue: Iterable<MediaSessionCompat.QueueItem>,
                              uri: Uri): Int {
         for ((index, item) in queue.withIndex()) {
             if (uri == item.description.mediaUri) {
@@ -70,7 +67,7 @@ object QueueHelper {
         return -1
     }
 
-    fun getMusicIndexOnQueue(queue: Iterable<MediaSessionCompat.QueueItem>,
+    internal fun getMusicIndexOnQueue(queue: Iterable<MediaSessionCompat.QueueItem>,
                              queueId: Long): Int {
         for ((index, item) in queue.withIndex()) {
             if (queueId == item.queueId) {
@@ -112,7 +109,7 @@ object QueueHelper {
      * @return list containing [MediaSessionCompat.QueueItem]'s
      */
 
-    fun getRandomQueue(musicProvider: MusicProvider): List<MediaSessionCompat.QueueItem> {
+    internal fun getRandomQueue(musicProvider: MusicProvider): List<MediaSessionCompat.QueueItem> {
         val result = ArrayList<MediaMetadataCompat>(RANDOM_QUEUE_SIZE)
         val shuffled = musicProvider.shuffledMusic
         for (metadata in shuffled) {
@@ -126,7 +123,7 @@ object QueueHelper {
         return convertToQueue(result, MEDIA_ID_MUSICS_BY_SEARCH, "random")
     }
 
-    fun isIndexPlayable(index: Int, queue: List<MediaSessionCompat.QueueItem>?): Boolean {
+    internal fun isIndexPlayable(index: Int, queue: List<MediaSessionCompat.QueueItem>?): Boolean {
         return queue != null && index >= 0 && index < queue.size
     }
 
@@ -137,7 +134,7 @@ object QueueHelper {
      * @param list2 containing [MediaSessionCompat.QueueItem]'s
      * @return boolean indicating whether the queue's match
      */
-    fun equals(list1: List<MediaSessionCompat.QueueItem>?,
+    internal fun equals(list1: List<MediaSessionCompat.QueueItem>?,
                list2: List<MediaSessionCompat.QueueItem>?): Boolean {
         if (list1 === list2) {
             return true
@@ -158,28 +155,5 @@ object QueueHelper {
             }
         }
         return true
-    }
-
-    /**
-     * Determine if queue item matches the currently playing queue item
-     *
-     * @param context   for retrieving the [MediaControllerCompat]
-     * @param queueItem to compare to currently playing [MediaSessionCompat.QueueItem]
-     * @return boolean indicating whether queue item matches currently playing queue item
-     */
-    fun isQueueItemPlaying(context: Context,
-                           queueItem: MediaSessionCompat.QueueItem): Boolean {
-        // Queue item is considered to be playing or paused based on both the controller's
-        // current media id and the controller's active queue item id
-        val controller = MediaControllerCompat.getMediaController(context as FragmentActivity)
-        if (controller != null && controller.playbackState != null) {
-            val currentPlayingQueueId = controller.playbackState.activeQueueItemId
-            val currentPlayingMediaId = controller.metadata.description.mediaId
-            val itemMusicId = MediaIDHelper.extractMusicIDFromMediaID(queueItem.description.mediaId!!)
-            return (queueItem.queueId == currentPlayingQueueId
-                    && currentPlayingMediaId != null
-                    && TextUtils.equals(currentPlayingMediaId, itemMusicId))
-        }
-        return false
     }
 }

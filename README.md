@@ -27,14 +27,12 @@ SoundCrowd is extensible via plugins to support online media providers.
 ## Screenshots
 <img src="https://soundcrowd.github.io/images/screenshot-browser.png" width="300"/> <img src="https://soundcrowd.github.io/images/screenshot-player.png" width="300"/>
 
-
 ## License
 SoundCrowd and its modules are licensed under GPLv3.
 
-
 ## Dependencies
-  - [Glide](https://github.com/bumptech/glide) - BSD, part MIT and Apache 2.0
-  - [AndroidSlidingUpPanel](https://github.com/umano/AndroidSlidingUpPanel) - Apache 2.0
-  - [AlphabetIndex-Fast-Scroll-RecyclerView](https://github.com/myinnos/AlphabetIndex-Fast-Scroll-RecyclerView) - Apache 2.0
-  - [AppIntro](https://github.com/AppIntro/AppIntro) - Apache 2.0
-  - [ShowcaseView](https://github.com/amlcurran/ShowcaseView) - Apache 2.0
+- [Glide](https://github.com/bumptech/glide) - BSD, part MIT and Apache 2.0
+- [AndroidSlidingUpPanel](https://github.com/umano/AndroidSlidingUpPanel) - Apache 2.0
+- [AlphabetIndex-Fast-Scroll-RecyclerView](https://github.com/myinnos/AlphabetIndex-Fast-Scroll-RecyclerView) - Apache 2.0
+- [AppIntro](https://github.com/AppIntro/AppIntro) - Apache 2.0
+- [ShowcaseView](https://github.com/amlcurran/ShowcaseView) - Apache 2.0

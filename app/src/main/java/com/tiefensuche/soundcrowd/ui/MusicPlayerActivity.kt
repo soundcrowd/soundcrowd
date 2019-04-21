@@ -10,14 +10,12 @@ import android.content.pm.PackageManager
 import android.os.Bundle
 import android.preference.PreferenceManager
 import android.support.design.widget.CollapsingToolbarLayout
-import android.support.design.widget.NavigationView
 import android.support.design.widget.Snackbar
 import android.support.v4.app.ActivityCompat
 import android.support.v4.content.ContextCompat
 import android.support.v4.media.MediaBrowserCompat
 import android.support.v4.media.MediaDescriptionCompat
 import android.support.v4.media.session.MediaControllerCompat
-import android.support.v4.view.GravityCompat
 import android.support.v4.view.MenuItemCompat
 import android.support.v7.widget.SearchView
 import android.text.TextUtils
@@ -32,7 +30,6 @@ import com.tiefensuche.soundcrowd.ui.intro.ShowcaseViewManager
 import com.tiefensuche.soundcrowd.utils.LogHelper
 import com.tiefensuche.soundcrowd.utils.MediaIDHelper.CATEGORY_SEPARATOR
 import com.tiefensuche.soundcrowd.utils.MediaIDHelper.MEDIA_ID_MUSICS_BY_SEARCH
-import com.tiefensuche.soundcrowd.utils.MediaIDHelper.MEDIA_ID_ROOT
 
 
 /**
@@ -41,25 +38,23 @@ import com.tiefensuche.soundcrowd.utils.MediaIDHelper.MEDIA_ID_ROOT
  * when it is created and connect/disconnect on start/stop. Thus, a MediaBrowser will be always
  * connected while this activity is running.
  */
-class MusicPlayerActivity : BaseActivity(), MediaBrowserFragment.MediaFragmentListener, SharedPreferences.OnSharedPreferenceChangeListener {
+internal class MusicPlayerActivity : BaseActivity(), MediaBrowserFragment.MediaFragmentListener, SharedPreferences.OnSharedPreferenceChangeListener {
     private lateinit var searchView: SearchView
     private lateinit var searchItem: MenuItem
     internal lateinit var controls: RelativeLayout
     internal lateinit var collapsingToolbarLayout: CollapsingToolbarLayout
     private lateinit var toolbarHeader: View
-    lateinit var preferences: SharedPreferences
+    private lateinit var preferences: SharedPreferences
 
     private val mediaId: String?
         get() {
             val fragment = browseFragment ?: return null
-            return fragment.mediaId
+            return fragment.mMediaId
         }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         LogHelper.d(TAG, "create activity")
-
-        setContentView(R.layout.activity_player)
 
         initializeToolbar()
         initializeFromParams(savedInstanceState)
@@ -120,14 +115,16 @@ class MusicPlayerActivity : BaseActivity(), MediaBrowserFragment.MediaFragmentLi
             }
         })
 
-        searchView = MenuItemCompat.getActionView(searchItem) as SearchView
+        searchView = MenuItemCompat.getActionView(searchItem) as? SearchView ?: throw RuntimeException()
         searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
             override fun onQueryTextSubmit(query: String): Boolean {
                 LogHelper.d(TAG, "onQueryTextSubmit, query=", query)
-                navigateToBrowser(browseFragment!!.mediaId + CATEGORY_SEPARATOR +
-                         MEDIA_ID_MUSICS_BY_SEARCH + CATEGORY_SEPARATOR + query, null)
-                closeSearchMenu()
-                searchView.clearFocus()
+                browseFragment?.let {
+                    navigateToBrowser(it.mMediaId + CATEGORY_SEPARATOR +
+                            MEDIA_ID_MUSICS_BY_SEARCH + CATEGORY_SEPARATOR + query, null)
+                    closeSearchMenu()
+                    searchView.clearFocus()
+                }
                 return true
             }
 
@@ -162,7 +159,7 @@ class MusicPlayerActivity : BaseActivity(), MediaBrowserFragment.MediaFragmentLi
     override fun onMediaItemSelected(item: MediaBrowserCompat.MediaItem) {
         when {
             item.isPlayable -> {
-                LogHelper.d(TAG, "isPlayable: " + item.mediaId!!)
+                LogHelper.d(TAG, "isPlayable: " + item.mediaId)
 
                 MediaControllerCompat.getMediaController(this).transportControls
                         .playFromMediaId(item.mediaId, null)
@@ -190,28 +187,6 @@ class MusicPlayerActivity : BaseActivity(), MediaBrowserFragment.MediaFragmentLi
     override fun onNewIntent(intent: Intent) {
         LogHelper.d(TAG, "onNewIntent, intent=$intent")
         startFullScreenActivityIfNeeded(intent)
-    }
-
-    override fun onBackPressed() {
-        // If the drawer is open, back will close it
-        if (mDrawerLayout != null && mDrawerLayout!!.isDrawerOpen(GravityCompat.START)) {
-            mDrawerLayout!!.closeDrawers()
-            return
-        }
-        if (slidingUpPanelLayout.panelState == SlidingUpPanelLayout.PanelState.EXPANDED) {
-            slidingUpPanelLayout.panelState = SlidingUpPanelLayout.PanelState.COLLAPSED
-            return
-        }
-        when {
-            supportFragmentManager.backStackEntryCount > 0 -> supportFragmentManager.popBackStack()
-            browseFragment?.mediaId != MEDIA_ID_ROOT -> {
-                supportFragmentManager.beginTransaction().setCustomAnimations(
-                        R.animator.slide_in_from_right, R.animator.slide_out_to_left,
-                        R.animator.slide_in_from_left, R.animator.slide_out_to_right).replace(R.id.container, MediaBrowserFragment(), MediaBrowserFragment::class.java.name).commit()
-                (findViewById<View>(R.id.nav_view) as NavigationView).setCheckedItem(R.id.navigation_allmusic)
-            }
-            else -> super.onBackPressed()
-        }
     }
 
     private fun checkPermissions() {
@@ -262,9 +237,8 @@ class MusicPlayerActivity : BaseActivity(), MediaBrowserFragment.MediaFragmentLi
         LogHelper.d(TAG, "navigateToBrowser, mediaId=", mediaId)
         var fragment: MediaBrowserFragment? = browseFragment
 
-        if (fragment == null || !TextUtils.equals(fragment.mediaId, mediaId)) {
+        if (fragment == null || !TextUtils.equals(fragment.mMediaId, mediaId)) {
             fragment = MediaBrowserFragment()
-//            fragment.mediaId = mediaId
             val bundle = Bundle()
             bundle.putString("media_id", mediaId)
             bundle.putBoolean("stream", description?.extras?.getBoolean("stream") ?: false)

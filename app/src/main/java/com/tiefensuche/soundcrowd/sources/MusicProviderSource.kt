@@ -7,7 +7,7 @@ package com.tiefensuche.soundcrowd.sources
 
 import android.support.v4.media.MediaMetadataCompat
 
-interface MusicProviderSource {
+internal interface MusicProviderSource {
 
     operator fun iterator(): Iterator<MediaMetadataCompat>
 

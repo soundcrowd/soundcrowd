@@ -18,7 +18,7 @@ import java.nio.ByteBuffer
 /**
  * Extract artworks from music files via [MediaMetadataRetriever] within [com.bumptech.glide.Glide]
  */
-class ArtworkExtractor internal constructor(private val context: Context, private val description: MediaDescriptionCompat) : DataFetcher<ByteBuffer> {
+internal class ArtworkExtractor internal constructor(private val context: Context, private val description: MediaDescriptionCompat) : DataFetcher<ByteBuffer> {
 
     override fun loadData(priority: Priority, callback: DataFetcher.DataCallback<in ByteBuffer>) {
         LogHelper.d(TAG, "trying to extract embedded image from music file")

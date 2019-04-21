@@ -19,18 +19,18 @@ import java.nio.ByteBuffer
  *
  * Created by tiefensuche on 6/29/17.
  */
-class ArtworkLoader(private val context: Context) : ModelLoader<MediaDescriptionCompat, ByteBuffer> {
+internal class ArtworkLoader(private val context: Context) : ModelLoader<MediaDescriptionCompat, ByteBuffer> {
 
 
     override fun buildLoadData(model: MediaDescriptionCompat, width: Int, height: Int, options: Options): ModelLoader.LoadData<ByteBuffer>? {
-        return ModelLoader.LoadData(StringKey(model.mediaId!!), ArtworkExtractor(context, model))
+        return model.mediaId?.let { ModelLoader.LoadData(StringKey(it), ArtworkExtractor(context, model)) }
     }
 
     override fun handles(description: MediaDescriptionCompat): Boolean {
         return !(description.iconUri?.toString()?.startsWith("http") ?: true)
     }
 
-    class Factory(private val context: Context) : ModelLoaderFactory<MediaDescriptionCompat, ByteBuffer> {
+    internal class Factory(private val context: Context) : ModelLoaderFactory<MediaDescriptionCompat, ByteBuffer> {
 
 
         override fun build(multiFactory: MultiModelLoaderFactory): ModelLoader<MediaDescriptionCompat, ByteBuffer> {

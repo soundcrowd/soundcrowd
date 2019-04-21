@@ -17,7 +17,7 @@ import com.tiefensuche.soundcrowd.R
  * A drawable that encapsulates all the functionality needed to display a letter tile to
  * represent a artist/album/playlist image.
  */
-class LetterTileDrawable(context: Context) : Drawable() {
+internal class LetterTileDrawable(context: Context) : Drawable() {
     private val TAG = LetterTileDrawable::class.java.simpleName
     private val mPaint: Paint = Paint()
     private var mDisplayName: String? = null
@@ -27,7 +27,7 @@ class LetterTileDrawable(context: Context) : Drawable() {
     private var mOffset = 0.0f
     private var mIsCircle = false
 
-    val color: Int
+    internal val color: Int
         get() = pickColor(mIdentifier)
 
     init {
@@ -62,15 +62,17 @@ class LetterTileDrawable(context: Context) : Drawable() {
         }
 
         // Draw letter/digit only if the first character is an english letter
-        if (mDisplayName != null && !mDisplayName!!.isEmpty()
-                && isEnglishLetter(mDisplayName!![0])) {
+        mDisplayName?.let {
+            if (it.isEmpty() || !isEnglishLetter(it[0])) {
+                return
+            }
             var numChars = 1
 
             // Draw letter or digit.
-            sChars[0] = Character.toUpperCase(mDisplayName!![0])
+            sChars[0] = Character.toUpperCase(it[0])
 
-            if (mDisplayName!!.length > 1 && isEnglishLetter(mDisplayName!![1])) {
-                sChars[1] = Character.toLowerCase(mDisplayName!![1])
+            if (it.length > 1 && isEnglishLetter(it[1])) {
+                sChars[1] = Character.toLowerCase(it[1])
                 numChars = 2
             }
 
@@ -106,7 +108,7 @@ class LetterTileDrawable(context: Context) : Drawable() {
      * @param scale The ratio the letter tile should be scaled to as a percentage of its default
      * size, from a scale of 0 to 2.0f. The default is 1.0f.
      */
-    fun setScale(scale: Float) {
+    internal fun setScale(scale: Float) {
         mScale = scale
     }
 
@@ -122,7 +124,7 @@ class LetterTileDrawable(context: Context) : Drawable() {
      * at the bottom edge of the canvas.
      * The default is 0.0f.
      */
-    fun setOffset(offset: Float) {
+    internal fun setOffset(offset: Float) {
         mOffset = offset
     }
 
@@ -135,13 +137,13 @@ class LetterTileDrawable(context: Context) : Drawable() {
      * album, use albumId, for artist use artistName and for playlist use
      * playlistId
      */
-    fun setTileDetails(displayName: String, identifier: String) {
+    internal fun setTileDetails(displayName: String, identifier: String) {
         mDisplayName = getTrimmedName(displayName)
         mIdentifier = getTrimmedName(identifier)
         invalidateSelf()
     }
 
-    fun setIsCircular(isCircle: Boolean) {
+    internal fun setIsCircular(isCircle: Boolean) {
         mIsCircle = isCircle
     }
 
@@ -157,7 +159,7 @@ class LetterTileDrawable(context: Context) : Drawable() {
          * Letter tile
          */
         private var sColors: TypedArray? = null
-        private var sVibrantDarkColors: TypedArray? = null
+        private lateinit var sVibrantDarkColors: TypedArray
         private var sDefaultColor: Int = 0
         private var sTileFontColor: Int = 0
         private var sLetterToTileRatio: Float = 0.toFloat()
@@ -184,8 +186,7 @@ class LetterTileDrawable(context: Context) : Drawable() {
         private fun getColorIndex(identifier: String?): Int {
             return if (TextUtils.isEmpty(identifier)) {
                 -1
-            } else Math.abs(identifier!!.hashCode()) % sColors!!.length()
-
+            } else sColors?.let { Math.abs(identifier.hashCode()) % it.length() } ?: -1
         }
 
         /**
@@ -195,7 +196,7 @@ class LetterTileDrawable(context: Context) : Drawable() {
             val idx = getColorIndex(identifier)
             return if (idx == -1) {
                 sDefaultColor
-            } else sColors!!.getColor(idx, sDefaultColor)
+            } else sColors?.getColor(idx, sDefaultColor) ?: sDefaultColor
 
         }
 
@@ -206,7 +207,7 @@ class LetterTileDrawable(context: Context) : Drawable() {
             val idx = getColorIndex(identifier)
             return if (idx == -1) {
                 sDefaultColor
-            } else sVibrantDarkColors!!.getColor(idx, sDefaultColor)
+            } else sVibrantDarkColors.getColor(idx, sDefaultColor)
 
         }
 
@@ -225,7 +226,7 @@ class LetterTileDrawable(context: Context) : Drawable() {
 
         private fun getTrimmedName(name: String?): String? {
             var name = name
-            if (name == null || name.length == 0) {
+            if (name == null || name.isEmpty()) {
                 return name
             }
 

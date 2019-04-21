@@ -21,7 +21,7 @@ import java.nio.ByteBuffer
  * waveform generation and artwork loading.
  */
 @GlideModule
-class SoundCrowdGlideModule : AppGlideModule() {
+internal class SoundCrowdGlideModule : AppGlideModule() {
 
     override fun registerComponents(context: Context, glide: Glide, registry: Registry) {
         super.registerComponents(context, glide, registry)
