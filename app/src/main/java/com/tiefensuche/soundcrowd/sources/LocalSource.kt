@@ -21,10 +21,10 @@ import java.util.*
  *
  * Created by tiefensuche on 02.04.2016.
  */
-class LocalSource(private val context: MusicService) {
+internal class LocalSource(private val context: MusicService) {
     private val tracks = ArrayList<MediaMetadataCompat>()
 
-    fun resolve(uri: Uri): MediaMetadataCompat {
+    internal fun resolve(uri: Uri): MediaMetadataCompat {
         val mmr = MediaMetadataRetriever()
         mmr.setDataSource(context, uri)
         val artist = mmr.extractMetadata(MediaMetadataRetriever.METADATA_KEY_ARTIST)
@@ -102,7 +102,7 @@ class LocalSource(private val context: MusicService) {
         musicCursor?.close()
     }
 
-    operator fun iterator(): Iterator<MediaMetadataCompat> {
+    internal operator fun iterator(): Iterator<MediaMetadataCompat> {
         if (tracks.isEmpty()) {
             loadMusic()
         }

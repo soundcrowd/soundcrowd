@@ -20,7 +20,7 @@ import com.tiefensuche.soundcrowd.ui.MusicPlayerActivity
  *
  * Created by tiefensuche on 26.02.18.
  */
-class IntroActivity : AppIntro() {
+internal class IntroActivity : AppIntro() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

@@ -38,13 +38,13 @@ import com.tiefensuche.soundcrowd.utils.MediaIDHelper.MEDIA_ID_MUSICS_BY_SEARCH
  * when it is created and connect/disconnect on start/stop. Thus, a MediaBrowser will be always
  * connected while this activity is running.
  */
-class MusicPlayerActivity : BaseActivity(), MediaBrowserFragment.MediaFragmentListener, SharedPreferences.OnSharedPreferenceChangeListener {
+internal class MusicPlayerActivity : BaseActivity(), MediaBrowserFragment.MediaFragmentListener, SharedPreferences.OnSharedPreferenceChangeListener {
     private lateinit var searchView: SearchView
     private lateinit var searchItem: MenuItem
     internal lateinit var controls: RelativeLayout
     internal lateinit var collapsingToolbarLayout: CollapsingToolbarLayout
     private lateinit var toolbarHeader: View
-    lateinit var preferences: SharedPreferences
+    private lateinit var preferences: SharedPreferences
 
     private val mediaId: String?
         get() {

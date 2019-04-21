@@ -36,9 +36,9 @@ import com.tiefensuche.soundcrowd.utils.MediaIDHelper
  */
 abstract class ActionBarCastActivity : AppCompatActivity() {
 
-    lateinit var mToolbar: Toolbar
-    lateinit var mNavigationView: NavigationView
-    internal lateinit var mDrawerLayout: DrawerLayout
+    internal lateinit var mToolbar: Toolbar
+    internal lateinit var mNavigationView: NavigationView
+    private lateinit var mDrawerLayout: DrawerLayout
     internal lateinit var slidingUpPanelLayout: SlidingUpPanelLayout
     private lateinit var mDrawerToggle: ActionBarDrawerToggle
     private val mBackStackChangedListener = FragmentManager.OnBackStackChangedListener { this.updateDrawerToggle() }

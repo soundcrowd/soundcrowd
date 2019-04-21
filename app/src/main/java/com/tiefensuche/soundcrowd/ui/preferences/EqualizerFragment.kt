@@ -45,7 +45,7 @@ import java.util.*
  *
  * Created by tiefensuche on 07.10.16.
  */
-class EqualizerFragment : Fragment() {
+internal class EqualizerFragment : Fragment() {
 
     private lateinit var mPreferences: SharedPreferences
     private var bandBars: MutableList<SeekBar> = ArrayList()

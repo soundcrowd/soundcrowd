@@ -12,7 +12,7 @@ import android.support.v7.widget.StaggeredGridLayoutManager
 /**
  * Source https://github.com/codepath/android_guides/wiki/Endless-Scrolling-with-AdapterViews-and-RecyclerView
  */
-abstract class EndlessRecyclerViewScrollListener : RecyclerView.OnScrollListener {
+internal abstract class EndlessRecyclerViewScrollListener : RecyclerView.OnScrollListener {
 
     private val mLayoutManager: RecyclerView.LayoutManager
     // The minimum amount of items to have below your current scroll position
@@ -110,7 +110,7 @@ abstract class EndlessRecyclerViewScrollListener : RecyclerView.OnScrollListener
     }
 
     // Call this method whenever performing new searches
-    fun resetState() {
+    internal fun resetState() {
         this.currentPage = this.startingPageIndex
         this.previousTotalItemCount = 0
         this.loading = true

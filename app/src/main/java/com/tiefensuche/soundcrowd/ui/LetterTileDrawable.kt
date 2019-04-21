@@ -17,7 +17,7 @@ import com.tiefensuche.soundcrowd.R
  * A drawable that encapsulates all the functionality needed to display a letter tile to
  * represent a artist/album/playlist image.
  */
-class LetterTileDrawable(context: Context) : Drawable() {
+internal class LetterTileDrawable(context: Context) : Drawable() {
     private val TAG = LetterTileDrawable::class.java.simpleName
     private val mPaint: Paint = Paint()
     private var mDisplayName: String? = null
@@ -27,7 +27,7 @@ class LetterTileDrawable(context: Context) : Drawable() {
     private var mOffset = 0.0f
     private var mIsCircle = false
 
-    val color: Int
+    internal val color: Int
         get() = pickColor(mIdentifier)
 
     init {
@@ -108,7 +108,7 @@ class LetterTileDrawable(context: Context) : Drawable() {
      * @param scale The ratio the letter tile should be scaled to as a percentage of its default
      * size, from a scale of 0 to 2.0f. The default is 1.0f.
      */
-    fun setScale(scale: Float) {
+    internal fun setScale(scale: Float) {
         mScale = scale
     }
 
@@ -124,7 +124,7 @@ class LetterTileDrawable(context: Context) : Drawable() {
      * at the bottom edge of the canvas.
      * The default is 0.0f.
      */
-    fun setOffset(offset: Float) {
+    internal fun setOffset(offset: Float) {
         mOffset = offset
     }
 
@@ -137,13 +137,13 @@ class LetterTileDrawable(context: Context) : Drawable() {
      * album, use albumId, for artist use artistName and for playlist use
      * playlistId
      */
-    fun setTileDetails(displayName: String, identifier: String) {
+    internal fun setTileDetails(displayName: String, identifier: String) {
         mDisplayName = getTrimmedName(displayName)
         mIdentifier = getTrimmedName(identifier)
         invalidateSelf()
     }
 
-    fun setIsCircular(isCircle: Boolean) {
+    internal fun setIsCircular(isCircle: Boolean) {
         mIsCircle = isCircle
     }
 

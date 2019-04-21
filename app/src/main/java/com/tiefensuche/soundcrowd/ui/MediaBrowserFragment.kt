@@ -39,7 +39,7 @@ import com.tiefensuche.soundcrowd.utils.MediaIDHelper
  * Once connected, the fragment subscribes to get all the children.
  * All [MediaBrowserCompat.MediaItem]'s that can be browsed are shown in a ListView.
  */
-class MediaBrowserFragment : Fragment() {
+internal class MediaBrowserFragment : Fragment() {
     private lateinit var mBrowserAdapter: MediaItemAdapter
 
     private var mDescription: MediaDescriptionCompat? = null
@@ -84,7 +84,7 @@ class MediaBrowserFragment : Fragment() {
     private lateinit var requests: GlideRequests
 
 
-    var mMediaId: String
+    internal var mMediaId: String
         get() {
             val args = arguments
             return args?.getString(ARG_MEDIA_ID) ?: MediaIDHelper.MEDIA_ID_ROOT
@@ -171,7 +171,7 @@ class MediaBrowserFragment : Fragment() {
         return rootView
     }
 
-    fun setFilter(filter: CharSequence?) {
+    internal fun setFilter(filter: CharSequence?) {
         mBrowserAdapter.filter.filter(filter)
     }
 
@@ -183,12 +183,12 @@ class MediaBrowserFragment : Fragment() {
         }
     }
 
-    fun onConnected() {
+    internal fun onConnected() {
         mBrowserAdapter.clear()
         onConnected(Bundle())
     }
 
-    fun onConnected(bundle: Bundle) {
+    internal fun onConnected(bundle: Bundle) {
         updateTitle()
 
         // Unsubscribing before subscribing is required if this mediaId already has a subscriber
@@ -226,7 +226,7 @@ class MediaBrowserFragment : Fragment() {
         }
     }
 
-    fun setDescription(description: MediaDescriptionCompat?) {
+    internal fun setDescription(description: MediaDescriptionCompat?) {
         mDescription = description
     }
 

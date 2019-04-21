@@ -17,10 +17,10 @@ import java.io.InputStreamReader
 import java.net.HttpURLConnection
 import java.net.URL
 
-object Utils {
+internal object Utils {
 
     @Throws(IOException::class)
-    fun fetchFromUrl(url: String, post: String?): String {
+    internal fun fetchFromUrl(url: String, post: String?): String {
         var reader: BufferedReader? = null
         try {
             val urlConnection = URL(url).openConnection() as? HttpURLConnection ?: throw IOException()
@@ -59,7 +59,7 @@ object Utils {
         }
     }
 
-    fun getExtendedDescription(metadata: MediaMetadataCompat): MediaDescriptionCompat {
+    internal fun getExtendedDescription(metadata: MediaMetadataCompat): MediaDescriptionCompat {
         val description = metadata.description
         val bob = MediaDescriptionCompat.Builder()
         bob.setDescription(description.description)
@@ -87,7 +87,7 @@ object Utils {
         return bob.build()
     }
 
-    fun getIndexCharacter(text: CharSequence?): String {
+    private fun getIndexCharacter(text: CharSequence?): String {
         if (text == null) {
             return "#"
         }
@@ -100,7 +100,7 @@ object Utils {
         return "#"
     }
 
-    fun scaleBitmap(src: Bitmap, maxWidth: Int, maxHeight: Int): Bitmap {
+    internal fun scaleBitmap(src: Bitmap, maxWidth: Int, maxHeight: Int): Bitmap {
         val scaleFactor = Math.min(
                 maxWidth.toDouble() / src.width, maxHeight.toDouble() / src.height)
         return Bitmap.createScaledBitmap(src,
@@ -115,7 +115,7 @@ object Utils {
      * @param defaultColor default to use.
      * @return color value
      */
-    fun getThemeColor(context: Context, attribute: Int, defaultColor: Int): Int {
+    internal fun getThemeColor(context: Context, attribute: Int, defaultColor: Int): Int {
         var themeColor = 0
         val packageName = context.packageName
         try {
@@ -133,7 +133,7 @@ object Utils {
         return themeColor
     }
 
-    fun isAppInstalled(context: Context, uri: String): Boolean {
+    internal fun isAppInstalled(context: Context, uri: String): Boolean {
         val pm = context.packageManager
         try {
             pm.getPackageInfo(uri, PackageManager.GET_ACTIVITIES)

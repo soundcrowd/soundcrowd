@@ -83,14 +83,14 @@ import java.util.*
  *
  * @see [README.md](README.md) for more details.
  */
-class MusicService : MediaBrowserServiceCompat(), PlaybackManager.PlaybackServiceCallback {
+internal class MusicService : MediaBrowserServiceCompat(), PlaybackManager.PlaybackServiceCallback {
     private val mDelayedStopHandler = DelayedStopHandler(this)
     private lateinit var mPlaybackManager: PlaybackManager
     private lateinit var mSession: MediaSessionCompat
     private lateinit var mMediaNotificationManager: MediaNotificationManager
     private lateinit var mQueueManager: QueueManager
     private lateinit var databaseHelper: DatabaseHelper
-    lateinit var preferences: SharedPreferences
+    private lateinit var preferences: SharedPreferences
 
     /*
      * (non-Javadoc)

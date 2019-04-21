@@ -23,15 +23,14 @@ import com.tiefensuche.soundcrowd.utils.LogHelper
  * Methods for loading artworks via [com.bumptech.glide.Glide] with support for [Palette]
  * and a default and placeholder artwork [LetterTileDrawable] containing the first letters of an artist
  */
-object ArtworkHelper {
+internal object ArtworkHelper {
     const val MAX_ART_WIDTH = 800  // pixels
     const val MAX_ART_HEIGHT = 480  // pixels
     const val MAX_ART_WIDTH_ICON = 128  // pixels
     const val MAX_ART_HEIGHT_ICON = 128  // pixels
     private val TAG = LogHelper.makeLogTag(ArtworkHelper::class.java)
 
-    @JvmOverloads
-    fun loadArtwork(requests: GlideRequests, description: MediaDescriptionCompat, view: ImageView, listener: ColorsListener? = null) {
+    internal fun loadArtwork(requests: GlideRequests, description: MediaDescriptionCompat, view: ImageView, listener: ColorsListener? = null) {
         if (description.iconBitmap != null) {
             view.setImageBitmap(description.iconBitmap)
             return
@@ -61,7 +60,7 @@ object ArtworkHelper {
         }
     }
 
-    fun fetch(context: Context, description: MediaDescriptionCompat, width: Int, height: Int, listener: FetchListener) {
+    internal fun fetch(context: Context, description: MediaDescriptionCompat, width: Int, height: Int, listener: FetchListener) {
         GlideApp.with(context).asBitmap().load(description).apply(RequestOptions.centerCropTransform()).override(width, height).into(object : SimpleTarget<Bitmap>() {
             override fun onResourceReady(resource: Bitmap, transition: Transition<in Bitmap>?) {
                 listener.onFetched(resource)
@@ -75,11 +74,11 @@ object ArtworkHelper {
         return drawable
     }
 
-    interface FetchListener {
+    internal interface FetchListener {
         fun onFetched(image: Bitmap)
     }
 
-    interface ColorsListener {
+    internal interface ColorsListener {
         fun onColorsReady(colors: IntArray)
 
         fun onError()

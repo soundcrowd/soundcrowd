@@ -33,7 +33,7 @@ import com.tiefensuche.soundcrowd.utils.Utils
  * MediaSession. Maintaining a visible notification (usually) guarantees that the music service
  * won't be killed during playback.
  */
-class MediaNotificationManager @Throws(RemoteException::class)
+internal class MediaNotificationManager @Throws(RemoteException::class)
 constructor(private val mService: MusicService) : BroadcastReceiver() {
 
     private lateinit var mNotificationManager: NotificationManager
@@ -123,7 +123,7 @@ constructor(private val mService: MusicService) : BroadcastReceiver() {
      * updated. The notification will automatically be removed if the session is
      * destroyed before [.stopNotification] is called.
      */
-    fun startNotification() {
+    internal fun startNotification() {
         if (!mStarted) {
             mMetadata = mController?.metadata
             mPlaybackState = mController?.playbackState
@@ -149,7 +149,7 @@ constructor(private val mService: MusicService) : BroadcastReceiver() {
      * Removes the notification and stops tracking the session. If the session
      * was destroyed this has no effect.
      */
-    fun stopNotification() {
+    internal fun stopNotification() {
         if (mStarted) {
             mStarted = false
             mController?.unregisterCallback(mCb)

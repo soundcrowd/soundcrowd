@@ -39,7 +39,7 @@ import kotlin.collections.ArrayList
  * Simple data provider for music tracks. The actual metadata source is delegated to a
  * MusicProviderSource defined by a constructor argument of this class.
  */
-class MusicProvider(context: MusicService) {
+internal class MusicProvider(context: MusicService) {
     private val mMusicListById: ConcurrentMap<String, MutableMediaMetadata>
     private val musicByCategory: ConcurrentMap<String, MutableList<MediaMetadataCompat>>
     private val mFavoriteTracks: MutableSet<String>
@@ -48,14 +48,14 @@ class MusicProvider(context: MusicService) {
     @Volatile
     private var mCurrentState = State.NON_INITIALIZED
 
-    val allMusic: List<MediaMetadataCompat>?
+    internal val allMusic: List<MediaMetadataCompat>?
         get() = getMusicByCategory(MEDIA_ID_ROOT)
 
     /**
      * Get an iterator over a shuffled collection of all songs
      */
 
-    val shuffledMusic: Iterable<MediaMetadataCompat>
+    internal val shuffledMusic: Iterable<MediaMetadataCompat>
         get() {
             if (mCurrentState != State.INITIALIZED) {
                 return emptyList()
@@ -68,7 +68,7 @@ class MusicProvider(context: MusicService) {
             return shuffled
         }
 
-    val isInitialized: Boolean
+    private val isInitialized: Boolean
         get() = mCurrentState == State.INITIALIZED
 
     init {
@@ -79,7 +79,7 @@ class MusicProvider(context: MusicService) {
         pluginManager = PluginManager(context)
     }
 
-    fun getMusicByCategory(category: String): List<MediaMetadataCompat> {
+    internal fun getMusicByCategory(category: String): List<MediaMetadataCompat> {
         return if (!musicByCategory.containsKey(category)) {
             emptyList()
         } else Collections.synchronizedList(musicByCategory[category])
@@ -91,11 +91,11 @@ class MusicProvider(context: MusicService) {
      * @param musicId The unique, non-hierarchical music ID.
      */
 
-    fun getMusic(musicId: String): MediaMetadataCompat? {
+    internal fun getMusic(musicId: String): MediaMetadataCompat? {
         return mMusicListById[musicId]?.metadata
     }
 
-    fun resolveMusic(mediaId: String, callback: com.tiefensuche.soundcrowd.plugins.Callback<String>) {
+    internal fun resolveMusic(mediaId: String, callback: com.tiefensuche.soundcrowd.plugins.Callback<String>) {
         getMusic(MediaIDHelper.extractMusicIDFromMediaID(mediaId))?.let {
             if (!mediaId.contains(MEDIA_ID_ROOT)) {
                 callback.onResult(it.getString(MusicProviderSource.CUSTOM_METADATA_TRACK_SOURCE))
@@ -116,14 +116,14 @@ class MusicProvider(context: MusicService) {
         }
     }
 
-    fun hasItems(mediaId: String, options: Bundle): Boolean =
+    internal fun hasItems(mediaId: String, options: Bundle): Boolean =
             isInitialized && musicByCategory.containsKey(mediaId) && options.isEmpty
 
     /**
      * Get the list of music tracks from a server and caches the track information
      * for future reference, keying tracks by musicId and grouping by genre.
      */
-    fun retrieveMediaAsync(mediaId: String, extras: Bundle, callback: Callback) {
+    internal fun retrieveMediaAsync(mediaId: String, extras: Bundle, callback: Callback) {
         // Asynchronously load the music catalog in a separate thread
         if (MEDIA_ID_ROOT == mediaId) {
             if (mCurrentState == State.INITIALIZED && OPTION_REFRESH == extras.getString(ACTION)) {
@@ -216,7 +216,7 @@ class MusicProvider(context: MusicService) {
         return addedTracks
     }
 
-    fun getChildren(mediaId: String, options: Bundle): List<MediaBrowserCompat.MediaItem> {
+    internal fun getChildren(mediaId: String, options: Bundle): List<MediaBrowserCompat.MediaItem> {
         val mediaItems = ArrayList<MediaBrowserCompat.MediaItem>()
 
         if (!MediaIDHelper.isBrowseable(mediaId)) {
@@ -322,11 +322,11 @@ class MusicProvider(context: MusicService) {
         musicByCategory[MEDIA_ID_MUSICS_CUE_POINTS] = cuePoints
     }
 
-    fun isFavorite(musicId: String): Boolean {
+    internal fun isFavorite(musicId: String): Boolean {
         return mFavoriteTracks.contains(musicId)
     }
 
-    fun setFavorite(musicId: String, favorite: Boolean) {
+    internal fun setFavorite(musicId: String, favorite: Boolean) {
         if (favorite) {
             mFavoriteTracks.add(musicId)
         } else {
@@ -335,7 +335,7 @@ class MusicProvider(context: MusicService) {
     }
 
     @Synchronized
-    fun updateMusicArt(musicId: String, albumArt: Bitmap, icon: Bitmap) {
+    internal fun updateMusicArt(musicId: String, albumArt: Bitmap, icon: Bitmap) {
         getMusic(musicId)?.let {
             val metadata = MediaMetadataCompat.Builder(it)
 
@@ -462,7 +462,7 @@ class MusicProvider(context: MusicService) {
         return builder.build()
     }
 
-    fun resolve(uri: Uri): String {
+    internal fun resolve(uri: Uri): String {
         val track = localSource.resolve(uri)
         track.description.mediaId?.let {
             mMusicListById[it] = MutableMediaMetadata(it, track)

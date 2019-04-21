@@ -20,15 +20,15 @@ import com.tiefensuche.soundcrowd.R
  *
  * Created by tiefensuche on 26.02.18.
  */
-object ShowcaseViewManager {
+internal object ShowcaseViewManager {
 
     private var blocked = false
 
-    fun introduce(function: ShowcaseFunction, activity: Activity) {
+    internal fun introduce(function: ShowcaseFunction, activity: Activity) {
         introduce(function, ViewTarget(activity.findViewById<View>(function.id)), activity)
     }
 
-    fun introduce(function: ShowcaseFunction, point: Point, activity: Activity) {
+    internal fun introduce(function: ShowcaseFunction, point: Point, activity: Activity) {
         introduce(function, object: Target {
             override fun getPoint(): Point {
                 return point

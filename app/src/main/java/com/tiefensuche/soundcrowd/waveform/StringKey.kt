@@ -12,7 +12,7 @@ import java.security.MessageDigest
  * Created by tiefensuche on 6/29/17.
  */
 
-class StringKey(val key: String) : Key {
+internal class StringKey(val key: String) : Key {
 
     override fun updateDiskCacheKey(messageDigest: MessageDigest) {
         messageDigest.update(key.toByteArray())

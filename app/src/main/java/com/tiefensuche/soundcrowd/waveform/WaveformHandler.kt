@@ -19,7 +19,7 @@ import com.tiefensuche.soundcrowd.sources.MusicProviderSource
 import com.tiefensuche.soundcrowd.utils.LogHelper
 
 
-class WaveformHandler(private val waveformView: WaveformView) {
+internal class WaveformHandler(private val waveformView: WaveformView) {
 
     private val TAG = LogHelper.makeLogTag(WaveformHandler::class.java)
     private val cuePoint: Bitmap = BitmapFactory.decodeResource(waveformView.resources,
@@ -27,7 +27,7 @@ class WaveformHandler(private val waveformView: WaveformView) {
     private val play: Bitmap = BitmapFactory.decodeResource(waveformView.resources,
             R.drawable.ic_play_arrow_black_36dp)
 
-    fun loadWaveform(requests: GlideRequests, metadata: MediaMetadataCompat, duration: Int) {
+    internal fun loadWaveform(requests: GlideRequests, metadata: MediaMetadataCompat, duration: Int) {
         if (waveformView.context != null) {
             waveformView.setVisible(false)
             requests.asBitmap()
@@ -62,7 +62,7 @@ class WaveformHandler(private val waveformView: WaveformView) {
         }
     }
 
-    fun addCuePoint(metadata: MediaMetadataCompat, position: Int, duration: Int) {
+    internal fun addCuePoint(metadata: MediaMetadataCompat, position: Int, duration: Int) {
         metadata.description.mediaId?.let {
             DatabaseHelper.instance.addCuePoint(metadata, position)
             waveformView.drawCuePoint(CuePoint(it, position, ""), duration, cuePoint)

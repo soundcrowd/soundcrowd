@@ -22,12 +22,12 @@ import com.tiefensuche.soundcrowd.utils.MediaIDHelper.extractMusicIDFromMediaID
 /**
  * Manage the interactions among the container service, the queue manager and the actual playback.
  */
-class PlaybackManager(private val mServiceCallback: PlaybackServiceCallback, private val mResources: Resources,
+internal class PlaybackManager(private val mServiceCallback: PlaybackServiceCallback, private val mResources: Resources,
                       private val mMusicProvider: MusicProvider, private val mQueueManager: com.tiefensuche.soundcrowd.playback.QueueManager,
                       val playback: Playback, private val mPreferences: SharedPreferences) : Playback.Callback {
     private val mMediaSessionCallback: MediaSessionCallback
 
-    val mediaSessionCallback: MediaSessionCompat.Callback
+    internal val mediaSessionCallback: MediaSessionCompat.Callback
         get() = mMediaSessionCallback
 
     private val availableActions: Long
@@ -50,14 +50,10 @@ class PlaybackManager(private val mServiceCallback: PlaybackServiceCallback, pri
         this.playback.setCallback(this)
     }
 
-    fun seek(position: Int) {
-        playback.seekTo(position)
-    }
-
     /**
      * Handle a request to play music
      */
-    fun handlePlayRequest() {
+    internal fun handlePlayRequest() {
         LogHelper.d(TAG, "handlePlayRequest: mState=" + playback.state)
         val currentMusic = mQueueManager.currentMusic
         if (currentMusic != null) {
@@ -81,7 +77,7 @@ class PlaybackManager(private val mServiceCallback: PlaybackServiceCallback, pri
     /**
      * Handle a request to pause music
      */
-    fun handlePauseRequest() {
+    internal fun handlePauseRequest() {
         LogHelper.d(TAG, "handlePauseRequest: mState=" + playback.state)
         if (playback.isPlaying) {
             playback.pause()
@@ -96,7 +92,7 @@ class PlaybackManager(private val mServiceCallback: PlaybackServiceCallback, pri
      * message will be set in the PlaybackState and will be visible to
      * MediaController clients.
      */
-    fun handleStopRequest(withError: String?) {
+    internal fun handleStopRequest(withError: String?) {
         LogHelper.d(TAG, "handleStopRequest: mState=" + playback.state + " error=", withError)
         playback.stop(true)
         mServiceCallback.onPlaybackStop()
@@ -109,7 +105,7 @@ class PlaybackManager(private val mServiceCallback: PlaybackServiceCallback, pri
      *
      * @param error if not null, error message to present to the user.
      */
-    fun updatePlaybackState(error: String?) {
+    internal fun updatePlaybackState(error: String?) {
         LogHelper.d(TAG, "updatePlaybackState, playback state=" + playback.state)
         var position = -1
         if (playback.isConnected) {
@@ -200,7 +196,7 @@ class PlaybackManager(private val mServiceCallback: PlaybackServiceCallback, pri
         }
     }
 
-    fun loadLastTrack() {
+    internal fun loadLastTrack() {
         val lastMediaId = mPreferences.getString("last_media_id", null)
         LogHelper.d(TAG, "load metadata for lastMediaId=", lastMediaId)
         if (lastMediaId != null) {

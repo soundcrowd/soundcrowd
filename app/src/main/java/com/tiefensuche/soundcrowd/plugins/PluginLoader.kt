@@ -15,7 +15,7 @@ import java.lang.reflect.Proxy
 
 internal object PluginLoader {
 
-    fun loadPlugin(context: Context, classpath: String): IPlugin? {
+    internal fun loadPlugin(context: Context, classpath: String): IPlugin? {
         try {
             // Get the package context
             val pluginContext = PackageUtil.getPackageContext(context, classpath) ?: return null

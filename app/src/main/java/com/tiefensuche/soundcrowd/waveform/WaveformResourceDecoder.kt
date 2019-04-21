@@ -16,7 +16,7 @@ import com.bumptech.glide.load.resource.bitmap.BitmapResource
  * Created by tiefensuche on 06.02.18.
  */
 
-class WaveformResourceDecoder(private val pool: BitmapPool) : ResourceDecoder<Bitmap, Bitmap> {
+internal class WaveformResourceDecoder(private val pool: BitmapPool) : ResourceDecoder<Bitmap, Bitmap> {
 
     override fun handles(source: Bitmap, options: Options): Boolean {
         return true

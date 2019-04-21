@@ -23,9 +23,9 @@ import java.util.*
  *
  * Created by tiefensuche on 23.09.16.
  */
-class DatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME, null, DATABASE_VERSION) {
+internal class DatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME, null, DATABASE_VERSION) {
 
-    val cuePointItems: MutableList<MediaMetadataCompat>
+    internal val cuePointItems: MutableList<MediaMetadataCompat>
         get() {
             val items = ArrayList<MediaMetadataCompat>()
             val mediaIds = ArrayList<String>()
@@ -73,7 +73,7 @@ class DatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME
 
     }
 
-    fun getLastPosition(mediaId: String?): Long {
+    internal fun getLastPosition(mediaId: String?): Long {
         var result: Long = 0
         if (mediaId == null) {
             return 0
@@ -91,7 +91,7 @@ class DatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME
         return result
     }
 
-    fun updatePosition(mediaId: String, position: Int) {
+    internal fun updatePosition(mediaId: String, position: Int) {
         val values = ContentValues()
         values.put("id", mediaId)
         values.put("position", position)
@@ -122,7 +122,7 @@ class DatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME
                 .build()
     }
 
-    fun addCuePoint(metadata: MediaMetadataCompat, position: Int) {
+    internal fun addCuePoint(metadata: MediaMetadataCompat, position: Int) {
         addMediaItem(metadata)
         val values = ContentValues()
         values.put("media_id", metadata.description.mediaId)
@@ -135,7 +135,7 @@ class DatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME
 
     }
 
-    fun deleteCuePoint(mediaId: String, position: Int) {
+    internal fun deleteCuePoint(mediaId: String, position: Int) {
         try {
             writableDatabase.delete(DATABASE_MEDIA_ITEM_CUE_POINTS_NAME, "media_id=? AND position=?", arrayOf(mediaId, Integer.toString(position)))
         } catch (e: SQLException) {
@@ -144,7 +144,7 @@ class DatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME
 
     }
 
-    fun getCuePoints(mediaId: String?): Collection<CuePoint> {
+    internal fun getCuePoints(mediaId: String?): Collection<CuePoint> {
         val result = ArrayList<CuePoint>()
         if (mediaId == null) {
             return result
@@ -163,7 +163,7 @@ class DatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME
         return result
     }
 
-    fun setDescription(mediaId: String, position: Int, text: String) {
+    internal fun setDescription(mediaId: String, position: Int, text: String) {
         val values = ContentValues()
         values.put("description", text)
         try {

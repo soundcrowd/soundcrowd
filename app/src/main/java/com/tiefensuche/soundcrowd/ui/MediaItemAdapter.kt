@@ -19,7 +19,7 @@ import com.tiefensuche.soundcrowd.images.GlideRequests
 import com.tiefensuche.soundcrowd.sources.MusicProviderSource
 import java.util.*
 
-class MediaItemAdapter(private val requests: GlideRequests, private val listener: OnItemClickListener, private val defaultColor: Int) : RecyclerView.Adapter<MediaItemAdapter.ViewHolder>(), Filterable, SectionIndexer {
+internal class MediaItemAdapter(private val requests: GlideRequests, private val listener: OnItemClickListener, private val defaultColor: Int) : RecyclerView.Adapter<MediaItemAdapter.ViewHolder>(), Filterable, SectionIndexer {
     private val mLock = Any()
 
     private var mDataset: MutableList<MediaBrowserCompat.MediaItem> = ArrayList()
@@ -33,17 +33,17 @@ class MediaItemAdapter(private val requests: GlideRequests, private val listener
 
     private var positionForSection: List<Int> = ArrayList()
 
-    val isEmpty: Boolean
+    internal val isEmpty: Boolean
         get() = mDataset.isEmpty()
 
-    val count: Int
+    internal val count: Int
         get() = itemCount
 
-    fun add(item: MediaBrowserCompat.MediaItem) {
+    internal fun add(item: MediaBrowserCompat.MediaItem) {
         mDataset.add(item)
     }
 
-    fun clear() {
+    internal fun clear() {
         mDataset.clear()
     }
 
@@ -105,7 +105,7 @@ class MediaItemAdapter(private val requests: GlideRequests, private val listener
         return mDataset.size
     }
 
-    fun notifyDataChanged() {
+    internal fun notifyDataChanged() {
         mObjects = ArrayList<MediaBrowserCompat.MediaItem>(mDataset)
         notifyItemsChanged()
     }
@@ -235,7 +235,7 @@ class MediaItemAdapter(private val requests: GlideRequests, private val listener
         }
     }
 
-    inner class ViewHolder internal constructor(holder: View) : RecyclerView.ViewHolder(holder) {
+    internal inner class ViewHolder internal constructor(holder: View) : RecyclerView.ViewHolder(holder) {
 
         val mImageViewArtwork: ImageView = holder.findViewById(R.id.album_art)
         val mTitleView: TextView = holder.findViewById(R.id.title)

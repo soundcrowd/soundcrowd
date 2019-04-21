@@ -14,7 +14,7 @@ import com.tiefensuche.soundcrowd.ui.intro.IntroActivity
  * Created by tiefensuche on 26.02.18.
  */
 
-class SplashActivity : AppCompatActivity() {
+internal class SplashActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

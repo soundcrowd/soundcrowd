@@ -8,7 +8,7 @@ import android.support.annotation.RequiresApi
 import com.tiefensuche.soundcrowd.ui.preferences.EqualizerFragment
 import com.tiefensuche.soundcrowd.utils.LogHelper
 
-class EqualizerControl {
+internal class EqualizerControl {
 
     companion object {
 
@@ -23,14 +23,14 @@ class EqualizerControl {
         const val CONFIG_REVERB_ENABLED = "config.reverb.enabled"
         const val CONFIG_REVERB_PRESET = "config.reverb.preset"
 
-        var mEqualizer: Equalizer? = null
-        var mBassBoost: BassBoost? = null
-        var mPresetReverb: PresetReverb? = null
-        var mLoudnessEnhancer: LoudnessEnhancer? = null
+        internal var mEqualizer: Equalizer? = null
+        internal var mBassBoost: BassBoost? = null
+        internal var mPresetReverb: PresetReverb? = null
+        internal var mLoudnessEnhancer: LoudnessEnhancer? = null
 
         private var audioSessionId: Int = 0
 
-        fun setupEqualizerFX(audioSessionId: Int, context: Context) {
+        internal fun setupEqualizerFX(audioSessionId: Int, context: Context) {
             val preferences = PreferenceManager.getDefaultSharedPreferences(context)
             if (audioSessionId != 0 && EqualizerControl.audioSessionId != audioSessionId) {
                 LogHelper.d(TAG, "update audio session id and recreate effects")
@@ -54,7 +54,7 @@ class EqualizerControl {
             }
         }
 
-        fun setEqualizer(preset: Short) {
+        internal fun setEqualizer(preset: Short) {
             if (mEqualizer == null) {
                 mEqualizer = Equalizer(Integer.MAX_VALUE, audioSessionId)
             }
@@ -62,7 +62,7 @@ class EqualizerControl {
             mEqualizer?.usePreset(preset)
         }
 
-        fun setBassBoost(strength: Short) {
+        internal fun setBassBoost(strength: Short) {
             if (mBassBoost == null) {
                 mBassBoost = BassBoost(Integer.MAX_VALUE, audioSessionId)
             }
@@ -70,7 +70,7 @@ class EqualizerControl {
             mBassBoost?.setStrength(strength)
         }
 
-        fun setReverb(preset: Short) {
+        internal fun setReverb(preset: Short) {
             if (mPresetReverb == null) {
                 mPresetReverb = PresetReverb(Integer.MAX_VALUE, audioSessionId)
             }
@@ -79,7 +79,7 @@ class EqualizerControl {
         }
 
         @RequiresApi(api = Build.VERSION_CODES.KITKAT)
-        fun setLoudness(targetGain: Int) {
+        internal fun setLoudness(targetGain: Int) {
             if (mLoudnessEnhancer == null) {
                 mLoudnessEnhancer = LoudnessEnhancer(audioSessionId)
             }
@@ -87,7 +87,7 @@ class EqualizerControl {
             mLoudnessEnhancer?.setTargetGain(targetGain)
         }
 
-        fun releaseAudioEffect(audioEffect: AudioEffect?) {
+        internal fun releaseAudioEffect(audioEffect: AudioEffect?) {
             try {
                 if (audioEffect?.enabled == true) {
                     audioEffect.enabled = false

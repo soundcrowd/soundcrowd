@@ -13,7 +13,7 @@ import com.bumptech.glide.util.Util
 /**
  * A simple wrapper for a [android.support.v7.graphics.Palette] and a [android.graphics.Bitmap].
  */
-class PaletteBitmap(val bitmap: Bitmap, val palette: Palette) : Resource<PaletteBitmap> {
+internal class PaletteBitmap(val bitmap: Bitmap, val palette: Palette) : Resource<PaletteBitmap> {
 
 
     override fun getResourceClass(): Class<PaletteBitmap> {

@@ -23,7 +23,7 @@ import java.util.*
  * queue. Also provides methods to set the current queue based on common queries, relying on a
  * given MusicProvider to provide the actual media metadata.
  */
-class QueueManager(private val mMusicProvider: MusicProvider,
+internal class QueueManager(private val mMusicProvider: MusicProvider,
                    private val mResources: Resources,
                    private val mListener: QueueManager.MetadataUpdateListener,
                    private val mContext: Context) {
@@ -33,12 +33,12 @@ class QueueManager(private val mMusicProvider: MusicProvider,
     private var mCurrentIndex: Int = 0
 
 
-    val currentMusic: MediaSessionCompat.QueueItem?
+    internal val currentMusic: MediaSessionCompat.QueueItem?
         get() = if (!QueueHelper.isIndexPlayable(mCurrentIndex, mPlayingQueue)) {
             null
         } else mPlayingQueue[mCurrentIndex]
 
-    val currentQueueSize: Int
+    internal val currentQueueSize: Int
         get() = mPlayingQueue.size
 
     init {
@@ -62,7 +62,7 @@ class QueueManager(private val mMusicProvider: MusicProvider,
         }
     }
 
-    fun setCurrentQueueItem(queueId: Long): Boolean {
+    internal fun setCurrentQueueItem(queueId: Long): Boolean {
         // set the current index on queue from the queue Id:
         val index = QueueHelper.getMusicIndexOnQueue(mPlayingQueue, queueId)
         setCurrentQueueIndex(index)
@@ -76,14 +76,14 @@ class QueueManager(private val mMusicProvider: MusicProvider,
         return index >= 0
     }
 
-    fun setCurrentQueueItem(uri: android.net.Uri): Boolean {
+    internal fun setCurrentQueueItem(uri: android.net.Uri): Boolean {
         // set the current index on queue from the music Id:
         val index = QueueHelper.getMusicIndexOnQueue(mPlayingQueue, uri)
         setCurrentQueueIndex(index)
         return index >= 0
     }
 
-    fun skipQueuePosition(amount: Int): Boolean {
+    internal fun skipQueuePosition(amount: Int): Boolean {
         if (mPlayingQueue.isEmpty() || mPlayingQueue.size == 1) {
             return false
         }
@@ -104,7 +104,7 @@ class QueueManager(private val mMusicProvider: MusicProvider,
         return true
     }
 
-    fun setRandomQueue() {
+    internal fun setRandomQueue() {
         val lastMediaId = PreferenceManager.getDefaultSharedPreferences(mContext).getString("last_media_id", null)
         LogHelper.d(TAG, "setRandomQueue lastMediaId=", lastMediaId)
         if (lastMediaId != null) {
@@ -118,7 +118,7 @@ class QueueManager(private val mMusicProvider: MusicProvider,
 
     }
 
-    fun setQueueFromMusic(mediaId: String) {
+    internal fun setQueueFromMusic(mediaId: String) {
         LogHelper.d(TAG, "setQueueFromMusic", mediaId)
 
         // The mediaId used here is not the unique musicId. This one comes from the
@@ -139,7 +139,7 @@ class QueueManager(private val mMusicProvider: MusicProvider,
         updateMetadata()
     }
 
-    fun setQueueFromMusic(uri: android.net.Uri) {
+    internal fun setQueueFromMusic(uri: android.net.Uri) {
         val mediaId = mMusicProvider.resolve(uri)
         setQueueFromMusic(mediaId)
     }
@@ -155,13 +155,13 @@ class QueueManager(private val mMusicProvider: MusicProvider,
         mListener.onQueueUpdated(title, newQueue)
     }
 
-    fun updateMetadata() {
+    internal fun updateMetadata() {
         currentMusic?.description?.mediaId?.let {
             update(MediaIDHelper.extractMusicIDFromMediaID(it))
         } ?: mListener.onMetadataRetrieveError()
     }
 
-    fun update(musicId: String) {
+    internal fun update(musicId: String) {
         val metadata = mMusicProvider.getMusic(musicId)
                 ?: throw IllegalArgumentException("Invalid musicId $musicId")
 

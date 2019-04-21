@@ -16,7 +16,7 @@ import android.view.MotionEvent
  *
  * Created by tiefensuche on 07.10.16.
  */
-class VerticalSeekBar : android.support.v7.widget.AppCompatSeekBar {
+internal class VerticalSeekBar : android.support.v7.widget.AppCompatSeekBar {
 
     constructor(context: Context) : super(context)
 

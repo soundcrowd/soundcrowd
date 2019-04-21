@@ -29,7 +29,7 @@ import java.util.*
  *
  * Created by tiefensuche on 6/19/17.
  */
-class CueListFragment : Fragment() {
+internal class CueListFragment : Fragment() {
     private lateinit var adapter: ArrayAdapter<CuePoint>
 
     private val cuePoints = ArrayList<CuePoint>()
@@ -78,7 +78,7 @@ class CueListFragment : Fragment() {
         mMediaFragmentListener.showSearchButton(true)
     }
 
-    fun loadItems() {
+    internal fun loadItems() {
         mMediaFragmentListener.mediaBrowser?.unsubscribe(MEDIA_ID_MUSICS_CUE_POINTS)
         mMediaFragmentListener.mediaBrowser?.subscribe(MEDIA_ID_MUSICS_CUE_POINTS, object : MediaBrowserCompat.SubscriptionCallback() {
             override fun onChildrenLoaded(parentId: String, children: List<MediaBrowserCompat.MediaItem>) {
@@ -102,7 +102,7 @@ class CueListFragment : Fragment() {
         })
     }
 
-    fun setFilter(filter: CharSequence?) {
+    internal fun setFilter(filter: CharSequence?) {
         adapter.filter.filter(filter)
     }
 

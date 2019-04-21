@@ -45,7 +45,7 @@ import java.util.concurrent.TimeUnit
  * A full screen player that shows the current playing music with a background image
  * depicting the album art. The activity also has controls to seek/pause/play the audio.
  */
-class FullScreenPlayerFragment : Fragment() {
+internal class FullScreenPlayerFragment : Fragment() {
     private val mHandler = Handler()
     private val mExecutorService = Executors.newSingleThreadScheduledExecutor()
 
@@ -251,7 +251,7 @@ class FullScreenPlayerFragment : Fragment() {
         }
     }
 
-    fun onMetadataChanged(metadata: MediaMetadataCompat?) {
+    internal fun onMetadataChanged(metadata: MediaMetadataCompat?) {
         LogHelper.d(TAG, "Received metadata state change to mediaId=",
                 metadata?.description?.mediaId,
                 " song=", metadata?.description?.title)
@@ -276,7 +276,7 @@ class FullScreenPlayerFragment : Fragment() {
         fetchImageAsync(metadata.description)
     }
 
-    fun onPlaybackStateChanged(state: PlaybackStateCompat?) {
+    internal fun onPlaybackStateChanged(state: PlaybackStateCompat?) {
         LogHelper.d(TAG, "Received playback state change to state ", state?.state)
         var enablePlay = false
         when (state?.state) {

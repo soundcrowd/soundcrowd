@@ -27,7 +27,7 @@ import java.io.IOException
 /**
  * A class that implements local media playback using [android.media.MediaPlayer]
  */
-class LocalPlayback(private val mContext: Context, private val mMusicProvider: MusicProvider) : Playback, AudioManager.OnAudioFocusChangeListener, OnCompletionListener, OnErrorListener, OnPreparedListener, OnSeekCompleteListener {
+internal class LocalPlayback(private val mContext: Context, private val mMusicProvider: MusicProvider) : Playback, AudioManager.OnAudioFocusChangeListener, OnCompletionListener, OnErrorListener, OnPreparedListener, OnSeekCompleteListener {
     private val mWifiLock: WifiManager.WifiLock = (mContext.applicationContext.getSystemService(Context.WIFI_SERVICE) as? WifiManager)?.createWifiLock(WifiManager.WIFI_MODE_FULL, "soundcrowd_lock") ?: throw RuntimeException()
     private val mAudioManager: AudioManager = mContext.getSystemService(Context.AUDIO_SERVICE) as? AudioManager ?: throw RuntimeException()
     private val mAudioNoisyIntentFilter = IntentFilter(AudioManager.ACTION_AUDIO_BECOMING_NOISY)
@@ -58,7 +58,7 @@ class LocalPlayback(private val mContext: Context, private val mMusicProvider: M
 
     private var urlResolver: UrlResolver = object: UrlResolver{
         override fun getMediaUrl(url: String, callback: Callback<String>) {
-            callback.onResult(url) // track.getString(MusicProviderSource.CUSTOM_METADATA_TRACK_SOURCE)
+            callback.onResult(url)
         }
     }
 
@@ -75,7 +75,7 @@ class LocalPlayback(private val mContext: Context, private val mMusicProvider: M
         // Create the Wifi lock (this does not acquire the lock, this just creates it)
         this.state = PlaybackStateCompat.STATE_NONE
         try {
-            this.urlResolver = ExtensionLoader.loadClass<UrlResolver>("com.tiefensuche.soundcrowd.extensions.cache", mContext)
+            this.urlResolver = ExtensionLoader.loadClass("com.tiefensuche.soundcrowd.extensions.cache", mContext)
             LogHelper.d(TAG, "loaded custom url resolver implementation")
         } catch (e: Exception) {
             LogHelper.d(TAG, "using default url resolver implementation")
