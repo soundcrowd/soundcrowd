@@ -22,6 +22,7 @@ import android.view.ViewGroup
 import android.widget.ProgressBar
 import android.widget.TextView
 import com.tiefensuche.soundcrowd.R
+import com.tiefensuche.soundcrowd.extensions.MediaMetadataCompatExt
 import com.tiefensuche.soundcrowd.images.ArtworkHelper
 import com.tiefensuche.soundcrowd.images.GlideApp
 import com.tiefensuche.soundcrowd.images.GlideRequests
@@ -106,7 +107,7 @@ internal class MediaBrowserFragment : Fragment() {
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         val rootView = inflater.inflate(R.layout.fragment_list, container, false)
 
-        isStream = arguments?.getBoolean("stream") ?: false
+        isStream = mDescription?.extras?.getString(MediaMetadataCompatExt.METADATA_KEY_TYPE) == MediaMetadataCompatExt.MediaType.STREAM.name
 
         requests = GlideApp.with(this)
         mBrowserAdapter = MediaItemAdapter(requests, object: MediaItemAdapter.OnItemClickListener {
