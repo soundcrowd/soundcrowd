@@ -10,53 +10,32 @@ import android.graphics.Bitmap
 import android.os.Bundle
 import android.support.v4.media.MediaDescriptionCompat
 import android.support.v4.media.MediaMetadataCompat
-import com.tiefensuche.soundcrowd.sources.MusicProviderSource
-import java.io.BufferedReader
-import java.io.IOException
-import java.io.InputStreamReader
-import java.net.HttpURLConnection
-import java.net.URL
+import com.tiefensuche.soundcrowd.extensions.MediaMetadataCompatExt
+import java.security.MessageDigest
+import java.security.NoSuchAlgorithmException
 
 internal object Utils {
 
-    @Throws(IOException::class)
-    internal fun fetchFromUrl(url: String, post: String?): String {
-        var reader: BufferedReader? = null
+    /**
+     * Compute MD5 checksum for the input string
+     */
+    internal fun computeMD5(string: String): String {
         try {
-            val urlConnection = URL(url).openConnection() as? HttpURLConnection ?: throw IOException()
-            if (post != null) {
-                urlConnection.requestMethod = "POST"
-                urlConnection.outputStream.write(post.toByteArray())
-            }
-
-            reader = if (urlConnection.responseCode < 400) {
-                BufferedReader(InputStreamReader(
-                        urlConnection.inputStream, "UTF-8"))
-            } else {
-                BufferedReader(InputStreamReader(
-                        urlConnection.errorStream, "UTF-8"))
-            }
-
-            val sb = StringBuilder()
-            var line: String?
-            while (true) {
-                line = reader.readLine()
-                if (line == null) {
-                    break
-                }
-                sb.append(line)
-            }
-            return sb.toString()
-        } finally {
-            if (reader != null) {
-                try {
-                    reader.close()
-                } catch (e: IOException) {
-                    // ignore
-                }
-
-            }
+            val messageDigest = MessageDigest.getInstance("MD5")
+            val digestBytes = messageDigest.digest(string.toByteArray())
+            return bytesToHexString(digestBytes)
+        } catch (e: NoSuchAlgorithmException) {
+            throw IllegalStateException(e)
         }
+
+    }
+
+    private fun bytesToHexString(bytes: ByteArray): String {
+        val sb = StringBuilder()
+        for (b in bytes) {
+            sb.append(String.format("%02x", b))
+        }
+        return sb.toString()
     }
 
     internal fun getExtendedDescription(metadata: MediaMetadataCompat): MediaDescriptionCompat {
@@ -74,12 +53,10 @@ internal object Utils {
             bundle = Bundle()
         }
         bundle.putLong(MediaMetadataCompat.METADATA_KEY_DURATION, metadata.getLong(MediaMetadataCompat.METADATA_KEY_DURATION))
-        bundle.putString("index", getIndexCharacter(description.title))
-        bundle.putBoolean("stream", metadata.getString("stream") != null)
-        bundle.putString(MusicProviderSource.CUSTOM_METADATA_MEDIA_SOURCE, metadata.getString(MusicProviderSource.CUSTOM_METADATA_MEDIA_SOURCE))
+        bundle.putString(MediaMetadataCompatExt.METADATA_KEY_SOURCE, metadata.getString(MediaMetadataCompatExt.METADATA_KEY_SOURCE))
 
-        if (metadata.getString(MusicProviderSource.CUSTOM_METADATA_MEDIA_KIND) != null) {
-            bundle.putString(MusicProviderSource.CUSTOM_METADATA_MEDIA_KIND, metadata.getString(MusicProviderSource.CUSTOM_METADATA_MEDIA_KIND))
+        if (metadata.getString(MediaMetadataCompatExt.METADATA_KEY_TYPE) != null) {
+            bundle.putString(MediaMetadataCompatExt.METADATA_KEY_TYPE, metadata.getString(MediaMetadataCompatExt.METADATA_KEY_TYPE))
         }
 
 
@@ -87,17 +64,17 @@ internal object Utils {
         return bob.build()
     }
 
-    private fun getIndexCharacter(text: CharSequence?): String {
+    internal fun getIndexCharacter(text: CharSequence?): Char {
         if (text == null) {
-            return "#"
+            return '#'
         }
         val string = text.toString().toUpperCase()
         for (i in 0 until string.length) {
             if (Character.isLetter(string[i])) {
-                return string.substring(i, i + 1)
+                return string[i]
             }
         }
-        return "#"
+        return '#'
     }
 
     internal fun scaleBitmap(src: Bitmap, maxWidth: Int, maxHeight: Int): Bitmap {

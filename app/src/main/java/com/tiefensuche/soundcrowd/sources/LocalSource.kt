@@ -12,6 +12,7 @@ import android.net.Uri
 import android.provider.MediaStore
 import android.support.v4.content.ContextCompat
 import android.support.v4.media.MediaMetadataCompat
+import com.tiefensuche.soundcrowd.extensions.MediaMetadataCompatExt
 import com.tiefensuche.soundcrowd.service.MusicService
 import com.tiefensuche.soundcrowd.utils.LogHelper
 import java.util.*
@@ -35,15 +36,14 @@ internal class LocalSource(private val context: MusicService) {
 
         return MediaMetadataCompat.Builder()
                 .putString(MediaMetadataCompat.METADATA_KEY_MEDIA_ID, Integer.toString(uri.toString().hashCode()))
-                .putString(MusicProviderSource.CUSTOM_METADATA_TRACK_SOURCE, uri.toString())
-                .putString(MusicProviderSource.CUSTOM_METADATA_MEDIA_KIND, "track")
-                .putString(MusicProviderSource.CUSTOM_METADATA_WAVEFORM_URL, uri.toString())
+                .putString(MediaMetadataCompat.METADATA_KEY_MEDIA_URI, uri.toString())
+                .putString(MediaMetadataCompatExt.METADATA_KEY_TYPE, MediaMetadataCompatExt.MediaType.MEDIA.name)
+                .putString(MediaMetadataCompatExt.METADATA_KEY_WAVEFORM_URL, uri.toString())
                 .putString(MediaMetadataCompat.METADATA_KEY_ARTIST, artist)
                 .putString(MediaMetadataCompat.METADATA_KEY_ALBUM, album)
                 .putLong(MediaMetadataCompat.METADATA_KEY_DURATION, duration)
                 .putString(MediaMetadataCompat.METADATA_KEY_ALBUM_ART_URI, uri.toString())
                 .putString(MediaMetadataCompat.METADATA_KEY_TITLE, title)
-                .putString(MusicProviderSource.CUSTOM_METADATA_MEDIA_SOURCE, "LocalSource")
                 .build()
     }
 
@@ -81,15 +81,15 @@ internal class LocalSource(private val context: MusicService) {
 
                     tracks.add(MediaMetadataCompat.Builder()
                             .putString(MediaMetadataCompat.METADATA_KEY_MEDIA_ID, java.lang.Long.toString(id))
-                            .putString(MusicProviderSource.CUSTOM_METADATA_TRACK_SOURCE, trackUri.toString())
-                            .putString(MusicProviderSource.CUSTOM_METADATA_MEDIA_KIND, "track")
-                            .putString(MusicProviderSource.CUSTOM_METADATA_WAVEFORM_URL, trackUri.toString())
+                            .putString(MediaMetadataCompat.METADATA_KEY_MEDIA_URI, trackUri.toString())
+                            .putString(MediaMetadataCompatExt.METADATA_KEY_TYPE, MediaMetadataCompatExt.MediaType.MEDIA.name)
+                            .putString(MediaMetadataCompatExt.METADATA_KEY_WAVEFORM_URL, trackUri.toString())
                             .putString(MediaMetadataCompat.METADATA_KEY_ARTIST, if (artist == null || "<unknown>" == artist) title else artist)
                             .putString(MediaMetadataCompat.METADATA_KEY_ALBUM, album)
                             .putLong(MediaMetadataCompat.METADATA_KEY_DURATION, duration)
                             .putString(MediaMetadataCompat.METADATA_KEY_ALBUM_ART_URI, trackUri.toString())
                             .putString(MediaMetadataCompat.METADATA_KEY_TITLE, title)
-                            .putString(MusicProviderSource.CUSTOM_METADATA_MEDIA_SOURCE, "LocalSource")
+                            .putString(MediaMetadataCompatExt.METADATA_KEY_SOURCE, name)
                             .build())
                 } catch (e: Exception) {
                     LogHelper.w(TAG, "error while processing track", e)
@@ -110,7 +110,7 @@ internal class LocalSource(private val context: MusicService) {
     }
 
     companion object {
-
+        private const val name = "Local"
         private val TAG = LogHelper.makeLogTag(LocalSource::class.java)
     }
 }
