@@ -18,7 +18,7 @@ import android.support.v4.media.session.PlaybackStateCompat
 import android.text.TextUtils
 import com.tiefensuche.soundcrowd.extensions.UrlResolver
 import com.tiefensuche.soundcrowd.plugins.Callback
-import com.tiefensuche.soundcrowd.plugins.ExtensionLoader
+import com.tiefensuche.soundcrowd.plugins.PluginLoader
 import com.tiefensuche.soundcrowd.service.MusicService
 import com.tiefensuche.soundcrowd.sources.MusicProvider
 import com.tiefensuche.soundcrowd.utils.LogHelper
@@ -74,12 +74,7 @@ internal class LocalPlayback(private val mContext: Context, private val mMusicPr
     init {
         // Create the Wifi lock (this does not acquire the lock, this just creates it)
         this.state = PlaybackStateCompat.STATE_NONE
-        try {
-            this.urlResolver = ExtensionLoader.loadClass("com.tiefensuche.soundcrowd.extensions.cache", mContext)
-            LogHelper.d(TAG, "loaded custom url resolver implementation")
-        } catch (e: Exception) {
-            LogHelper.d(TAG, "using default url resolver implementation")
-        }
+        PluginLoader.loadPlugin<UrlResolver>(mContext, "com.tiefensuche.soundcrowd.plugins.cache", "Extension")?.let { this.urlResolver = it }
     }
 
     override fun start() {}

@@ -15,14 +15,18 @@ import java.lang.reflect.Proxy
 
 internal object PluginLoader {
 
-    internal fun loadPlugin(context: Context, classpath: String): IPlugin? {
+    internal fun loadPlugin(context: Context, packageName: String): IPlugin? {
+        return PluginLoader.loadPlugin<IPlugin>(context, packageName, "Plugin")
+    }
+
+    internal fun <T> loadPlugin(context: Context, packageName: String, className: String): T? {
         try {
             // Get the package context
-            val pluginContext = PackageUtil.getPackageContext(context, classpath) ?: return null
+            val pluginContext = PackageUtil.getPackageContext(context, packageName) ?: return null
             // Load the plugin class in the package
-            val pluginClass = pluginContext.classLoader.loadClass("$classpath.Plugin")
+            val pluginClass = pluginContext.classLoader.loadClass("$packageName.$className")
             // Instantiate the plugin from the class
-            val instance = pluginClass.newInstance()
+            val instance = pluginClass.getConstructor(Context::class.java).newInstance(context)
 
             // Load the shared callback class from the plugin package with the foreign context
             val callbackClass = pluginContext.classLoader.loadClass("com.tiefensuche.soundcrowd.plugins.Callback")
@@ -75,7 +79,7 @@ internal object PluginLoader {
                 } else {
                     m.invoke(instance, *objects)
                 }
-            } as? IPlugin
+            } as? T
         } catch (e: Exception) {
             LogHelper.e(PluginLoader::class.java.simpleName, e, "error loading plugin")
         }
