@@ -11,6 +11,7 @@ import android.os.Bundle
 import android.support.v4.media.MediaBrowserCompat
 import android.support.v4.media.MediaMetadataCompat
 import com.tiefensuche.soundcrowd.database.DatabaseHelper
+import com.tiefensuche.soundcrowd.extensions.MediaMetadataCompatExt
 import com.tiefensuche.soundcrowd.plugins.PluginManager
 import com.tiefensuche.soundcrowd.service.MusicService
 import com.tiefensuche.soundcrowd.utils.LogHelper
@@ -45,16 +46,12 @@ internal class MusicProvider(context: MusicService) {
     private val mFavoriteTracks: MutableSet<String>
     private val localSource: LocalSource
     private val pluginManager: PluginManager
-    @Volatile
     private var mCurrentState = State.NON_INITIALIZED
 
-    internal val allMusic: List<MediaMetadataCompat>?
-        get() = getMusicByCategory(MEDIA_ID_ROOT)
 
     /**
      * Get an iterator over a shuffled collection of all songs
      */
-
     internal val shuffledMusic: Iterable<MediaMetadataCompat>
         get() {
             if (mCurrentState != State.INITIALIZED) {
@@ -97,22 +94,22 @@ internal class MusicProvider(context: MusicService) {
 
     internal fun resolveMusic(mediaId: String, callback: com.tiefensuche.soundcrowd.plugins.Callback<String>) {
         getMusic(MediaIDHelper.extractMusicIDFromMediaID(mediaId))?.let {
-            if (!mediaId.contains(MEDIA_ID_ROOT)) {
-                callback.onResult(it.getString(MusicProviderSource.CUSTOM_METADATA_TRACK_SOURCE))
+            if (!mediaId.contains(MEDIA_ID_PLUGINS)) {
+                callback.onResult(it.getString(MediaMetadataCompat.METADATA_KEY_MEDIA_URI))
                 return
             }
 
             for (plugin in pluginManager.plugins) {
                 if (plugin.mediaCategories().contains(mediaId.split(CATEGORY_SEPARATOR)[1])) {
                     AsyncTask.execute {
-                        plugin.getMediaUrl(it.getString(MusicProviderSource.CUSTOM_METADATA_TRACK_SOURCE), callback)
+                        plugin.getMediaUrl(it.getString(MediaMetadataCompat.METADATA_KEY_MEDIA_URI), callback)
                     }
                     return
                 }
             }
 
             // no plugin found, pass-though the source from metadata
-            callback.onResult(it.getString(MusicProviderSource.CUSTOM_METADATA_TRACK_SOURCE))
+            callback.onResult(it.getString(MediaMetadataCompat.METADATA_KEY_MEDIA_URI))
         }
     }
 
@@ -178,7 +175,7 @@ internal class MusicProvider(context: MusicService) {
                     .putString(MediaMetadataCompat.METADATA_KEY_TITLE, values[1])
                     .putString(MediaMetadataCompat.METADATA_KEY_ARTIST, "" + getMusicByCategory(key).size + " Tracks")
                     .putLong(MediaMetadataCompat.METADATA_KEY_DURATION, getDurationSum(getMusicByCategory(key)))
-                    .putString(MusicProviderSource.CUSTOM_METADATA_MEDIA_KIND, "artist")
+                    .putString(MediaMetadataCompatExt.METADATA_KEY_TYPE, MediaMetadataCompatExt.MediaType.COLLECTION.name)
             root.add(builder.build())
         }
 
@@ -200,15 +197,24 @@ internal class MusicProvider(context: MusicService) {
             return addedTracks
         }
         while (tracks.hasNext()) {
-            val item = tracks.next()
-            val musicId = item.getString(MediaMetadataCompat.METADATA_KEY_MEDIA_ID)
-            val trackUrl = item.getString(MusicProviderSource.CUSTOM_METADATA_TRACK_SOURCE)
-            val kind = item.getString(MusicProviderSource.CUSTOM_METADATA_MEDIA_KIND)
+            var item = tracks.next()
 
-            // skip tracks that have no music id or no track url
-            if (musicId == null || "track" == kind && trackUrl == null || mMusicListById.containsKey(musicId)) {
+            var musicId = item.getString(MediaMetadataCompat.METADATA_KEY_MEDIA_ID)
+            val url = item.getString(MediaMetadataCompat.METADATA_KEY_MEDIA_URI)
+            val type = item.getString(MediaMetadataCompatExt.METADATA_KEY_TYPE)
+
+            // when no music id exists, default to the md5 of the source
+            if (musicId == null) {
+                musicId = Utils.computeMD5(url)
+            }
+
+            // skip tracks that have no track url and duplicates
+            if (MediaMetadataCompatExt.MediaType.MEDIA.name == type && url == null || mMusicListById.containsKey(musicId)) {
                 continue
             }
+
+            // add the music id to the metadata
+            item = MediaMetadataCompat.Builder(item).putString(MediaMetadataCompat.METADATA_KEY_MEDIA_ID, musicId).build()
 
             mMusicListById[musicId] = MutableMediaMetadata(musicId, item)
             addedTracks.add(item)
@@ -227,7 +233,8 @@ internal class MusicProvider(context: MusicService) {
         val offset = options.getInt(OFFSET)
         if (list.size > offset) {
             for (metadata in list.subList(offset, list.size)) {
-                if (isBrowsable(metadata)) {
+                if (metadata.getString(MediaMetadataCompatExt.METADATA_KEY_TYPE) == MediaMetadataCompatExt.MediaType.COLLECTION.name ||
+                        metadata.getString(MediaMetadataCompatExt.METADATA_KEY_TYPE) == MediaMetadataCompatExt.MediaType.STREAM.name) {
                     mediaItems.add(createBrowsableMediaItemForGenre(metadata, mediaId, metadata.getString(MediaMetadataCompat.METADATA_KEY_MEDIA_ID)))
                 } else {
                     mediaItems.add(createMediaItem(metadata, mediaId))
@@ -236,16 +243,6 @@ internal class MusicProvider(context: MusicService) {
         }
 
         return mediaItems
-    }
-
-    private fun isBrowsable(metadata: MediaMetadataCompat): Boolean {
-        val kind = metadata.getString(MusicProviderSource.CUSTOM_METADATA_MEDIA_KIND)
-        for (browsableCategory in arrayOf("artist", "album", "user", "playlist", "plugin")) {
-            if (browsableCategory == kind) {
-                return true
-            }
-        }
-        return false
     }
 
     private fun getDurationSum(tracks: List<MediaMetadataCompat>): Long {
@@ -387,8 +384,7 @@ internal class MusicProvider(context: MusicService) {
                     builder.putString(MediaMetadataCompat.METADATA_KEY_MEDIA_ID, category)
                             .putString(MediaMetadataCompat.METADATA_KEY_TITLE, category)
                             .putString(MediaMetadataCompat.METADATA_KEY_ARTIST, plugin.name())
-                            .putString(MusicProviderSource.CUSTOM_METADATA_MEDIA_KIND, "plugin")
-                            .putString("stream", "true")
+                            .putString(MediaMetadataCompatExt.METADATA_KEY_TYPE, MediaMetadataCompatExt.MediaType.STREAM.name)
                             .putBitmap(MediaMetadataCompat.METADATA_KEY_ALBUM_ART, pluginManager.icons[plugin.name()])
                     plugins.add(builder.build())
                 }
@@ -472,10 +468,6 @@ internal class MusicProvider(context: MusicService) {
         return ""
     }
 
-    enum class Source {
-        LOCAL, CUE_POINTS, STREAM, LIKES, SEARCH, FOLLOWINGS, FOLLOWERS, PROFILE, PLAYLIST
-    }
-
     enum class State {
         NON_INITIALIZED, INITIALIZING, INITIALIZED
     }
@@ -488,7 +480,6 @@ internal class MusicProvider(context: MusicService) {
     companion object {
 
         const val ACTION = "ACTION"
-        const val QUERY = "QUERY"
         private const val OFFSET = "OFFSET"
         const val OPTION_REFRESH = "REFRESH"
         private val TAG = LogHelper.makeLogTag(MusicProvider::class.java)

@@ -181,15 +181,14 @@ internal class FullScreenPlayerFragment : Fragment() {
         mPlayPause.setOnClickListener {
             activity?.let {
                 val state = MediaControllerCompat.getMediaController(it).playbackState
-                val controls13 = MediaControllerCompat.getMediaController(it).transportControls
+                val controls = MediaControllerCompat.getMediaController(it).transportControls
                 when (state.state) {
-                    PlaybackStateCompat.STATE_PLAYING // fall through
-                        , PlaybackStateCompat.STATE_BUFFERING -> {
-                        controls13.pause()
+                    PlaybackStateCompat.STATE_PLAYING, PlaybackStateCompat.STATE_BUFFERING -> {
+                        controls.pause()
                         stopSeekbarUpdate()
                     }
                     PlaybackStateCompat.STATE_NONE, PlaybackStateCompat.STATE_PAUSED, PlaybackStateCompat.STATE_STOPPED -> {
-                        controls13.play()
+                        controls.play()
                         scheduleSeekbarUpdate()
                     }
                     else -> LogHelper.d(TAG, "onClick with state ", state.state)
@@ -253,8 +252,7 @@ internal class FullScreenPlayerFragment : Fragment() {
 
     internal fun onMetadataChanged(metadata: MediaMetadataCompat?) {
         LogHelper.d(TAG, "Received metadata state change to mediaId=",
-                metadata?.description?.mediaId,
-                " song=", metadata?.description?.title)
+                metadata?.description?.mediaId, " song=", metadata?.description?.title)
 
         if (metadata == null || metadata.description.mediaId == mCurrentMetadata?.description?.mediaId) {
             return

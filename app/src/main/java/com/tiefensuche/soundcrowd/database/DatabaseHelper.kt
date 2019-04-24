@@ -12,8 +12,8 @@ import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteException
 import android.database.sqlite.SQLiteOpenHelper
 import android.support.v4.media.MediaMetadataCompat
+import com.tiefensuche.soundcrowd.extensions.MediaMetadataCompatExt
 import com.tiefensuche.soundcrowd.sources.LocalSource
-import com.tiefensuche.soundcrowd.sources.MusicProviderSource
 import com.tiefensuche.soundcrowd.utils.LogHelper
 import com.tiefensuche.soundcrowd.waveform.CuePoint
 import java.util.*
@@ -59,11 +59,11 @@ internal class DatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATA
     private fun addMediaItem(item: MediaMetadataCompat) {
         val values = ContentValues()
         values.put("id", item.getString(MediaMetadataCompat.METADATA_KEY_MEDIA_ID))
-        values.put("source", item.getString(MusicProviderSource.CUSTOM_METADATA_TRACK_SOURCE))
+        values.put("source", item.getString(MediaMetadataCompat.METADATA_KEY_MEDIA_URI))
         values.put("artist", item.getString(MediaMetadataCompat.METADATA_KEY_ARTIST))
         values.put("album_art_url", item.getString(MediaMetadataCompat.METADATA_KEY_ALBUM_ART_URI))
         values.put("title", item.getString(MediaMetadataCompat.METADATA_KEY_TITLE))
-        values.put("waveform_url", item.getString(MusicProviderSource.CUSTOM_METADATA_WAVEFORM_URL))
+        values.put("waveform_url", item.getString(MediaMetadataCompatExt.METADATA_KEY_WAVEFORM_URL))
         values.put("duration", item.getLong(MediaMetadataCompat.METADATA_KEY_DURATION))
         try {
             writableDatabase.insertOrThrow(DATABASE_MEDIA_ITEMS_NAME, null, values)
@@ -111,14 +111,14 @@ internal class DatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATA
     private fun buildItem(cursor: Cursor, source: String, builder: MediaMetadataCompat.Builder = MediaMetadataCompat.Builder()): MediaMetadataCompat {
         return builder
                 .putString(MediaMetadataCompat.METADATA_KEY_MEDIA_ID, cursor.getString(cursor.getColumnIndex("id")))
-                .putString(MusicProviderSource.CUSTOM_METADATA_TRACK_SOURCE, cursor.getString(cursor.getColumnIndex("source")))
+                .putString(MediaMetadataCompat.METADATA_KEY_MEDIA_URI, cursor.getString(cursor.getColumnIndex("source")))
                 .putString(MediaMetadataCompat.METADATA_KEY_ARTIST, cursor.getString(cursor.getColumnIndex("artist")))
                 .putLong(MediaMetadataCompat.METADATA_KEY_DURATION, cursor.getLong(cursor.getColumnIndex("duration")))
                 .putString(MediaMetadataCompat.METADATA_KEY_ALBUM_ART_URI, cursor.getString(cursor.getColumnIndex("album_art_url")))
                 .putString(MediaMetadataCompat.METADATA_KEY_TITLE, cursor.getString(cursor.getColumnIndex("title")))
-                .putString(MusicProviderSource.CUSTOM_METADATA_WAVEFORM_URL, cursor.getString(cursor.getColumnIndex("waveform_url")))
-                .putString(MusicProviderSource.CUSTOM_METADATA_MEDIA_SOURCE, source)
-                .putString(MusicProviderSource.CUSTOM_METADATA_MEDIA_KIND, "track")
+                .putString(MediaMetadataCompatExt.METADATA_KEY_WAVEFORM_URL, cursor.getString(cursor.getColumnIndex("waveform_url")))
+                .putString(MediaMetadataCompatExt.METADATA_KEY_SOURCE, source)
+                .putString(MediaMetadataCompatExt.METADATA_KEY_TYPE, MediaMetadataCompatExt.MediaType.MEDIA.name)
                 .build()
     }
 

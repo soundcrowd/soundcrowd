@@ -26,6 +26,7 @@ import android.widget.ImageView
 import android.widget.RelativeLayout
 import com.sothree.slidinguppanel.SlidingUpPanelLayout
 import com.tiefensuche.soundcrowd.R
+import com.tiefensuche.soundcrowd.extensions.MediaMetadataCompatExt
 import com.tiefensuche.soundcrowd.ui.intro.ShowcaseViewManager
 import com.tiefensuche.soundcrowd.utils.LogHelper
 import com.tiefensuche.soundcrowd.utils.MediaIDHelper.CATEGORY_SEPARATOR
@@ -40,7 +41,7 @@ import com.tiefensuche.soundcrowd.utils.MediaIDHelper.MEDIA_ID_MUSICS_BY_SEARCH
  */
 internal class MusicPlayerActivity : BaseActivity(), MediaBrowserFragment.MediaFragmentListener, SharedPreferences.OnSharedPreferenceChangeListener {
     private lateinit var searchView: SearchView
-    private lateinit var searchItem: MenuItem
+    private var searchItem: MenuItem? = null
     internal lateinit var controls: RelativeLayout
     internal lateinit var collapsingToolbarLayout: CollapsingToolbarLayout
     private lateinit var toolbarHeader: View
@@ -54,14 +55,11 @@ internal class MusicPlayerActivity : BaseActivity(), MediaBrowserFragment.MediaF
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        LogHelper.d(TAG, "create activity")
 
-        initializeToolbar()
         initializeFromParams(savedInstanceState)
 
         preferences = PreferenceManager.getDefaultSharedPreferences(this)
 
-        searchItem = mToolbar.menu.findItem(R.id.action_search)
         controls = findViewById(R.id.controls)
         collapsingToolbarLayout = findViewById(R.id.collapsing_toolbar)
         toolbarHeader = findViewById(R.id.toolbar_header)
@@ -103,6 +101,8 @@ internal class MusicPlayerActivity : BaseActivity(), MediaBrowserFragment.MediaF
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
         super.onCreateOptionsMenu(menu)
 
+        searchItem = mToolbar.menu.findItem(R.id.action_search)
+
         // Inflate the menu; this adds items to the action bar if it is present.
         MenuItemCompat.setOnActionExpandListener(searchItem, object : MenuItemCompat.OnActionExpandListener {
             override fun onMenuItemActionExpand(menuItem: MenuItem): Boolean {
@@ -120,8 +120,11 @@ internal class MusicPlayerActivity : BaseActivity(), MediaBrowserFragment.MediaF
             override fun onQueryTextSubmit(query: String): Boolean {
                 LogHelper.d(TAG, "onQueryTextSubmit, query=", query)
                 browseFragment?.let {
+                    val bundle = Bundle()
+                    bundle.putString(MediaMetadataCompatExt.METADATA_KEY_TYPE, MediaMetadataCompatExt.MediaType.STREAM.name)
                     navigateToBrowser(it.mMediaId + CATEGORY_SEPARATOR +
-                            MEDIA_ID_MUSICS_BY_SEARCH + CATEGORY_SEPARATOR + query, null)
+                            MEDIA_ID_MUSICS_BY_SEARCH + CATEGORY_SEPARATOR + query,
+                            MediaDescriptionCompat.Builder().setExtras(bundle).build())
                     closeSearchMenu()
                     searchView.clearFocus()
                 }
@@ -241,7 +244,6 @@ internal class MusicPlayerActivity : BaseActivity(), MediaBrowserFragment.MediaF
             fragment = MediaBrowserFragment()
             val bundle = Bundle()
             bundle.putString("media_id", mediaId)
-            bundle.putBoolean("stream", description?.extras?.getBoolean("stream") ?: false)
             fragment.arguments = bundle
             fragment.setDescription(description)
             val transaction = supportFragmentManager.beginTransaction()
@@ -263,7 +265,7 @@ internal class MusicPlayerActivity : BaseActivity(), MediaBrowserFragment.MediaF
     }
 
     override fun showSearchButton(show: Boolean) {
-        searchItem.isVisible = show
+        searchItem?.isVisible = show
     }
 
     override fun onMediaControllerConnected() {

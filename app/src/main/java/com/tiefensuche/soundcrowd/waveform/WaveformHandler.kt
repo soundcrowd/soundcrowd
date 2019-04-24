@@ -15,7 +15,7 @@ import com.bumptech.glide.request.target.Target
 import com.tiefensuche.soundcrowd.R
 import com.tiefensuche.soundcrowd.database.DatabaseHelper
 import com.tiefensuche.soundcrowd.images.GlideRequests
-import com.tiefensuche.soundcrowd.sources.MusicProviderSource
+import com.tiefensuche.soundcrowd.extensions.MediaMetadataCompatExt
 import com.tiefensuche.soundcrowd.utils.LogHelper
 
 
@@ -30,8 +30,9 @@ internal class WaveformHandler(private val waveformView: WaveformView) {
     internal fun loadWaveform(requests: GlideRequests, metadata: MediaMetadataCompat, duration: Int) {
         if (waveformView.context != null) {
             waveformView.setVisible(false)
+            val waveform = metadata.getString(MediaMetadataCompatExt.METADATA_KEY_WAVEFORM_URL) ?: return
             requests.asBitmap()
-                    .load(StringKey(metadata.getString(MusicProviderSource.CUSTOM_METADATA_WAVEFORM_URL)))
+                    .load(StringKey(waveform))
                     .apply(RequestOptions.overrideOf(waveformView.desiredWidth, waveformView.desiredHeight))
                     .listener(object : RequestListener<Bitmap> {
                         override fun onLoadFailed(e: GlideException?, model: Any, target: Target<Bitmap>, isFirstResource: Boolean): Boolean {
