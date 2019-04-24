@@ -13,10 +13,11 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.*
 import com.tiefensuche.soundcrowd.R
+import com.tiefensuche.soundcrowd.extensions.MediaMetadataCompatExt
 import com.tiefensuche.soundcrowd.images.ArtworkHelper
 import com.tiefensuche.soundcrowd.images.GlideApp
 import com.tiefensuche.soundcrowd.images.GlideRequests
-import com.tiefensuche.soundcrowd.sources.MusicProviderSource
+import com.tiefensuche.soundcrowd.utils.Utils
 import java.util.*
 
 internal class MediaItemAdapter(private val requests: GlideRequests, private val listener: OnItemClickListener, private val defaultColor: Int) : RecyclerView.Adapter<MediaItemAdapter.ViewHolder>(), Filterable, SectionIndexer {
@@ -29,7 +30,7 @@ internal class MediaItemAdapter(private val requests: GlideRequests, private val
     private var mObjects: List<MediaBrowserCompat.MediaItem> = ArrayList()
 
     // Section
-    private var sectionList: List<String> = ArrayList()
+    private var sectionList: List<Char> = ArrayList()
 
     private var positionForSection: List<Int> = ArrayList()
 
@@ -68,15 +69,15 @@ internal class MediaItemAdapter(private val requests: GlideRequests, private val
             } else {
                 holder.mDuration.text = ""
             }
-            val source = description.extras?.getString(MusicProviderSource.CUSTOM_METADATA_MEDIA_SOURCE)
-            val kind = description.extras?.getString(MusicProviderSource.CUSTOM_METADATA_MEDIA_KIND)
-            var iconId = R.drawable.ic_artist
-            if ("track" == kind && source != null) {
-                iconId = R.drawable.audio_file_white
-            } else if ("playlist" == kind) {
-                iconId = R.drawable.ic_playlist_music_black_24dp
+
+            description.extras?.getString(MediaMetadataCompatExt.METADATA_KEY_TYPE)?.let {
+                val iconId = when (MediaMetadataCompatExt.MediaType.valueOf(it)) {
+                    MediaMetadataCompatExt.MediaType.MEDIA -> R.drawable.baseline_audiotrack_24
+                    MediaMetadataCompatExt.MediaType.COLLECTION -> R.drawable.baseline_library_music_24
+                    MediaMetadataCompatExt.MediaType.STREAM -> R.drawable.baseline_view_stream_24
+                }
+                GlideApp.with(holder.mImageViewSource).load(iconId).into(holder.mImageViewSource)
             }
-            GlideApp.with(holder.mImageViewSource).load(iconId).into(holder.mImageViewSource)
         }
 
         ArtworkHelper.loadArtwork(requests, description, holder.mImageViewArtwork, object : ArtworkHelper.ColorsListener {
@@ -118,19 +119,19 @@ internal class MediaItemAdapter(private val requests: GlideRequests, private val
 
     private fun sort() {
         mDataset.sortWith(Comparator { o1, o2 ->
-            o1.description.extras?.getString("index")?.compareTo(o2.description.extras?.getString("index") ?: "", ignoreCase = true) ?: 0 // .replaceAll("[^A-Z]","")
+            Utils.getIndexCharacter(o1.description.title).compareTo(Utils.getIndexCharacter(o2.description.title))
         })
     }
 
     @Synchronized
     private fun generateSections(objects: List<MediaBrowserCompat.MediaItem>) {
-        val sectionList = ArrayList<String>()
+        val sectionList = ArrayList<Char>()
         val positionForSection = ArrayList<Int>()
 
-        var currentIndex: String? = ""
+        var currentIndex = 'a'
         for ((currentCount, item) in objects.withIndex()) {
-            val index = item.description.extras?.getString("index")
-            if (index != null && currentIndex != index) {
+            val index = Utils.getIndexCharacter(item.description.title)
+            if (currentIndex != index) {
                 currentIndex = index
                 sectionList.add(index)
                 positionForSection.add(currentCount)
@@ -143,7 +144,7 @@ internal class MediaItemAdapter(private val requests: GlideRequests, private val
 
 
     override fun getSections(): Array<String> {
-        return sectionList.toTypedArray()
+        return sectionList.map { it.toString() }.toTypedArray()
     }
 
     override fun getPositionForSection(section: Int): Int {
