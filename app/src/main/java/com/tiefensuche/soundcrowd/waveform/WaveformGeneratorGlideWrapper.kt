@@ -7,19 +7,16 @@ package com.tiefensuche.soundcrowd.waveform
 import android.content.Context
 import android.graphics.Bitmap
 import android.net.Uri
-
 import com.bumptech.glide.Priority
 import com.bumptech.glide.load.DataSource
 import com.bumptech.glide.load.data.DataFetcher
 import com.ringdroid.soundfile.SoundFile
 import com.tiefensuche.soundcrowd.images.SoundCrowdGlideModule
+import com.tiefensuche.soundcrowd.extensions.WebRequests
 import com.tiefensuche.soundcrowd.utils.LogHelper
-import com.tiefensuche.soundcrowd.utils.Utils
-
 import org.json.JSONArray
 import org.json.JSONException
 import org.json.JSONObject
-
 import java.io.IOException
 
 internal class WaveformGeneratorGlideWrapper(private val context: Context, private val params: StringKey, private val width: Int, private val height: Int) : DataFetcher<Bitmap> {
@@ -29,7 +26,7 @@ internal class WaveformGeneratorGlideWrapper(private val context: Context, priva
             val key = params.key
             val jsonArray: JSONArray
             jsonArray = if (key.startsWith("http")) {
-                val jsonObject = JSONObject(Utils.fetchFromUrl(key, null))
+                val jsonObject = JSONObject(WebRequests.get(key))
                 jsonObject.getJSONArray("samples")
             } else {
                 LogHelper.d(TAG, "key=", key, "path=", Uri.parse(key).path, ", type=", context.contentResolver.getType(Uri.parse(key)))

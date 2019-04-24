@@ -67,6 +67,7 @@ abstract class ActionBarCastActivity : AppCompatActivity() {
     public override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_player)
+        initializeToolbar()
     }
 
     override fun onStart() {
@@ -133,10 +134,7 @@ abstract class ActionBarCastActivity : AppCompatActivity() {
         when {
             supportFragmentManager.backStackEntryCount > 0 -> supportFragmentManager.popBackStack()
             browseFragment?.mMediaId != MediaIDHelper.MEDIA_ID_ROOT -> {
-                supportFragmentManager.beginTransaction().setCustomAnimations(
-                        R.animator.slide_in_from_right, R.animator.slide_out_to_left,
-                        R.animator.slide_in_from_left, R.animator.slide_out_to_right)
-                        .replace(R.id.container, MediaBrowserFragment(), MediaBrowserFragment::class.java.name).commit()
+                setFragment(MediaBrowserFragment())
                 mNavigationView.setCheckedItem(R.id.navigation_allmusic)
             }
             else -> // Lastly, it will rely on the system behavior for back
@@ -154,7 +152,7 @@ abstract class ActionBarCastActivity : AppCompatActivity() {
         mToolbar.setTitle(titleId)
     }
 
-    internal fun initializeToolbar() {
+    private fun initializeToolbar() {
         mToolbar = findViewById(R.id.toolbar)
         mToolbar.inflateMenu(R.menu.main)
 
