@@ -12,7 +12,6 @@ import android.os.*
 import android.preference.PreferenceManager
 import android.support.v4.media.MediaBrowserCompat.MediaItem
 import android.support.v4.media.MediaBrowserServiceCompat
-import android.support.v4.media.MediaDescriptionCompat
 import android.support.v4.media.MediaMetadataCompat
 import android.support.v4.media.session.MediaButtonReceiver
 import android.support.v4.media.session.MediaSessionCompat
@@ -26,7 +25,6 @@ import com.tiefensuche.soundcrowd.sources.MusicProvider
 import com.tiefensuche.soundcrowd.utils.LogHelper
 import com.tiefensuche.soundcrowd.utils.MediaIDHelper.MEDIA_ID_ROOT
 import java.lang.ref.WeakReference
-import java.util.*
 
 
 /**
@@ -240,22 +238,12 @@ internal class MusicService : MediaBrowserServiceCompat(), PlaybackManager.Playb
                             LogHelper.w(TAG, e, "can not send result")
                         }
                     } else {
-                        result.sendResult(buildError("error"))
+                        result.sendResult(ArrayList())
                     }
                 }
 
                 override fun onMusicCatalogReady(error: String) {
-                    result.sendResult(buildError(error))
-                }
-
-
-                private fun buildError(error: String): List<MediaItem> {
-                    val foo = ArrayList<MediaItem>()
-                    val builder = MediaDescriptionCompat.Builder()
-                    builder.setMediaId("error")
-                    builder.setDescription(error)
-                    foo.add(MediaItem(builder.build(), -1))
-                    return foo
+                    result.sendResult(ArrayList())
                 }
             })
         }
