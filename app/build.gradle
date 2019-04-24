@@ -8,19 +8,22 @@ apply plugin: 'kotlin-kapt'
 
 android {
     buildToolsVersion '28.0.3'
+
     defaultConfig {
         applicationId 'com.tiefensuche.soundcrowd'
-        versionName "2.4.1"
+        versionName "3.0.0-test"
         compileSdkVersion 28
         minSdkVersion 16
         targetSdkVersion 28
-        versionCode 102
+        versionCode 1
         proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
     }
+
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
     }
+
     buildTypes {
         debug {
             debuggable true
@@ -29,6 +32,7 @@ android {
             minifyEnabled false
             useProguard false
         }
+
         release {
             debuggable false
             versionNameSuffix '-release'
@@ -37,6 +41,7 @@ android {
             useProguard false
         }
     }
+
     lintOptions {
         abortOnError false
     }
@@ -60,8 +65,8 @@ dependencies {
     implementation 'com.github.apl-devs:appintro:v4.2.3'
     implementation 'com.github.amlcurran.showcaseview:library:5.4.3'
     implementation 'com.github.myinnos:AlphabetIndex-Fast-Scroll-RecyclerView:1.0.92'
-    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
 }
+
 repositories {
     mavenCentral()
 }
