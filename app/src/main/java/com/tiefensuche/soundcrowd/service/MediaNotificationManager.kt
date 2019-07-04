@@ -304,12 +304,12 @@ constructor(private val mService: MusicService) : BroadcastReceiver() {
             mService.stopForeground(true)
             return
         }
-        mPlaybackState?.state.let {
-            if (it == PlaybackStateCompat.STATE_PLAYING && it >= 0) {
+        mPlaybackState?.let {
+            if (it.state == PlaybackStateCompat.STATE_PLAYING && it.position >= 0) {
                 LogHelper.d(TAG, "updateNotificationPlaybackState. updating playback position to ",
-                        (System.currentTimeMillis() - it) / 1000, " seconds")
+                        (System.currentTimeMillis() - it.position) / 1000, " seconds")
                 builder
-                        .setWhen(System.currentTimeMillis() - it)
+                        .setWhen(System.currentTimeMillis() - it.position)
                         .setShowWhen(true)
                         .setUsesChronometer(true)
             } else {
@@ -321,7 +321,7 @@ constructor(private val mService: MusicService) : BroadcastReceiver() {
             }
 
             // Make sure that the notification can be dismissed by the user when we are not playing:
-            builder.setOngoing(it == PlaybackStateCompat.STATE_PLAYING)
+            builder.setOngoing(it.state == PlaybackStateCompat.STATE_PLAYING)
         }
     }
 
