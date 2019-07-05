@@ -16,7 +16,7 @@
     <dimen name="nav_header_height">160dp</dimen>
 
     <!-- media browser listview -->
-    <dimen name="media_item_height">160dp</dimen>
+    <dimen name="media_item_height">200dp</dimen>
     <!-- Margins for the ShowcaseView button -->
 
     <!-- Margins for full screen activity-->

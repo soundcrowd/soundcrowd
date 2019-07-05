@@ -92,10 +92,7 @@ internal class MediaItemAdapter(private val requests: GlideRequests, private val
     }
 
     private fun setColors(holder: ViewHolder, vibrant: Int, text: Int) {
-        holder.mTitleView.setBackgroundColor(vibrant)
-        holder.mArtistView.setBackgroundColor(vibrant)
-        holder.mDuration.setBackgroundColor(vibrant)
-        holder.mImageViewSource.setBackgroundColor(vibrant)
+        holder.mBackground.setBackgroundColor(vibrant)
         holder.mImageViewSource.setColorFilter(text)
         holder.mTitleView.setTextColor(text)
         holder.mArtistView.setTextColor(text)
@@ -238,6 +235,7 @@ internal class MediaItemAdapter(private val requests: GlideRequests, private val
 
     internal inner class ViewHolder internal constructor(holder: View) : RecyclerView.ViewHolder(holder) {
 
+        val mBackground: ImageView = holder.findViewById(R.id.background)
         val mImageViewArtwork: ImageView = holder.findViewById(R.id.album_art)
         val mTitleView: TextView = holder.findViewById(R.id.title)
         val mArtistView: TextView = holder.findViewById(R.id.description)
