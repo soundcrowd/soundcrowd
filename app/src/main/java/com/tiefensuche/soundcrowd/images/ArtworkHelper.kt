@@ -37,7 +37,8 @@ internal object ArtworkHelper {
         }
         requests.clear(view)
         if (listener != null) {
-            requests.`as`(PaletteBitmap::class.java).load(description).placeholder(getPlaceholder(view.context, description)).thumbnail(0.1f).apply(RequestOptions.centerCropTransform()).into(object : ImageViewTarget<PaletteBitmap>(view) {
+            val placeholder = getPlaceholder(view.context, description)
+            requests.`as`(PaletteBitmap::class.java).load(description).placeholder(placeholder).thumbnail(0.1f).apply(RequestOptions.centerCropTransform()).into(object : ImageViewTarget<PaletteBitmap>(view) {
                 public override fun setResource(resource: PaletteBitmap?) {
                     if (resource != null) {
                         view.setImageBitmap(resource.bitmap)
@@ -51,7 +52,9 @@ internal object ArtworkHelper {
                         }
                         listener.onColorsReady(result)
                     } else {
-                        listener.onError()
+                        // in case the image can not be loaded, set the colors of the placeholder.
+                        // the placeholder will remain as the image, so no need to set it again.
+                        listener.onColorsReady(intArrayOf(placeholder.color, Color.WHITE))
                     }
                 }
             })
