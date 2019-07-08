@@ -8,6 +8,7 @@ package com.tiefensuche.soundcrowd.service
 import android.app.Service
 import android.content.Intent
 import android.content.SharedPreferences
+import android.net.Uri
 import android.os.*
 import android.preference.PreferenceManager
 import android.support.v4.media.MediaBrowserCompat.MediaItem
@@ -17,7 +18,7 @@ import android.support.v4.media.session.MediaButtonReceiver
 import android.support.v4.media.session.MediaSessionCompat
 import android.support.v4.media.session.PlaybackStateCompat
 import com.tiefensuche.soundcrowd.R
-import com.tiefensuche.soundcrowd.database.DatabaseHelper
+import com.tiefensuche.soundcrowd.database.Database
 import com.tiefensuche.soundcrowd.playback.LocalPlayback
 import com.tiefensuche.soundcrowd.playback.PlaybackManager
 import com.tiefensuche.soundcrowd.playback.QueueManager
@@ -87,7 +88,7 @@ internal class MusicService : MediaBrowserServiceCompat(), PlaybackManager.Playb
     private lateinit var mSession: MediaSessionCompat
     private lateinit var mMediaNotificationManager: MediaNotificationManager
     private lateinit var mQueueManager: QueueManager
-    private lateinit var databaseHelper: DatabaseHelper
+    private lateinit var databaseHelper: Database
     private lateinit var preferences: SharedPreferences
 
     /*
@@ -99,7 +100,7 @@ internal class MusicService : MediaBrowserServiceCompat(), PlaybackManager.Playb
         LogHelper.d(TAG, "create service")
 
         preferences = PreferenceManager.getDefaultSharedPreferences(this)
-        databaseHelper = DatabaseHelper(this)
+        databaseHelper = Database(this)
 
         mMusicProvider = MusicProvider(this)
 
@@ -141,10 +142,6 @@ internal class MusicService : MediaBrowserServiceCompat(), PlaybackManager.Playb
         } catch (e: RemoteException) {
             throw IllegalStateException("Could not create a MediaNotificationManager", e)
         }
-
-        if (started && mQueueManager.currentMusic == null) {
-//            mPlaybackManager.loadLastTrack()
-        }
     }
 
     /**
@@ -160,6 +157,17 @@ internal class MusicService : MediaBrowserServiceCompat(), PlaybackManager.Playb
 
             if (ACTION_CMD == action && CMD_PAUSE == command) {
                 mPlaybackManager.handlePauseRequest()
+            } else if (CMD_RESOLVE == command) {
+                try {
+                    val uri = startIntent.getParcelableExtra<Uri>("url")
+                    val mediaId = mMusicProvider.resolve(uri)
+                    if (mediaId != null) {
+                        mPlaybackManager.setCurrentMediaId(mediaId)
+                        mPlaybackManager.handlePlayRequest()
+                    }
+                } catch (e: Exception) {
+                    LogHelper.e(TAG, e, "error while resolving url")
+                }
             } else {
                 // Try to handle the intent as a media button event wrapped by MediaButtonReceiver
                 MediaButtonReceiver.handleIntent(mSession, startIntent)
@@ -220,12 +228,12 @@ internal class MusicService : MediaBrowserServiceCompat(), PlaybackManager.Playb
             // To make the app more responsive, fetch and cache catalog information now.
             // This can help improve the response time in the method
             // {@link #onLoadChildren(String, Result<List<MediaItem>>) onLoadChildren()}.
-            mMusicProvider.retrieveMediaAsync(parentMediaId, options, object : MusicProvider.Callback {
+            mMusicProvider.retrieveMediaAsync(parentMediaId, options, object : MusicProvider.Callback<Any?> {
 
                 override fun onMusicCatalogReady(success: Boolean) {
                     if (success) {
                         LogHelper.d(TAG, "getChildren parentMediaId=", parentMediaId)
-                        if (mQueueManager.currentMusic == null) {
+                        if (mSession.controller.metadata == null) {
                             try {
                                 mPlaybackManager.loadLastTrack()
                             } catch (e: IllegalArgumentException) {
@@ -326,11 +334,11 @@ internal class MusicService : MediaBrowserServiceCompat(), PlaybackManager.Playb
         // A value of a CMD_NAME key in the extras of the incoming Intent that
         // indicates that the music playback should be paused (see {@link #onStartCommand})
         const val CMD_PAUSE = "CMD_PAUSE"
+        const val CMD_RESOLVE = "CMD_RESOLVE"
 
         private val TAG = LogHelper.makeLogTag(MusicService::class.java)
         // Delay stopSelf by using a handler.
         private const val STOP_DELAY = 600000
         private lateinit var mMusicProvider: MusicProvider
-        private var started = false
     }
 }
