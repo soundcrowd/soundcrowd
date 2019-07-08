@@ -5,6 +5,7 @@
 
 <resources>
     <string name="search_title">Suchen</string>
+    <string name="preferences_title">Einstellungen</string>
     <string name="no_media">Keine Musikdateien gefunden.</string>
     <string name="no_cue_points">Drücke den Stern bei deinen Lieblingsstellen deiner Musik, um sie hier aufzulisten.</string>
     <string name="permission">Berechtigung zum Lesen des Speichers wird benötigt, um die gesamte lokale Musik zu laden.</string>

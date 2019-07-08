@@ -4,10 +4,12 @@
 package com.tiefensuche.soundcrowd.ui
 
 import android.content.res.Configuration
+import android.graphics.drawable.BitmapDrawable
 import android.os.Bundle
 import android.support.design.widget.NavigationView
 import android.support.v4.app.Fragment
 import android.support.v4.app.FragmentManager
+import android.support.v4.media.MediaBrowserCompat
 import android.support.v4.view.GravityCompat
 import android.support.v4.widget.DrawerLayout
 import android.support.v7.app.ActionBarDrawerToggle
@@ -18,9 +20,11 @@ import android.view.MenuItem
 import android.view.View
 import com.sothree.slidinguppanel.SlidingUpPanelLayout
 import com.tiefensuche.soundcrowd.R
+import com.tiefensuche.soundcrowd.extensions.MediaMetadataCompatExt
 import com.tiefensuche.soundcrowd.ui.preferences.EqualizerFragment
-import com.tiefensuche.soundcrowd.utils.LogHelper
+import com.tiefensuche.soundcrowd.ui.preferences.PreferenceFragment
 import com.tiefensuche.soundcrowd.utils.MediaIDHelper
+import org.json.JSONArray
 
 
 /**
@@ -41,7 +45,11 @@ abstract class ActionBarCastActivity : AppCompatActivity() {
     private lateinit var mDrawerLayout: DrawerLayout
     internal lateinit var slidingUpPanelLayout: SlidingUpPanelLayout
     private lateinit var mDrawerToggle: ActionBarDrawerToggle
+
+    internal var plugins: List<MediaBrowserCompat.MediaItem> = ArrayList()
+
     private val mBackStackChangedListener = FragmentManager.OnBackStackChangedListener { this.updateDrawerToggle() }
+
     private val mDrawerListener = object : DrawerLayout.DrawerListener {
         override fun onDrawerClosed(drawerView: View) {
             mDrawerToggle.onDrawerClosed(drawerView)
@@ -133,7 +141,7 @@ abstract class ActionBarCastActivity : AppCompatActivity() {
         // Otherwise, it may return to the previous fragment stack
         when {
             supportFragmentManager.backStackEntryCount > 0 -> supportFragmentManager.popBackStack()
-            browseFragment?.mMediaId != MediaIDHelper.MEDIA_ID_ROOT -> {
+            browseFragment?.mediaId != MediaIDHelper.MEDIA_ID_ROOT -> {
                 setFragment(MediaBrowserFragment())
                 mNavigationView.setCheckedItem(R.id.navigation_allmusic)
             }
@@ -172,24 +180,40 @@ abstract class ActionBarCastActivity : AppCompatActivity() {
     }
 
     private fun populateDrawerItems(navigationView: NavigationView) {
+
         navigationView.setNavigationItemSelectedListener(fun(menuItem: MenuItem): Boolean {
+            // if it is the current fragment already, not need to reload
             if (menuItem.isChecked) {
                 mDrawerLayout.closeDrawers()
                 return true
             }
+
             supportFragmentManager.popBackStack()
-            menuItem.isChecked = true
 
             when (menuItem.itemId) {
                 R.id.navigation_allmusic -> setFragment(MediaBrowserFragment())
                 R.id.navigation_cue_points -> setFragment(CueListFragment())
                 R.id.navigation_equalizer -> setFragment(EqualizerFragment())
-                R.id.navigation_addons -> {
+                R.id.navigation_preferences -> {
+                    val fragment = PreferenceFragment()
+                    val prefs = HashMap<String, JSONArray>()
+                    for (plugin in plugins) {
+                        plugin.description.extras?.getString(MediaMetadataCompatExt.METADATA_KEY_PREFERENCES)?.let { json ->
+                            prefs.put(plugin.description.subtitle.toString(), JSONArray(json))
+                        }
+                    }
+                    fragment.prefs = prefs
+                    setFragment(fragment)
+                }
+                else -> { // handle as addon category
                     val fragment = MediaBrowserFragment()
-                    fragment.mMediaId = MediaIDHelper.MEDIA_ID_PLUGINS
+                    val args = Bundle()
+                    args.putParcelable(MediaBrowserFragment.ARG_MEDIA_DESCRIPTION, plugins[menuItem.itemId].description)
+                    fragment.arguments = args
                     setFragment(fragment)
                 }
             }
+
             if (slidingUpPanelLayout.panelState == SlidingUpPanelLayout.PanelState.EXPANDED) {
                 slidingUpPanelLayout.panelState = SlidingUpPanelLayout.PanelState.COLLAPSED
             }
@@ -199,9 +223,7 @@ abstract class ActionBarCastActivity : AppCompatActivity() {
     }
 
     private fun setFragment(fragment: Fragment) {
-        supportFragmentManager.beginTransaction().setCustomAnimations(
-                R.animator.slide_in_from_right, R.animator.slide_out_to_left,
-                R.animator.slide_in_from_left, R.animator.slide_out_to_right).replace(R.id.container, fragment, fragment::class.java.name).commit()
+        supportFragmentManager.beginTransaction().replace(R.id.container, fragment, fragment::class.java.name).commit()
     }
 
     private fun updateDrawerToggle() {
@@ -217,8 +239,17 @@ abstract class ActionBarCastActivity : AppCompatActivity() {
         }
     }
 
-    companion object {
+    internal fun updatePlugins(plugins: List<MediaBrowserCompat.MediaItem>) {
+        this.plugins = plugins
 
-        private val TAG = LogHelper.makeLogTag(ActionBarCastActivity::class.java)
+        // add addon category
+        val addonCategory = mNavigationView.menu.addSubMenu("Addons")
+
+        // add the categories of all addons
+        for ((i, plugin) in plugins.withIndex()) {
+            val item = addonCategory.add(0, i, 0, plugin.description.title)
+            item.isCheckable = true
+            item.icon = BitmapDrawable(resources, plugin.description.iconBitmap)
+        }
     }
 }

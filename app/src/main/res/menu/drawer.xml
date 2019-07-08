@@ -17,8 +17,8 @@
             android:icon="@drawable/ic_equalizer_white_36dp"
             android:title="@string/equalizer_title" />
         <item
-            android:id="@+id/navigation_addons"
-            android:icon="@android:drawable/stat_notify_sdcard"
-            android:title="@string/addons_title" />
+            android:id="@+id/navigation_preferences"
+            android:icon="@android:drawable/ic_menu_preferences"
+            android:title="@string/preferences_title" />
     </group>
 </menu>

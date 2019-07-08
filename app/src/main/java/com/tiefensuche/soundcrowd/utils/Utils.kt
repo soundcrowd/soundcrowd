@@ -58,7 +58,9 @@ internal object Utils {
         if (metadata.getString(MediaMetadataCompatExt.METADATA_KEY_TYPE) != null) {
             bundle.putString(MediaMetadataCompatExt.METADATA_KEY_TYPE, metadata.getString(MediaMetadataCompatExt.METADATA_KEY_TYPE))
         }
-
+        if(metadata.getString(MediaMetadataCompatExt.METADATA_KEY_PREFERENCES) != null) {
+            bundle.putString(MediaMetadataCompatExt.METADATA_KEY_PREFERENCES, metadata.getString(MediaMetadataCompatExt.METADATA_KEY_PREFERENCES))
+        }
 
         bob.setExtras(bundle)
         return bob.build()
@@ -104,7 +106,7 @@ internal object Utils {
             themeColor = ta.getColor(0, defaultColor)
             ta.recycle()
         } catch (e: PackageManager.NameNotFoundException) {
-            e.printStackTrace()
+            // ignore
         }
 
         return themeColor

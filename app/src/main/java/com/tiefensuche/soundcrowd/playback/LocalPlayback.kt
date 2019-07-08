@@ -13,6 +13,7 @@ import android.media.MediaPlayer.*
 import android.net.Uri
 import android.net.wifi.WifiManager
 import android.os.PowerManager
+import android.support.v4.media.MediaMetadataCompat
 import android.support.v4.media.session.MediaSessionCompat.QueueItem
 import android.support.v4.media.session.PlaybackStateCompat
 import android.text.TextUtils
@@ -22,6 +23,7 @@ import com.tiefensuche.soundcrowd.plugins.PluginLoader
 import com.tiefensuche.soundcrowd.service.MusicService
 import com.tiefensuche.soundcrowd.sources.MusicProvider
 import com.tiefensuche.soundcrowd.utils.LogHelper
+import org.json.JSONObject
 import java.io.IOException
 
 /**
@@ -57,8 +59,8 @@ internal class LocalPlayback(private val mContext: Context, private val mMusicPr
     private var mAudioFocus = AUDIO_NO_FOCUS_NO_DUCK
 
     private var urlResolver: UrlResolver = object: UrlResolver{
-        override fun getMediaUrl(url: String, callback: Callback<String>) {
-            callback.onResult(url)
+        override fun getMediaUrl(metadata: JSONObject, callback: Callback<JSONObject>) {
+            callback.onResult(metadata)
         }
     }
 
@@ -74,7 +76,9 @@ internal class LocalPlayback(private val mContext: Context, private val mMusicPr
     init {
         // Create the Wifi lock (this does not acquire the lock, this just creates it)
         this.state = PlaybackStateCompat.STATE_NONE
-        PluginLoader.loadPlugin<UrlResolver>(mContext, "com.tiefensuche.soundcrowd.plugins.cache", "Extension")?.let { this.urlResolver = it }
+        PluginLoader.loadPlugin<UrlResolver>(mContext,
+                "com.tiefensuche.soundcrowd.plugins.cache",
+                "Extension")?.let { this.urlResolver = it }
     }
 
     override fun start() {}
@@ -122,17 +126,17 @@ internal class LocalPlayback(private val mContext: Context, private val mMusicPr
             state = PlaybackStateCompat.STATE_STOPPED
             relaxResources(false) // release everything except MediaPlayer
 
-            mMusicProvider.resolveMusic(mediaId, object: Callback<String> {
-                override fun onResult(result: String) {
-                    urlResolver.getMediaUrl(result, object: Callback<String> {
-                        override fun onResult(result: String) {
+            mMusicProvider.resolveMusic(mediaId, object: Callback<JSONObject> {
+                override fun onResult(result: JSONObject) {
+                    urlResolver.getMediaUrl(result, object: Callback<JSONObject> {
+                        override fun onResult(result: JSONObject) {
                             try {
                                 createMediaPlayerIfNeeded()
 
                                 mMediaPlayer?.let {
                                     state = PlaybackStateCompat.STATE_BUFFERING
 
-                                    it.setDataSource(mContext, Uri.parse(result))
+                                    it.setDataSource(mContext, Uri.parse(result.getString(MediaMetadataCompat.METADATA_KEY_MEDIA_URI)))
 
                                     // Starts preparing the media player in the background. When
                                     // it's done, it will call our OnPreparedListener (that is,

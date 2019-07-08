@@ -22,6 +22,7 @@
     <string name="search_title">Search</string>
     <string name="equalizer_title" translatable="false">Equalizer</string>
     <string name="addons_title" translatable="false">Addons</string>
+    <string name="preferences_title">Preferences</string>
     <string name="no_media">No music files found.</string>
     <string name="no_cue_points">No Cue Points found. Hit the star button for your favorite positions in your tracks to list them here.</string>
     <string name="permission">Need permission to read your storage to retrieve all your music.</string>
