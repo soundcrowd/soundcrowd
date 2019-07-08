@@ -9,6 +9,7 @@ package com.tiefensuche.soundcrowd.plugins
 import android.content.Context
 import com.tiefensuche.soundcrowd.utils.LogHelper
 import org.json.JSONArray
+import org.json.JSONObject
 import java.lang.reflect.InvocationHandler
 import java.lang.reflect.Method
 import java.lang.reflect.Proxy
@@ -26,7 +27,7 @@ internal object PluginLoader {
             // Load the plugin class in the package
             val pluginClass = pluginContext.classLoader.loadClass("$packageName.$className")
             // Instantiate the plugin from the class
-            val instance = pluginClass.getConstructor(Context::class.java).newInstance(context)
+            val instance = pluginClass.getConstructor(Context::class.java, Context::class.java).newInstance(context, pluginContext)
 
             // Load the shared callback class from the plugin package with the foreign context
             val callbackClass = pluginContext.classLoader.loadClass("com.tiefensuche.soundcrowd.plugins.Callback")
@@ -61,10 +62,13 @@ internal object PluginLoader {
                                 override fun invoke(o: Any?, method: Method?, objects: Array<out Any>?) {
                                     // simply invoke in sole callback method
                                     objects?.get(0).let {
-                                        if (it is JSONArray) {
-                                            (clb as Callback<JSONArray>).onResult(it)
-                                        } else if (it is String) {
-                                            (clb as Callback<String>).onResult(it)
+                                        // Could not find a better working solution yet
+                                        // to support arbitrary types
+                                        when (it) {
+                                            is String -> (clb as Callback<String>).onResult(it)
+                                            is JSONObject -> (clb as Callback<JSONObject>).onResult(it)
+                                            is JSONArray -> (clb as Callback<JSONArray>).onResult(it)
+                                            else -> throw RuntimeException("unknown callback type")
                                         }
                                     }
                                 }

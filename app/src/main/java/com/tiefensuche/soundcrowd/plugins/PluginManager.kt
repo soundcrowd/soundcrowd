@@ -5,14 +5,16 @@
 package com.tiefensuche.soundcrowd.plugins
 
 import android.content.Context
-import android.graphics.Bitmap
-import android.graphics.BitmapFactory
 import java.util.*
 
 internal class PluginManager(private val context: Context) {
 
+    companion object {
+
+        private const val PLUGIN_PACKAGE_PREFIX = "com.tiefensuche.soundcrowd.plugins"
+    }
+
     val plugins = ArrayList<IPlugin>()
-    var icons: MutableMap<String, Bitmap> = HashMap()
 
     internal fun init() {
 
@@ -21,15 +23,7 @@ internal class PluginManager(private val context: Context) {
         for (pluginPackage in pluginPackages) {
             PluginLoader.loadPlugin(context, pluginPackage)?.let { plugin ->
                 plugins.add(plugin)
-                PackageUtil.getPackageContext(context, pluginPackage)?.let {
-                    icons[plugin.name()] = BitmapFactory.decodeResource(it.resources, it.resources.getIdentifier("plugin_icon", "drawable", pluginPackage))
-                }
             }
         }
-    }
-
-    companion object {
-
-        private const val PLUGIN_PACKAGE_PREFIX = "com.tiefensuche.soundcrowd.plugins"
     }
 }
