@@ -21,7 +21,6 @@ internal class SplashActivity : AppCompatActivity() {
 
         val prefs = PreferenceManager.getDefaultSharedPreferences(this)
         if (prefs.getBoolean("first_start", true)) {
-            // INTRO SCREEN
             startActivity(Intent(this, IntroActivity::class.java))
         } else {
             startActivity(Intent(this, MusicPlayerActivity::class.java))

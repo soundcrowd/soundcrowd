@@ -10,11 +10,11 @@ import android.database.Cursor
 import android.database.SQLException
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteException
-import android.database.sqlite.SQLiteOpenHelper
 import android.support.v4.media.MediaMetadataCompat
+import android.util.Log
 import com.tiefensuche.soundcrowd.extensions.MediaMetadataCompatExt
 import com.tiefensuche.soundcrowd.sources.LocalSource
-import com.tiefensuche.soundcrowd.utils.LogHelper
+import com.tiefensuche.soundcrowd.utils.MediaIDHelper
 import com.tiefensuche.soundcrowd.waveform.CuePoint
 import java.util.*
 
@@ -23,7 +23,24 @@ import java.util.*
  *
  * Created by tiefensuche on 23.09.16.
  */
-internal class DatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME, null, DATABASE_VERSION) {
+internal class Database(context: Context) : MetadataDatabase(context) {
+
+    companion object {
+        private var TAG = Database::class.simpleName
+
+        private const val DATABASE_MEDIA_ITEM_CUE_POINTS_NAME = "MediaItemStars"
+        private const val DATABASE_MEDIA_ITEMS_CUE_POINTS_CREATE = "create table if not exists $DATABASE_MEDIA_ITEM_CUE_POINTS_NAME (media_id text not null, position int not null, description text, CONSTRAINT pk_media_item_star PRIMARY KEY (media_id,position));"
+
+        private const val DATABASE_MEDIA_ITEMS_METADATA_NAME = "MediaItemsMetadata"
+        private const val DATABASE_MEDIA_ITEMS_METADATA_CREATE = "create table if not exists $DATABASE_MEDIA_ITEMS_METADATA_NAME (id text primary key, position long, album_art_url text, vibrant_color int, text_color int)"
+
+        lateinit var instance: Database
+    }
+
+    init {
+        writableDatabase.execSQL(DATABASE_MEDIA_ITEMS_CUE_POINTS_CREATE)
+        instance = this
+    }
 
     internal val cuePointItems: MutableList<MediaMetadataCompat>
         get() {
@@ -43,35 +60,11 @@ internal class DatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATA
                 }
                 cursor.close()
             } catch (e: SQLException) {
-                LogHelper.e(TAG, e, "error while querying cue points")
+                Log.e(TAG, "error while querying cue points", e)
             }
 
             return items
         }
-
-    init {
-        writableDatabase.execSQL(DATABASE_MEDIA_ITEMS_CREATE)
-        writableDatabase.execSQL(DATABASE_MEDIA_ITEMS_CUE_POINTS_CREATE)
-        writableDatabase.execSQL(DATABASE_MEDIA_ITEMS_METADATA_CREATE)
-        instance = this
-    }
-
-    private fun addMediaItem(item: MediaMetadataCompat) {
-        val values = ContentValues()
-        values.put("id", item.getString(MediaMetadataCompat.METADATA_KEY_MEDIA_ID))
-        values.put("source", item.getString(MediaMetadataCompat.METADATA_KEY_MEDIA_URI))
-        values.put("artist", item.getString(MediaMetadataCompat.METADATA_KEY_ARTIST))
-        values.put("album_art_url", item.getString(MediaMetadataCompat.METADATA_KEY_ALBUM_ART_URI))
-        values.put("title", item.getString(MediaMetadataCompat.METADATA_KEY_TITLE))
-        values.put("waveform_url", item.getString(MediaMetadataCompatExt.METADATA_KEY_WAVEFORM_URL))
-        values.put("duration", item.getLong(MediaMetadataCompat.METADATA_KEY_DURATION))
-        try {
-            writableDatabase.insertOrThrow(DATABASE_MEDIA_ITEMS_NAME, null, values)
-        } catch (e: SQLException) {
-            LogHelper.d(TAG, e, "value=", values.toString())
-        }
-
-    }
 
     internal fun getLastPosition(mediaId: String?): Long {
         var result: Long = 0
@@ -85,26 +78,29 @@ internal class DatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATA
             }
             cursor.close()
         } catch (e: SQLException) {
-            LogHelper.e(TAG, e, "error while query last position")
+            Log.e(TAG, "error while query last position", e)
         }
 
         return result
     }
 
-    internal fun updatePosition(mediaId: String, position: Int) {
-        val values = ContentValues()
-        values.put("id", mediaId)
-        values.put("position", position)
-        try {
-            writableDatabase.insertOrThrow(DATABASE_MEDIA_ITEMS_METADATA_NAME, null, values)
-        } catch (e: SQLException) {
-            values.remove("id")
+    internal fun updatePosition(metadata: MediaMetadataCompat, position: Int) {
+        addMediaItem(metadata)
+        metadata.description.mediaId?.let {
+            val musicId = MediaIDHelper.extractMusicIDFromMediaID(it)
+            val values = ContentValues()
+            values.put("id", musicId)
+            values.put("position", position)
             try {
-                writableDatabase.update(DATABASE_MEDIA_ITEMS_METADATA_NAME, values, "id=?", arrayOf(mediaId))
-            } catch (e1: SQLiteException) {
-                LogHelper.e(TAG, e1, "error while updating position")
+                writableDatabase.insertOrThrow(DATABASE_MEDIA_ITEMS_METADATA_NAME, null, values)
+            } catch (e: SQLException) {
+                values.remove("id")
+                try {
+                    writableDatabase.update(DATABASE_MEDIA_ITEMS_METADATA_NAME, values, "id=?", arrayOf(musicId))
+                } catch (e1: SQLiteException) {
+                    Log.e(TAG, "error while updating position", e1)
+                }
             }
-
         }
     }
 
@@ -122,26 +118,25 @@ internal class DatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATA
                 .build()
     }
 
-    internal fun addCuePoint(metadata: MediaMetadataCompat, position: Int) {
+    internal fun addCuePoint(metadata: MediaMetadataCompat, position: Int, description: String?) {
         addMediaItem(metadata)
         val values = ContentValues()
         values.put("media_id", metadata.description.mediaId)
         values.put("position", position)
+        values.put("description", description)
         try {
             writableDatabase.insertOrThrow(DATABASE_MEDIA_ITEM_CUE_POINTS_NAME, null, values)
         } catch (e: SQLException) {
-            LogHelper.e(TAG, e, "error while adding cue point")
+            Log.e(TAG, "error while adding cue point", e)
         }
-
     }
 
     internal fun deleteCuePoint(mediaId: String, position: Int) {
         try {
-            writableDatabase.delete(DATABASE_MEDIA_ITEM_CUE_POINTS_NAME, "media_id=? AND position=?", arrayOf(mediaId, Integer.toString(position)))
+            writableDatabase.delete(DATABASE_MEDIA_ITEM_CUE_POINTS_NAME, "media_id=? AND position=?", arrayOf(mediaId, position.toString()))
         } catch (e: SQLException) {
-            LogHelper.e(TAG, e, "error while removing cue point")
+            Log.e(TAG, "error while removing cue point", e)
         }
-
     }
 
     internal fun getCuePoints(mediaId: String?): Collection<CuePoint> {
@@ -156,8 +151,8 @@ internal class DatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATA
                 result.add(cuePoint)
             }
             cursor.close()
-        } catch (e: SQLException) {
-            LogHelper.e(TAG, e, "error while querying cue points")
+        } catch (e: Exception) {
+            Log.e(TAG, "error while querying cue points", e)
         }
 
         return result
@@ -167,36 +162,24 @@ internal class DatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATA
         val values = ContentValues()
         values.put("description", text)
         try {
-            writableDatabase.update(DATABASE_MEDIA_ITEM_CUE_POINTS_NAME, values, "media_id=? AND position=?", arrayOf(mediaId, Integer.toString(position)))
+            writableDatabase.update(DATABASE_MEDIA_ITEM_CUE_POINTS_NAME, values, "media_id=? AND position=?", arrayOf(mediaId, position.toString()))
         } catch (e: SQLException) {
-            LogHelper.e(TAG, e, "error while setting description")
+            Log.e(TAG, "error while setting description", e)
         }
-
     }
 
     override fun onCreate(sqLiteDatabase: SQLiteDatabase) {
-        sqLiteDatabase.execSQL(DATABASE_MEDIA_ITEMS_CREATE)
+        super.onCreate(sqLiteDatabase)
         sqLiteDatabase.execSQL(DATABASE_MEDIA_ITEMS_CUE_POINTS_CREATE)
         sqLiteDatabase.execSQL(DATABASE_MEDIA_ITEMS_METADATA_CREATE)
     }
 
     override fun onUpgrade(sqLiteDatabase: SQLiteDatabase, i: Int, i1: Int) {
-        // initial schema is up-to-date
-    }
-
-    companion object {
-
-        private val TAG = LogHelper.makeLogTag(DatabaseHelper::class.java)
-        private const val DATABASE_NAME = "SoundCrowd"
-        private const val DATABASE_VERSION = 1
-        private const val DATABASE_MEDIA_ITEMS_NAME = "MediaItems"
-        private const val DATABASE_MEDIA_ITEM_CUE_POINTS_NAME = "MediaItemCuePoints"
-        private const val DATABASE_MEDIA_ITEMS_METADATA_NAME = "MediaItemsMetadata"
-
-        private const val DATABASE_MEDIA_ITEMS_CREATE = "create table if not exists $DATABASE_MEDIA_ITEMS_NAME (id text primary key, artist text not null, title text not null, duration long not null, source text not null unique, download text unique, album_art_url text not null, waveform_url text);"
-        private const val DATABASE_MEDIA_ITEMS_CUE_POINTS_CREATE = "create table if not exists $DATABASE_MEDIA_ITEM_CUE_POINTS_NAME (media_id text not null, position int not null, description text, CONSTRAINT pk_media_item_star PRIMARY KEY (media_id,position));"
-        private const val DATABASE_MEDIA_ITEMS_METADATA_CREATE = "create table if not exists $DATABASE_MEDIA_ITEMS_METADATA_NAME (id text primary key, position long, album_art_url text, vibrant_color int, text_color int)"
-
-        lateinit var instance: DatabaseHelper
+        when (i) {
+            1 -> {
+                sqLiteDatabase.execSQL("ALTER TABLE $DATABASE_MEDIA_ITEMS_METADATA_NAME ADD COLUMN vibrant_color int")
+                sqLiteDatabase.execSQL("ALTER TABLE $DATABASE_MEDIA_ITEMS_METADATA_NAME ADD COLUMN text_color int")
+            }
+        }
     }
 }

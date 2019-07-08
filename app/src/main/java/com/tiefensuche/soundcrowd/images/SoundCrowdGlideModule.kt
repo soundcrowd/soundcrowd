@@ -39,7 +39,6 @@ internal class SoundCrowdGlideModule : AppGlideModule() {
     }
 
     companion object {
-
         var barWidth: Int = 0
         var barGap: Int = 0
         var bottomBorder: Int = 0

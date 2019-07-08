@@ -6,6 +6,7 @@ package com.tiefensuche.soundcrowd.ui
 import android.animation.ArgbEvaluator
 import android.animation.ValueAnimator
 import android.content.Intent
+import android.graphics.Color
 import android.graphics.Point
 import android.graphics.PorterDuff
 import android.graphics.drawable.Drawable
@@ -17,35 +18,38 @@ import android.support.v4.app.Fragment
 import android.support.v4.content.ContextCompat
 import android.support.v4.media.MediaDescriptionCompat
 import android.support.v4.media.MediaMetadataCompat
+import android.support.v4.media.RatingCompat
 import android.support.v4.media.session.MediaControllerCompat
 import android.support.v4.media.session.PlaybackStateCompat
 import android.text.format.DateUtils
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
-import android.view.View.INVISIBLE
-import android.view.View.VISIBLE
+import android.view.View.*
 import android.view.ViewGroup
 import android.widget.*
 import com.sothree.slidinguppanel.SlidingUpPanelLayout
 import com.tiefensuche.soundcrowd.R
-import com.tiefensuche.soundcrowd.database.DatabaseHelper
+import com.tiefensuche.soundcrowd.database.Database
+import com.tiefensuche.soundcrowd.extensions.MediaMetadataCompatExt
 import com.tiefensuche.soundcrowd.images.ArtworkHelper
 import com.tiefensuche.soundcrowd.images.GlideApp
 import com.tiefensuche.soundcrowd.images.GlideRequests
 import com.tiefensuche.soundcrowd.ui.intro.ShowcaseViewManager
-import com.tiefensuche.soundcrowd.utils.LogHelper
 import com.tiefensuche.soundcrowd.utils.Utils
 import com.tiefensuche.soundcrowd.waveform.WaveformHandler
 import com.tiefensuche.soundcrowd.waveform.WaveformView
 import java.util.concurrent.Executors
 import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.TimeUnit
+import kotlin.math.roundToInt
 
 /**
  * A full screen player that shows the current playing music with a background image
  * depicting the album art. The activity also has controls to seek/pause/play the audio.
  */
 internal class FullScreenPlayerFragment : Fragment() {
+
     private val mHandler = Handler()
     private val mExecutorService = Executors.newSingleThreadScheduledExecutor()
 
@@ -58,6 +62,7 @@ internal class FullScreenPlayerFragment : Fragment() {
     private lateinit var requests: GlideRequests
     private lateinit var mTitle: TextView
     private lateinit var mSubtitle: TextView
+    private lateinit var mDescription: TextView
     private lateinit var mAlbumArt: ImageView
     private lateinit var mPlayPauseSmall: ImageButton
     private lateinit var mSkipPrev: ImageView
@@ -73,6 +78,8 @@ internal class FullScreenPlayerFragment : Fragment() {
     private lateinit var mLoading: ProgressBar
     private var mPauseDrawable: Drawable? = null
     private var mPlayDrawable: Drawable? = null
+    private lateinit var mShare: ImageView
+    private lateinit var mLike: ImageView
     private lateinit var mBackgroundImage: ImageView
     private lateinit var mWaveformHandler: WaveformHandler
 
@@ -83,36 +90,35 @@ internal class FullScreenPlayerFragment : Fragment() {
     private var mScheduleFuture: ScheduledFuture<*>? = null
     private var mScheduleFutureWaveform: ScheduledFuture<*>? = null
 
-
-    private val mButtonListener = View.OnClickListener(function = fun(view: View) {
+    private val mButtonListener = OnClickListener(function = fun(view: View) {
         val activity = activity ?: return
         val controller = MediaControllerCompat.getMediaController(activity)
         val state = controller.playbackState?.state ?: PlaybackStateCompat.STATE_NONE
-        LogHelper.d(TAG, "Button pressed, in state $state")
+        Log.d(TAG, "Button pressed, in state $state")
         when (view.id) {
             R.id.play_pause -> {
-                LogHelper.d(TAG, "Play button pressed, in state $state")
-                if (state == PlaybackStateCompat.STATE_PAUSED ||
-                        state == PlaybackStateCompat.STATE_STOPPED ||
-                        state == PlaybackStateCompat.STATE_NONE) {
-                    playMedia()
-                } else if (state == PlaybackStateCompat.STATE_PLAYING ||
-                        state == PlaybackStateCompat.STATE_BUFFERING ||
-                        state == PlaybackStateCompat.STATE_CONNECTING) {
-                    pauseMedia()
+                Log.d(TAG, "Play button pressed, in state $state")
+                when (state) {
+                    PlaybackStateCompat.STATE_PAUSED,
+                    PlaybackStateCompat.STATE_STOPPED,
+                    PlaybackStateCompat.STATE_NONE -> playMedia()
+                    PlaybackStateCompat.STATE_PLAYING,
+                    PlaybackStateCompat.STATE_BUFFERING,
+                    PlaybackStateCompat.STATE_CONNECTING -> pauseMedia()
                 }
             }
         }
     })
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
-        val rootView = inflater.inflate(R.layout.playback_controls, container, false)
+        val rootView = inflater.inflate(R.layout.fragment_full_player, container, false)
         mPlayPauseSmall = rootView.findViewById(R.id.play_pause)
         mPlayPauseSmall.isEnabled = true
         mPlayPauseSmall.setOnClickListener(mButtonListener)
 
         mTitle = rootView.findViewById(R.id.title)
         mSubtitle = rootView.findViewById(R.id.artist)
+        mDescription = rootView.findViewById(R.id.description)
         mAlbumArt = rootView.findViewById(R.id.album_art)
 
         requests = GlideApp.with(this)
@@ -131,6 +137,7 @@ internal class FullScreenPlayerFragment : Fragment() {
         mLine3 = rootView.findViewById(R.id.line3)
         mLoading = rootView.findViewById(R.id.progressBar1)
         mControllers = rootView.findViewById(R.id.controllers)
+        mLike = rootView.findViewById(R.id.favorite)
 
         // Init waveform
         val displaySize = Point()
@@ -149,11 +156,11 @@ internal class FullScreenPlayerFragment : Fragment() {
             }
 
             override fun onCuePointSetText(mediaId: String, position: Int, text: String) {
-                DatabaseHelper.instance.setDescription(mediaId, position, text)
+                Database.instance.setDescription(mediaId, position, text)
             }
 
             override fun onCuePointDelete(mediaId: String, position: Int) {
-                DatabaseHelper.instance.deleteCuePoint(mediaId, position)
+                Database.instance.deleteCuePoint(mediaId, position)
             }
 
             override fun onWaveformLoaded() {
@@ -164,7 +171,6 @@ internal class FullScreenPlayerFragment : Fragment() {
                 }
             }
         })
-
 
         mSkipNext.setOnClickListener {
             activity?.let {
@@ -191,7 +197,19 @@ internal class FullScreenPlayerFragment : Fragment() {
                         controls.play()
                         scheduleSeekbarUpdate()
                     }
-                    else -> LogHelper.d(TAG, "onClick with state ", state.state)
+                    else -> Log.d(TAG, "onClick with state ${state.state}")
+                }
+            }
+        }
+
+        mShare = rootView.findViewById(R.id.share)
+        mShare.setOnClickListener {
+            mCurrentMetadata?.let {
+                val sharingIntent = Intent(Intent.ACTION_SEND)
+                it.getString(MediaMetadataCompatExt.METADATA_KEY_URL)?.let {
+                    sharingIntent.type = "text/plain"
+                    sharingIntent.putExtra(Intent.EXTRA_TEXT, it)
+                    startActivity(Intent.createChooser(sharingIntent, "Share via"))
                 }
             }
         }
@@ -210,7 +228,7 @@ internal class FullScreenPlayerFragment : Fragment() {
                 startActivity(intent)
             }
         } else {
-            startShazam.visibility = View.GONE
+            startShazam.visibility = GONE
         }
 
         mSeekbar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
@@ -233,15 +251,10 @@ internal class FullScreenPlayerFragment : Fragment() {
 
     internal fun onMediaControllerConnected() {
         activity?.let {
-            val controller = MediaControllerCompat.getMediaController(it)
-            LogHelper.d(TAG, "onConnected, mediaController==null? ", controller == null)
-            if (controller == null) {
-                return
-            }
+            val controller = MediaControllerCompat.getMediaController(it) ?: return
             val state = controller.playbackState
-            val metadata = controller.metadata
             onPlaybackStateChanged(state)
-            onMetadataChanged(metadata)
+            onMetadataChanged(controller.metadata)
 
             updateProgress()
             if (state != null && (state.state == PlaybackStateCompat.STATE_PLAYING || state.state == PlaybackStateCompat.STATE_BUFFERING)) {
@@ -251,35 +264,45 @@ internal class FullScreenPlayerFragment : Fragment() {
     }
 
     internal fun onMetadataChanged(metadata: MediaMetadataCompat?) {
-        LogHelper.d(TAG, "Received metadata state change to mediaId=",
-                metadata?.description?.mediaId, " song=", metadata?.description?.title)
 
-        if (metadata == null || metadata.description.mediaId == mCurrentMetadata?.description?.mediaId) {
-            return
+        if (metadata != null) {
+            // Small sliding-up bar
+            mLine1.text = metadata.description.title
+            mLine2.text = metadata.description.subtitle
+
+            // Main fragment
+            mTitle.text = metadata.description.title
+            mSubtitle.text = metadata.description.subtitle
+            mDescription.text = metadata.getString(MediaMetadataCompat.METADATA_KEY_DISPLAY_DESCRIPTION)
+            mDuration = metadata.getLong(MediaMetadataCompat.METADATA_KEY_DURATION).toInt()
+            mSeekbar.max = mDuration
+            mEnd.text = DateUtils.formatElapsedTime((mDuration / 1000).toLong())
+            mWaveformHandler.loadWaveform(requests, metadata, mDuration)
+
+            mShare.visibility = if (metadata.containsKey(MediaMetadataCompatExt.METADATA_KEY_URL)) VISIBLE else GONE
+
+            metadata.getRating(MediaMetadataCompatExt.METADATA_KEY_FAVORITE)?.let { rating ->
+                mLike.setColorFilter(if (rating.hasHeart()) Color.RED else Color.WHITE)
+                mLike.setOnClickListener {
+                    activity?.let { it1 -> MediaControllerCompat.getMediaController(it1).transportControls.setRating(RatingCompat.newHeartRating(!rating.hasHeart())) }
+                }
+                mLike.visibility = VISIBLE
+            } ?: run {
+                mLike.visibility = GONE
+            }
+
+            mCurrentMetadata = metadata
+            fetchImageAsync(metadata.description)
         }
-
-        // Small sliding-up bar
-        mLine1.text = metadata.description.title
-        mLine2.text = metadata.description.subtitle
-
-        // Main fragment
-        mTitle.text = metadata.description.title
-        mSubtitle.text = metadata.description.subtitle
-        mDuration = metadata.getLong(MediaMetadataCompat.METADATA_KEY_DURATION).toInt()
-        mSeekbar.max = mDuration
-        mEnd.text = DateUtils.formatElapsedTime((mDuration / 1000).toLong())
-        mWaveformHandler.loadWaveform(requests, metadata, mDuration)
-
-        mCurrentMetadata = metadata
-        fetchImageAsync(metadata.description)
     }
 
     internal fun onPlaybackStateChanged(state: PlaybackStateCompat?) {
-        LogHelper.d(TAG, "Received playback state change to state ", state?.state)
+
+        Log.d(TAG, "Received playback state change to state ${state?.state}")
         var enablePlay = false
         when (state?.state) {
             PlaybackStateCompat.STATE_NONE, PlaybackStateCompat.STATE_PAUSED, PlaybackStateCompat.STATE_STOPPED -> enablePlay = true
-            PlaybackStateCompat.STATE_ERROR -> LogHelper.e(TAG, "error playbackstate: ", state.errorMessage)
+            PlaybackStateCompat.STATE_ERROR -> Log.e(TAG, "error playbackstate: ${state.errorMessage}")
         }
 
         context?.let {
@@ -319,7 +342,7 @@ internal class FullScreenPlayerFragment : Fragment() {
         stopSeekbarUpdate()
         if (!mExecutorService.isShutdown) {
             mScheduleFuture = mExecutorService.scheduleAtFixedRate({ mHandler.post(mUpdateProgressTask) }, PROGRESS_UPDATE_INITIAL_INTERVAL,
-                    PROGRESS_UPDATE_INTERNAL, TimeUnit.MILLISECONDS)
+                    PROGRESS_UPDATE_INTERNAL.coerceAtMost((mDuration / waveformView.desiredWidth).toLong().coerceAtLeast(1)), TimeUnit.MILLISECONDS)
         }
     }
 
@@ -333,6 +356,7 @@ internal class FullScreenPlayerFragment : Fragment() {
     }
 
     private fun fetchImageAsync(description: MediaDescriptionCompat) {
+        Log.d(TAG, "fetchImageAsync, ${description.mediaId}")
         // get artwork from uri online or from cache
         ArtworkHelper.loadArtwork(requests, description, mBackgroundImage, object : ArtworkHelper.ColorsListener {
             override fun onColorsReady(colors: IntArray) {
@@ -345,17 +369,18 @@ internal class FullScreenPlayerFragment : Fragment() {
                         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
                             mSeekbar.thumb.setColorFilter(color, PorterDuff.Mode.SRC_IN)
                         }
-                        mPlayPause.setColorFilter(color)
-                        mSkipNext.setColorFilter(color)
-                        mSkipPrev.setColorFilter(color)
+
+                        for (view in listOf(mPlayPause, mSkipNext, mSkipPrev)) {
+                            view.setColorFilter(color)
+                        }
+
                         waveformView.colorizeWaveform(color)
 
                         val activity = activity
                         if (activity is MusicPlayerActivity) {
-                            activity.collapsingToolbarLayout.setBackgroundColor(color)
-                            activity.mNavigationView.setBackgroundColor(color)
-                            activity.controls.setBackgroundColor(color)
-                            activity.slidingUpPanelLayout.setBackgroundColor(color)
+                            for (view in listOf(activity.collapsingToolbarLayout, activity.mNavigationView, activity.controls, activity.slidingUpPanelLayout)) {
+                                view.setBackgroundColor(color)
+                            }
                         }
                     }
                 }
@@ -381,8 +406,9 @@ internal class FullScreenPlayerFragment : Fragment() {
 
             override fun onError() {
                 activity?.let {
-                    mSeekbar.progressDrawable.setColorFilter(ContextCompat.getColor(it, R.color.colorPrimary), PorterDuff.Mode.SRC_IN)
-                    mSeekbar.thumb.setColorFilter(ContextCompat.getColor(it, R.color.colorPrimary), PorterDuff.Mode.SRC_IN)
+                    for (view in listOf(mSeekbar.progressDrawable, mSeekbar.thumb)) {
+                        view.setColorFilter(ContextCompat.getColor(it, R.color.colorPrimary), PorterDuff.Mode.SRC_IN)
+                    }
                     waveformView.colorizeWaveform(ContextCompat.getColor(it, R.color.colorPrimary))
                 }
             }
@@ -396,7 +422,7 @@ internal class FullScreenPlayerFragment : Fragment() {
         if (state == null) {
             return
         }
-        LogHelper.d(TAG, "updatePlaybackState=", state.state)
+        Log.d(TAG, "updatePlaybackState=${state.state}")
         mLastPlaybackState = state
         mLine3.text = ""
         when (state.state) {
@@ -426,7 +452,7 @@ internal class FullScreenPlayerFragment : Fragment() {
                 mLine3.text = getString(R.string.loading)
                 stopSeekbarUpdate()
             }
-            else -> LogHelper.d(TAG, "Unhandled state ", state.state)
+            else -> Log.d(TAG, "Unhandled state ${state.state}")
         }
 
         mSkipNext.visibility = if (state.actions and PlaybackStateCompat.ACTION_SKIP_TO_NEXT == 0L)
@@ -448,16 +474,21 @@ internal class FullScreenPlayerFragment : Fragment() {
                 // latest position. This ensure that we do not repeatedly call the getPlaybackState()
                 // on MediaControllerCompat.
                 val timeDelta = SystemClock.elapsedRealtime() - it.lastPositionUpdateTime
-                currentPosition += Math.round(timeDelta * it.playbackSpeed)
+                currentPosition += (timeDelta * it.playbackSpeed).roundToInt()
             }
             mSeekbar.progress = currentPosition
             waveformView.setProgress(currentPosition, mDuration)
         }
     }
 
-    companion object {
+    internal fun addCuePoint(text: String?) {
+        mCurrentMetadata?.let {
+            mWaveformHandler.addCuePoint(it, currentPosition, mDuration, text ?: "")
+        }
+    }
 
-        private val TAG = LogHelper.makeLogTag(FullScreenPlayerFragment::class.java)
+    companion object {
+        private val TAG = FullScreenPlayerFragment::class.simpleName
         private const val PROGRESS_UPDATE_INTERNAL: Long = 1000
         private const val PROGRESS_UPDATE_INITIAL_INTERVAL: Long = 100
     }

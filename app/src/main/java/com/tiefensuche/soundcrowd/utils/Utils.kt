@@ -27,7 +27,6 @@ internal object Utils {
         } catch (e: NoSuchAlgorithmException) {
             throw IllegalStateException(e)
         }
-
     }
 
     private fun bytesToHexString(bytes: ByteArray): String {
@@ -58,7 +57,7 @@ internal object Utils {
         if (metadata.getString(MediaMetadataCompatExt.METADATA_KEY_TYPE) != null) {
             bundle.putString(MediaMetadataCompatExt.METADATA_KEY_TYPE, metadata.getString(MediaMetadataCompatExt.METADATA_KEY_TYPE))
         }
-        if(metadata.getString(MediaMetadataCompatExt.METADATA_KEY_PREFERENCES) != null) {
+        if (metadata.getString(MediaMetadataCompatExt.METADATA_KEY_PREFERENCES) != null) {
             bundle.putString(MediaMetadataCompatExt.METADATA_KEY_PREFERENCES, metadata.getString(MediaMetadataCompatExt.METADATA_KEY_PREFERENCES))
         }
 
@@ -71,7 +70,7 @@ internal object Utils {
             return '#'
         }
         val string = text.toString().toUpperCase()
-        for (i in 0 until string.length) {
+        for (i in string.indices) {
             if (Character.isLetter(string[i])) {
                 return string[i]
             }
@@ -80,8 +79,7 @@ internal object Utils {
     }
 
     internal fun scaleBitmap(src: Bitmap, maxWidth: Int, maxHeight: Int): Bitmap {
-        val scaleFactor = Math.min(
-                maxWidth.toDouble() / src.width, maxHeight.toDouble() / src.height)
+        val scaleFactor = (maxWidth.toDouble() / src.width).coerceAtMost(maxHeight.toDouble() / src.height)
         return Bitmap.createScaledBitmap(src,
                 (src.width * scaleFactor).toInt(), (src.height * scaleFactor).toInt(), false)
     }
@@ -118,6 +116,7 @@ internal object Utils {
             pm.getPackageInfo(uri, PackageManager.GET_ACTIVITIES)
             return true
         } catch (ignored: PackageManager.NameNotFoundException) {
+            // not installed
         }
 
         return false

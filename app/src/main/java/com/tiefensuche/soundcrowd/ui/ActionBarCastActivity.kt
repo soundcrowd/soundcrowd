@@ -26,7 +26,6 @@ import com.tiefensuche.soundcrowd.ui.preferences.PreferenceFragment
 import com.tiefensuche.soundcrowd.utils.MediaIDHelper
 import org.json.JSONArray
 
-
 /**
  * Abstract activity with toolbar, navigation drawer and cast support. Needs to be extended by
  * any activity that wants to be shown as a top level activity.
@@ -75,6 +74,7 @@ abstract class ActionBarCastActivity : AppCompatActivity() {
     public override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_player)
+        slidingUpPanelLayout = findViewById(R.id.sliding_layout)
         initializeToolbar()
     }
 
@@ -165,7 +165,6 @@ abstract class ActionBarCastActivity : AppCompatActivity() {
         mToolbar.inflateMenu(R.menu.main)
 
         mDrawerLayout = findViewById(R.id.drawer_layout)
-
         mNavigationView = findViewById(R.id.nav_view)
 
         // Create an ActionBarDrawerToggle that will handle opening/closing of the drawer:

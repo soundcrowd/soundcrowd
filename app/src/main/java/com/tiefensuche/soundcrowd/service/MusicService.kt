@@ -4,7 +4,6 @@
 
 package com.tiefensuche.soundcrowd.service
 
-
 import android.app.Service
 import android.content.Intent
 import android.content.SharedPreferences
@@ -17,16 +16,15 @@ import android.support.v4.media.MediaMetadataCompat
 import android.support.v4.media.session.MediaButtonReceiver
 import android.support.v4.media.session.MediaSessionCompat
 import android.support.v4.media.session.PlaybackStateCompat
+import android.util.Log
 import com.tiefensuche.soundcrowd.R
 import com.tiefensuche.soundcrowd.database.Database
 import com.tiefensuche.soundcrowd.playback.LocalPlayback
 import com.tiefensuche.soundcrowd.playback.PlaybackManager
 import com.tiefensuche.soundcrowd.playback.QueueManager
 import com.tiefensuche.soundcrowd.sources.MusicProvider
-import com.tiefensuche.soundcrowd.utils.LogHelper
 import com.tiefensuche.soundcrowd.utils.MediaIDHelper.MEDIA_ID_ROOT
 import java.lang.ref.WeakReference
-
 
 /**
  * This class provides a MediaBrowser through a service. It exposes the media library to a browsing
@@ -83,6 +81,7 @@ import java.lang.ref.WeakReference
  * @see [README.md](README.md) for more details.
  */
 internal class MusicService : MediaBrowserServiceCompat(), PlaybackManager.PlaybackServiceCallback {
+
     private val mDelayedStopHandler = DelayedStopHandler(this)
     private lateinit var mPlaybackManager: PlaybackManager
     private lateinit var mSession: MediaSessionCompat
@@ -97,11 +96,10 @@ internal class MusicService : MediaBrowserServiceCompat(), PlaybackManager.Playb
      */
     override fun onCreate() {
         super.onCreate()
-        LogHelper.d(TAG, "create service")
+        Log.d(TAG, "create service")
 
         preferences = PreferenceManager.getDefaultSharedPreferences(this)
         databaseHelper = Database(this)
-
         mMusicProvider = MusicProvider(this)
 
         mQueueManager = QueueManager(mMusicProvider, resources,
@@ -142,6 +140,8 @@ internal class MusicService : MediaBrowserServiceCompat(), PlaybackManager.Playb
         } catch (e: RemoteException) {
             throw IllegalStateException("Could not create a MediaNotificationManager", e)
         }
+
+        mPlaybackManager.loadLastTrack()
     }
 
     /**
@@ -150,7 +150,7 @@ internal class MusicService : MediaBrowserServiceCompat(), PlaybackManager.Playb
      * @see android.app.Service.onStartCommand
      */
     override fun onStartCommand(startIntent: Intent?, flags: Int, startId: Int): Int {
-        LogHelper.d(TAG, "onStartCommand intent=", startIntent)
+        Log.d(TAG, "onStartCommand intent=$startIntent")
         if (startIntent != null) {
             val action = startIntent.action
             val command = startIntent.getStringExtra(CMD_NAME)
@@ -166,7 +166,7 @@ internal class MusicService : MediaBrowserServiceCompat(), PlaybackManager.Playb
                         mPlaybackManager.handlePlayRequest()
                     }
                 } catch (e: Exception) {
-                    LogHelper.e(TAG, e, "error while resolving url")
+                    Log.e(TAG, "error while resolving url", e)
                 }
             } else {
                 // Try to handle the intent as a media button event wrapped by MediaButtonReceiver
@@ -179,7 +179,6 @@ internal class MusicService : MediaBrowserServiceCompat(), PlaybackManager.Playb
 
         return Service.START_STICKY
     }
-
 
     /*
      * Handle case when user swipes the app away from the recents apps list by
@@ -196,7 +195,7 @@ internal class MusicService : MediaBrowserServiceCompat(), PlaybackManager.Playb
      * @see android.app.Service.onDestroy
      */
     override fun onDestroy() {
-        LogHelper.d(TAG, "onDestroy")
+        Log.d(TAG, "onDestroy")
         // Service is being killed, so make sure we release our resources
         mPlaybackManager.handleStopRequest(null)
         mMediaNotificationManager.stopNotification()
@@ -205,22 +204,19 @@ internal class MusicService : MediaBrowserServiceCompat(), PlaybackManager.Playb
     }
 
     override fun onGetRoot(clientPackageName: String, clientUid: Int,
-                           rootHints: Bundle?): MediaBrowserServiceCompat.BrowserRoot? {
-        LogHelper.d(TAG, "OnGetRoot: clientPackageName=$clientPackageName",
-                "; clientUid=$clientUid ; rootHints=", rootHints)
-
-        return MediaBrowserServiceCompat.BrowserRoot(MEDIA_ID_ROOT, null)
+                           rootHints: Bundle?): BrowserRoot? {
+        return BrowserRoot(MEDIA_ID_ROOT, null)
     }
 
     override fun onLoadChildren(parentMediaId: String,
-                                result: MediaBrowserServiceCompat.Result<List<MediaItem>>) {
+                                result: Result<List<MediaItem>>) {
         onLoadChildren(parentMediaId, result, Bundle())
     }
 
     override fun onLoadChildren(parentMediaId: String,
-                                result: MediaBrowserServiceCompat.Result<List<MediaItem>>,
+                                result: Result<List<MediaItem>>,
                                 options: Bundle) {
-        LogHelper.d(TAG, "OnLoadChildren: parentMediaId=", parentMediaId)
+        Log.d(TAG, "OnLoadChildren: parentMediaId=$parentMediaId")
         if (mMusicProvider.hasItems(parentMediaId, options) && MusicProvider.OPTION_REFRESH != options.getString(MusicProvider.ACTION)) {
             result.sendResult(mMusicProvider.getChildren(parentMediaId, options))
         } else {
@@ -232,19 +228,8 @@ internal class MusicService : MediaBrowserServiceCompat(), PlaybackManager.Playb
 
                 override fun onMusicCatalogReady(success: Boolean) {
                     if (success) {
-                        LogHelper.d(TAG, "getChildren parentMediaId=", parentMediaId)
-                        if (mSession.controller.metadata == null) {
-                            try {
-                                mPlaybackManager.loadLastTrack()
-                            } catch (e: IllegalArgumentException) {
-                                LogHelper.w(TAG, e, "can not load last track media id")
-                            }
-                        }
-                        try {
-                            result.sendResult(mMusicProvider.getChildren(parentMediaId, options))
-                        } catch (e: Exception) {
-                            LogHelper.w(TAG, e, "can not send result")
-                        }
+                        Log.d(TAG, "getChildren parentMediaId=$parentMediaId")
+                        result.sendResult(mMusicProvider.getChildren(parentMediaId, options))
                     } else {
                         result.sendResult(ArrayList())
                     }
@@ -261,7 +246,6 @@ internal class MusicService : MediaBrowserServiceCompat(), PlaybackManager.Playb
      * Callback method called from PlaybackManager whenever the music is about to play.
      */
     override fun onPlaybackStart() {
-        LogHelper.d(TAG, "onPlaybackStart")
         mSession.isActive = true
         mDelayedStopHandler.removeCallbacksAndMessages(null)
 
@@ -275,7 +259,6 @@ internal class MusicService : MediaBrowserServiceCompat(), PlaybackManager.Playb
         }
     }
 
-
     /**
      * Callback method called from PlaybackManager whenever the music stops playing.
      */
@@ -285,9 +268,7 @@ internal class MusicService : MediaBrowserServiceCompat(), PlaybackManager.Playb
         // potentially stopping the service.
         mDelayedStopHandler.removeCallbacksAndMessages(null)
         mDelayedStopHandler.sendEmptyMessageDelayed(0, STOP_DELAY.toLong())
-        mQueueManager.currentMusic?.description?.mediaId.let {
-            preferences.edit().putString("last_media_id", it).apply()
-        }
+        mPlaybackManager.updateLastPosition()
     }
 
     override fun onNotificationRequired() {
@@ -298,9 +279,8 @@ internal class MusicService : MediaBrowserServiceCompat(), PlaybackManager.Playb
         try {
             mSession.setPlaybackState(newState)
         } catch (e: IllegalStateException) {
-            LogHelper.e(TAG, "error while updating playback state", e)
+            Log.e(TAG, "error while updating playback state", e)
         }
-
     }
 
     /**
@@ -314,10 +294,10 @@ internal class MusicService : MediaBrowserServiceCompat(), PlaybackManager.Playb
             val service = mWeakReference.get()
             if (service != null) {
                 if (service.mPlaybackManager.playback.isPlaying) {
-                    LogHelper.d(TAG, "Ignoring delayed stop since the media player is in use.")
+                    Log.d(TAG, "Ignoring delayed stop since the media player is in use.")
                     return
                 }
-                LogHelper.d(TAG, "Stopping service with delay handler.")
+                Log.d(TAG, "Stopping service with delay handler.")
                 service.stopSelf()
             }
         }
@@ -328,15 +308,18 @@ internal class MusicService : MediaBrowserServiceCompat(), PlaybackManager.Playb
         // The action of the incoming Intent indicating that it contains a command
         // to be executed (see {@link #onStartCommand})
         const val ACTION_CMD = "com.tiefensuche.soundcrowd.ACTION_CMD"
+
         // The key in the extras of the incoming Intent indicating the command that
         // should be executed (see {@link #onStartCommand})
         const val CMD_NAME = "CMD_NAME"
+
         // A value of a CMD_NAME key in the extras of the incoming Intent that
         // indicates that the music playback should be paused (see {@link #onStartCommand})
         const val CMD_PAUSE = "CMD_PAUSE"
         const val CMD_RESOLVE = "CMD_RESOLVE"
 
-        private val TAG = LogHelper.makeLogTag(MusicService::class.java)
+        private val TAG = MusicService::class.simpleName
+
         // Delay stopSelf by using a handler.
         private const val STOP_DELAY = 600000
         private lateinit var mMusicProvider: MusicProvider

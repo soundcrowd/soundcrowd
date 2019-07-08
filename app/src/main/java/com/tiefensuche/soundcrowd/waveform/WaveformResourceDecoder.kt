@@ -22,7 +22,6 @@ internal class WaveformResourceDecoder(private val pool: BitmapPool) : ResourceD
         return true
     }
 
-
     override fun decode(source: Bitmap, width: Int, height: Int, options: Options): Resource<Bitmap>? {
         return BitmapResource.obtain(source, pool)
     }

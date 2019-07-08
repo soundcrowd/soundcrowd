@@ -17,24 +17,19 @@ import com.bumptech.glide.request.target.SimpleTarget
 import com.bumptech.glide.request.transition.Transition
 import com.tiefensuche.soundcrowd.R
 import com.tiefensuche.soundcrowd.ui.LetterTileDrawable
-import com.tiefensuche.soundcrowd.utils.LogHelper
 
 /**
  * Methods for loading artworks via [com.bumptech.glide.Glide] with support for [Palette]
  * and a default and placeholder artwork [LetterTileDrawable] containing the first letters of an artist
  */
 internal object ArtworkHelper {
+
     const val MAX_ART_WIDTH = 800  // pixels
     const val MAX_ART_HEIGHT = 480  // pixels
     const val MAX_ART_WIDTH_ICON = 128  // pixels
     const val MAX_ART_HEIGHT_ICON = 128  // pixels
-    private val TAG = LogHelper.makeLogTag(ArtworkHelper::class.java)
 
     internal fun loadArtwork(requests: GlideRequests, description: MediaDescriptionCompat, view: ImageView, listener: ColorsListener? = null) {
-        if (description.iconBitmap != null) {
-            view.setImageBitmap(description.iconBitmap)
-            return
-        }
         requests.clear(view)
         if (listener != null) {
             val placeholder = getPlaceholder(view.context, description)
@@ -83,7 +78,6 @@ internal object ArtworkHelper {
 
     internal interface ColorsListener {
         fun onColorsReady(colors: IntArray)
-
         fun onError()
     }
 }

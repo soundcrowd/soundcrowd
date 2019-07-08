@@ -12,13 +12,15 @@ import android.graphics.Paint.Align
 import android.graphics.drawable.Drawable
 import android.text.TextUtils
 import com.tiefensuche.soundcrowd.R
+import kotlin.math.abs
+import kotlin.math.min
 
 /**
  * A drawable that encapsulates all the functionality needed to display a letter tile to
  * represent a artist/album/playlist image.
  */
 internal class LetterTileDrawable(context: Context) : Drawable() {
-    private val TAG = LetterTileDrawable::class.java.simpleName
+
     private val mPaint: Paint = Paint()
     private var mDisplayName: String? = null
 
@@ -38,7 +40,6 @@ internal class LetterTileDrawable(context: Context) : Drawable() {
     }
 
     override fun draw(canvas: Canvas) {
-        //        setBounds(0, 0, 120, 120);
         val bounds = bounds
         if (!isVisible || bounds.isEmpty) {
             return
@@ -53,7 +54,7 @@ internal class LetterTileDrawable(context: Context) : Drawable() {
 
         sPaint.alpha = mPaint.alpha
         val bounds = bounds
-        val minDimension = Math.min(bounds.width(), bounds.height())
+        val minDimension = min(bounds.width(), bounds.height())
 
         if (mIsCircle) {
             canvas.drawCircle(bounds.centerX().toFloat(), bounds.centerY().toFloat(), (minDimension / 2).toFloat(), sPaint)
@@ -99,7 +100,7 @@ internal class LetterTileDrawable(context: Context) : Drawable() {
     }
 
     override fun getOpacity(): Int {
-        return android.graphics.PixelFormat.OPAQUE
+        return PixelFormat.OPAQUE
     }
 
     /**
@@ -155,6 +156,7 @@ internal class LetterTileDrawable(context: Context) : Drawable() {
         private val sPaint = Paint()
         private val sRect = Rect()
         private val sChars = CharArray(2)
+
         /**
          * Letter tile
          */
@@ -169,8 +171,8 @@ internal class LetterTileDrawable(context: Context) : Drawable() {
             if (sColors == null) {
                 sColors = res.obtainTypedArray(R.array.letter_tile_colors)
                 sVibrantDarkColors = res.obtainTypedArray(R.array.letter_tile_vibrant_dark_colors)
-                sDefaultColor = Color.GRAY //res.getColor(R.color.letter_tile_default_color);
-                sTileFontColor = Color.WHITE //res.getColor(R.color.letter_tile_font_color);
+                sDefaultColor = Color.GRAY
+                sTileFontColor = Color.WHITE
                 sLetterToTileRatio = res.getFraction(R.fraction.letter_to_tile_ratio, 1, 1)
 
                 sPaint.typeface = Typeface.create(
@@ -186,7 +188,7 @@ internal class LetterTileDrawable(context: Context) : Drawable() {
         private fun getColorIndex(identifier: String?): Int {
             return if (TextUtils.isEmpty(identifier)) {
                 -1
-            } else sColors?.let { Math.abs(identifier.hashCode()) % it.length() } ?: -1
+            } else sColors?.let { abs(identifier.hashCode()) % it.length() } ?: -1
         }
 
         /**
@@ -197,7 +199,6 @@ internal class LetterTileDrawable(context: Context) : Drawable() {
             return if (idx == -1) {
                 sDefaultColor
             } else sColors?.getColor(idx, sDefaultColor) ?: sDefaultColor
-
         }
 
         /**
@@ -208,11 +209,10 @@ internal class LetterTileDrawable(context: Context) : Drawable() {
             return if (idx == -1) {
                 sDefaultColor
             } else sVibrantDarkColors.getColor(idx, sDefaultColor)
-
         }
 
         private fun isEnglishLetter(c: Char): Boolean {
-            return 'A' <= c && c <= 'Z' || 'a' <= c && c <= 'z' || '0' <= c && c <= '9'
+            return c in 'A'..'Z' || c in 'a'..'z' || c in '0'..'9'
         }
 
         /**

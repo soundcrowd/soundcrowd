@@ -18,7 +18,6 @@ import com.bumptech.glide.util.LruCache
  */
 internal class PaletteBitmapTranscoder : ResourceTranscoder<Bitmap, PaletteBitmap> {
 
-
     override fun transcode(toTranscode: Resource<Bitmap>, options: Options): Resource<PaletteBitmap>? {
         val bitmap = toTranscode.get()
         val key = bitmap.hashCode()
@@ -31,7 +30,6 @@ internal class PaletteBitmapTranscoder : ResourceTranscoder<Bitmap, PaletteBitma
     }
 
     companion object {
-
         private val colorCache = LruCache<Int, Palette>((10 * 1024).toLong())
     }
 }

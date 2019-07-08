@@ -17,12 +17,12 @@ import android.support.v4.media.MediaMetadataCompat
 import android.support.v4.media.session.MediaSessionCompat.QueueItem
 import android.support.v4.media.session.PlaybackStateCompat
 import android.text.TextUtils
+import android.util.Log
 import com.tiefensuche.soundcrowd.extensions.UrlResolver
 import com.tiefensuche.soundcrowd.plugins.Callback
 import com.tiefensuche.soundcrowd.plugins.PluginLoader
 import com.tiefensuche.soundcrowd.service.MusicService
 import com.tiefensuche.soundcrowd.sources.MusicProvider
-import com.tiefensuche.soundcrowd.utils.LogHelper
 import org.json.JSONObject
 import java.io.IOException
 
@@ -30,15 +30,18 @@ import java.io.IOException
  * A class that implements local media playback using [android.media.MediaPlayer]
  */
 internal class LocalPlayback(private val mContext: Context, private val mMusicProvider: MusicProvider) : Playback, AudioManager.OnAudioFocusChangeListener, OnCompletionListener, OnErrorListener, OnPreparedListener, OnSeekCompleteListener {
-    private val mWifiLock: WifiManager.WifiLock = (mContext.applicationContext.getSystemService(Context.WIFI_SERVICE) as? WifiManager)?.createWifiLock(WifiManager.WIFI_MODE_FULL, "soundcrowd_lock") ?: throw RuntimeException()
-    private val mAudioManager: AudioManager = mContext.getSystemService(Context.AUDIO_SERVICE) as? AudioManager ?: throw RuntimeException()
+
+    private val mWifiLock: WifiManager.WifiLock = (mContext.applicationContext.getSystemService(Context.WIFI_SERVICE) as? WifiManager)?.createWifiLock(WifiManager.WIFI_MODE_FULL, "soundcrowd_lock")
+            ?: throw IllegalStateException("can not get wifi service")
+    private val mAudioManager: AudioManager = mContext.getSystemService(Context.AUDIO_SERVICE) as? AudioManager
+            ?: throw IllegalStateException("can not get audio service")
     private val mAudioNoisyIntentFilter = IntentFilter(AudioManager.ACTION_AUDIO_BECOMING_NOISY)
     override var state: Int = 0
     private var mPlayOnFocusGain: Boolean = false
     private val mAudioNoisyReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
             if (AudioManager.ACTION_AUDIO_BECOMING_NOISY == intent.action) {
-                LogHelper.d(TAG, "Headphones disconnected.")
+                Log.d(TAG, "Headphones disconnected.")
                 if (isPlaying) {
                     val i = Intent(context, MusicService::class.java)
                     i.action = MusicService.ACTION_CMD
@@ -49,16 +52,20 @@ internal class LocalPlayback(private val mContext: Context, private val mMusicPr
         }
     }
     private var mCallback: Playback.Callback? = null
+
     @Volatile
     private var mAudioNoisyReceiverRegistered: Boolean = false
+
     @Volatile
     private var mCurrentPosition: Int = 0
+
     @Volatile
     override var currentMediaId: String = ""
+
     // Type of audio focus we have:
     private var mAudioFocus = AUDIO_NO_FOCUS_NO_DUCK
 
-    private var urlResolver: UrlResolver = object: UrlResolver{
+    private var urlResolver: UrlResolver = object : UrlResolver {
         override fun getMediaUrl(metadata: JSONObject, callback: Callback<JSONObject>) {
             callback.onResult(metadata)
         }
@@ -126,10 +133,11 @@ internal class LocalPlayback(private val mContext: Context, private val mMusicPr
             state = PlaybackStateCompat.STATE_STOPPED
             relaxResources(false) // release everything except MediaPlayer
 
-            mMusicProvider.resolveMusic(mediaId, object: Callback<JSONObject> {
+            mMusicProvider.resolveMusic(mediaId, object : Callback<JSONObject> {
                 override fun onResult(result: JSONObject) {
-                    urlResolver.getMediaUrl(result, object: Callback<JSONObject> {
+                    urlResolver.getMediaUrl(result, object : Callback<JSONObject> {
                         override fun onResult(result: JSONObject) {
+
                             try {
                                 createMediaPlayerIfNeeded()
 
@@ -152,9 +160,9 @@ internal class LocalPlayback(private val mContext: Context, private val mMusicPr
 
                                     mCallback?.onPlaybackStatusChanged(state)
                                 }
-                            } catch (ex: IOException) {
-                                LogHelper.e(TAG, ex, "Exception playing song")
-                                mCallback?.onError(ex.message ?: "")
+                            } catch (e: IOException) {
+                                Log.e(TAG, "Exception playing song", e)
+                                mCallback?.onError(e.message ?: "")
                             }
                         }
                     })
@@ -181,8 +189,6 @@ internal class LocalPlayback(private val mContext: Context, private val mMusicPr
     }
 
     override fun seekTo(position: Int) {
-        LogHelper.d(TAG, "seekTo called with ", position)
-
         if (mMediaPlayer == null) {
             // If we do not have a current media player, simply update the current position
             mCurrentPosition = position
@@ -204,7 +210,6 @@ internal class LocalPlayback(private val mContext: Context, private val mMusicPr
      * Try to get the system audio focus.
      */
     private fun tryToGetAudioFocus() {
-        LogHelper.d(TAG, "tryToGetAudioFocus")
         val result = mAudioManager.requestAudioFocus(this, AudioManager.STREAM_MUSIC,
                 AudioManager.AUDIOFOCUS_GAIN)
         mAudioFocus = if (result == AudioManager.AUDIOFOCUS_REQUEST_GRANTED) {
@@ -218,7 +223,6 @@ internal class LocalPlayback(private val mContext: Context, private val mMusicPr
      * Give up the audio focus.
      */
     private fun giveUpAudioFocus() {
-        LogHelper.d(TAG, "giveUpAudioFocus")
         if (mAudioManager.abandonAudioFocus(this) == AudioManager.AUDIOFOCUS_REQUEST_GRANTED) {
             mAudioFocus = AUDIO_NO_FOCUS_NO_DUCK
         }
@@ -235,7 +239,6 @@ internal class LocalPlayback(private val mContext: Context, private val mMusicPr
      * you are sure this is the case.
      */
     private fun configMediaPlayerState() {
-        LogHelper.d(TAG, "configMediaPlayerState. mAudioFocus=", mAudioFocus)
         if (mAudioFocus == AUDIO_NO_FOCUS_NO_DUCK) {
             // If we don't have audio focus and can't duck, we have to pause,
             if (state == PlaybackStateCompat.STATE_PLAYING) {
@@ -254,8 +257,6 @@ internal class LocalPlayback(private val mContext: Context, private val mMusicPr
                     if (it.isPlaying) {
                         return
                     }
-                    LogHelper.d(TAG, "configMediaPlayerState startMediaPlayer. seeking to ",
-                            mCurrentPosition)
                     state = if (mCurrentPosition == it.currentPosition) {
                         it.start()
                         PlaybackStateCompat.STATE_PLAYING
@@ -275,11 +276,10 @@ internal class LocalPlayback(private val mContext: Context, private val mMusicPr
      * Implementation of [android.media.AudioManager.OnAudioFocusChangeListener]
      */
     override fun onAudioFocusChange(focusChange: Int) {
-        LogHelper.d(TAG, "onAudioFocusChange. focusChange=", focusChange)
+        Log.d(TAG, "onAudioFocusChange. focusChange=$focusChange")
         if (focusChange == AudioManager.AUDIOFOCUS_GAIN) {
             // We have gained focus:
             mAudioFocus = AUDIO_FOCUSED
-
         } else if (focusChange == AudioManager.AUDIOFOCUS_LOSS ||
                 focusChange == AudioManager.AUDIOFOCUS_LOSS_TRANSIENT ||
                 focusChange == AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK) {
@@ -296,7 +296,7 @@ internal class LocalPlayback(private val mContext: Context, private val mMusicPr
                 mPlayOnFocusGain = true
             }
         } else {
-            LogHelper.e(TAG, "onAudioFocusChange: Ignoring unsupported focusChange: ", focusChange)
+            Log.e(TAG, "onAudioFocusChange: Ignoring unsupported focusChange: $focusChange")
         }
         configMediaPlayerState()
     }
@@ -307,7 +307,6 @@ internal class LocalPlayback(private val mContext: Context, private val mMusicPr
      * @see OnSeekCompleteListener
      */
     override fun onSeekComplete(mp: MediaPlayer) {
-        LogHelper.d(TAG, "onSeekComplete from MediaPlayer:", mp.currentPosition)
         mCurrentPosition = mp.currentPosition
         if (state == PlaybackStateCompat.STATE_BUFFERING) {
             registerAudioNoisyReceiver()
@@ -323,7 +322,6 @@ internal class LocalPlayback(private val mContext: Context, private val mMusicPr
      * @see OnCompletionListener
      */
     override fun onCompletion(player: MediaPlayer) {
-        LogHelper.d(TAG, "onCompletion from MediaPlayer")
         // The media player finished playing the current song, so we go ahead
         // and start the next.
         mCallback?.onCompletion()
@@ -335,7 +333,7 @@ internal class LocalPlayback(private val mContext: Context, private val mMusicPr
      * @see OnPreparedListener
      */
     override fun onPrepared(player: MediaPlayer) {
-        LogHelper.d(TAG, "onPrepared from MediaPlayer")
+        Log.d(TAG, "onPrepared from MediaPlayer")
         // The media player is done preparing. That means we can start playing if we
         // have audio focus.
         configMediaPlayerState()
@@ -349,7 +347,7 @@ internal class LocalPlayback(private val mContext: Context, private val mMusicPr
      * @see OnErrorListener
      */
     override fun onError(mp: MediaPlayer, what: Int, extra: Int): Boolean {
-        LogHelper.e(TAG, "Media player error: what=$what, extra=$extra")
+        Log.e(TAG, "Media player error: what=$what, extra=$extra")
         mCallback?.onError("MediaPlayer error $what ($extra)")
         return true // true indicates we handled the error
     }
@@ -360,7 +358,7 @@ internal class LocalPlayback(private val mContext: Context, private val mMusicPr
      * already exists.
      */
     private fun createMediaPlayerIfNeeded() {
-        LogHelper.d(TAG, "createMediaPlayerIfNeeded. needed? ", mMediaPlayer == null)
+        Log.d(TAG, "createMediaPlayerIfNeeded. needed? ${mMediaPlayer == null}")
         if (mMediaPlayer == null) {
             mMediaPlayer = MediaPlayer()
             mMediaPlayer?.let {
@@ -392,7 +390,7 @@ internal class LocalPlayback(private val mContext: Context, private val mMusicPr
      * be released or not
      */
     private fun relaxResources(releaseMediaPlayer: Boolean) {
-        LogHelper.d(TAG, "relaxResources. releaseMediaPlayer=", releaseMediaPlayer)
+        Log.d(TAG, "relaxResources. releaseMediaPlayer=$releaseMediaPlayer")
 
         // stop and release the Media Player, if it's available
         if (releaseMediaPlayer) {
@@ -428,13 +426,17 @@ internal class LocalPlayback(private val mContext: Context, private val mMusicPr
         // The volume we set the media player to when we lose audio focus, but are
         // allowed to reduce the volume instead of stopping playback.
         private const val VOLUME_DUCK = 0.2f
+
         // The volume we set the media player when we have audio focus.
         private const val VOLUME_NORMAL = 1.0f
-        private val TAG = LogHelper.makeLogTag(LocalPlayback::class.java)
+        private val TAG = LocalPlayback::class.simpleName
+
         // we don't have audio focus, and can't duck (play at a low volume)
         private const val AUDIO_NO_FOCUS_NO_DUCK = 0
+
         // we don't have focus, but can duck (play at a low volume)
         private const val AUDIO_NO_FOCUS_CAN_DUCK = 1
+
         // we have full audio focus
         private const val AUDIO_FOCUSED = 2
         private var mMediaPlayer: MediaPlayer? = null

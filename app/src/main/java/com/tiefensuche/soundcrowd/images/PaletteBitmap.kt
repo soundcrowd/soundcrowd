@@ -15,11 +15,9 @@ import com.bumptech.glide.util.Util
  */
 internal class PaletteBitmap(val bitmap: Bitmap, val palette: Palette) : Resource<PaletteBitmap> {
 
-
     override fun getResourceClass(): Class<PaletteBitmap> {
         return PaletteBitmap::class.java
     }
-
 
     override fun get(): PaletteBitmap {
         return this
@@ -30,6 +28,6 @@ internal class PaletteBitmap(val bitmap: Bitmap, val palette: Palette) : Resourc
     }
 
     override fun recycle() {
-
+        // nothing
     }
 }

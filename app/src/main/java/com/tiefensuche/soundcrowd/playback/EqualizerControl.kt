@@ -5,14 +5,14 @@ import android.media.audiofx.*
 import android.os.Build
 import android.preference.PreferenceManager
 import android.support.annotation.RequiresApi
+import android.util.Log
 import com.tiefensuche.soundcrowd.ui.preferences.EqualizerFragment
-import com.tiefensuche.soundcrowd.utils.LogHelper
 
 internal class EqualizerControl {
 
     companion object {
 
-        private val TAG = LogHelper.makeLogTag(EqualizerFragment::class.java)
+        private val TAG = EqualizerFragment::class.simpleName
 
         const val CONFIG_EQUALIZER_ENABLED = "config.equalizer.enabled"
         const val CONFIG_PRESET = "config.equalizer.preset"
@@ -33,7 +33,6 @@ internal class EqualizerControl {
         internal fun setupEqualizerFX(audioSessionId: Int, context: Context) {
             val preferences = PreferenceManager.getDefaultSharedPreferences(context)
             if (audioSessionId != 0 && EqualizerControl.audioSessionId != audioSessionId) {
-                LogHelper.d(TAG, "update audio session id and recreate effects")
                 EqualizerControl.audioSessionId = audioSessionId
                 try {
                     if (preferences.getBoolean(CONFIG_EQUALIZER_ENABLED, false)) {
@@ -49,7 +48,7 @@ internal class EqualizerControl {
                         setLoudness(preferences.getInt(CONFIG_LOUDNESS_GAIN, 0))
                     }
                 } catch (e: RuntimeException) {
-                    LogHelper.e(TAG, "error while enabling audio effect", e)
+                    Log.e(TAG, "error while enabling audio effect", e)
                 }
             }
         }
@@ -93,9 +92,8 @@ internal class EqualizerControl {
                     audioEffect.enabled = false
                 }
             } catch (e: RuntimeException) {
-                LogHelper.e(TAG, "can not release audio effect", e)
+                Log.e(TAG, "can not release audio effect", e)
             }
         }
     }
-
 }

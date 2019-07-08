@@ -12,9 +12,9 @@ import android.net.Uri
 import android.provider.MediaStore
 import android.support.v4.content.ContextCompat
 import android.support.v4.media.MediaMetadataCompat
+import android.util.Log
 import com.tiefensuche.soundcrowd.extensions.MediaMetadataCompatExt
 import com.tiefensuche.soundcrowd.service.MusicService
-import com.tiefensuche.soundcrowd.utils.LogHelper
 import java.util.*
 
 /**
@@ -23,6 +23,7 @@ import java.util.*
  * Created by tiefensuche on 02.04.2016.
  */
 internal class LocalSource(private val context: MusicService) {
+
     private val tracks = ArrayList<MediaMetadataCompat>()
 
     internal fun resolve(uri: Uri): MediaMetadataCompat {
@@ -52,13 +53,12 @@ internal class LocalSource(private val context: MusicService) {
         // check for read storage permission
         if (ContextCompat.checkSelfPermission(context,
                         Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
-            LogHelper.d(TAG, "Need permission WRITE_EXTERNAL_STORAGE")
+            Log.d(TAG, "Need permission WRITE_EXTERNAL_STORAGE")
             return
         }
 
         val res = context.contentResolver
         val musicUri = MediaStore.Audio.Media.EXTERNAL_CONTENT_URI
-
         val selection = MediaStore.Audio.Media.IS_MUSIC + " != 0"
         val musicCursor = res.query(musicUri, null, selection, null, null)
 
@@ -92,10 +92,8 @@ internal class LocalSource(private val context: MusicService) {
                             .putString(MediaMetadataCompatExt.METADATA_KEY_SOURCE, name)
                             .build())
                 } catch (e: Exception) {
-                    LogHelper.w(TAG, "error while processing track", e)
-                    // on exception skip track
+                    Log.w(TAG, "error while processing track", e)
                 }
-
             } while (musicCursor.moveToNext())
         }
 
@@ -111,6 +109,6 @@ internal class LocalSource(private val context: MusicService) {
 
     companion object {
         private const val name = "Local"
-        private val TAG = LogHelper.makeLogTag(LocalSource::class.java)
+        private val TAG = LocalSource::class.simpleName
     }
 }

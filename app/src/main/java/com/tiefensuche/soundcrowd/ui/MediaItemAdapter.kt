@@ -21,17 +21,16 @@ import com.tiefensuche.soundcrowd.utils.Utils
 import java.util.*
 
 internal class MediaItemAdapter(private val requests: GlideRequests, private val listener: OnItemClickListener, private val defaultColor: Int) : RecyclerView.Adapter<MediaItemAdapter.ViewHolder>(), Filterable, SectionIndexer {
-    private val mLock = Any()
 
+    private val mLock = Any()
     private var mDataset: MutableList<MediaBrowserCompat.MediaItem> = ArrayList()
+
     // Filter
     private var mFilter: ArrayFilter? = null
-
     private var mObjects: List<MediaBrowserCompat.MediaItem> = ArrayList()
 
     // Section
     private var sectionList: List<Char> = ArrayList()
-
     private var positionForSection: List<Int> = ArrayList()
 
     internal val isEmpty: Boolean
@@ -63,7 +62,8 @@ internal class MediaItemAdapter(private val requests: GlideRequests, private val
         holder.mImageViewSource.setColorFilter(Color.WHITE)
 
         if (description.extras != null) {
-            val duration = description.extras?.getLong(MediaMetadataCompat.METADATA_KEY_DURATION) ?: 0
+            val duration = description.extras?.getLong(MediaMetadataCompat.METADATA_KEY_DURATION)
+                    ?: 0
             if (duration > 0) {
                 holder.mDuration.text = DateUtils.formatElapsedTime(duration / 1000)
             } else {
@@ -104,7 +104,7 @@ internal class MediaItemAdapter(private val requests: GlideRequests, private val
     }
 
     internal fun notifyDataChanged() {
-        mObjects = ArrayList<MediaBrowserCompat.MediaItem>(mDataset)
+        mObjects = ArrayList(mDataset)
         notifyItemsChanged()
     }
 
@@ -138,7 +138,6 @@ internal class MediaItemAdapter(private val requests: GlideRequests, private val
         this.sectionList = sectionList
         this.positionForSection = positionForSection
     }
-
 
     override fun getSections(): Array<String> {
         return sectionList.map { it.toString() }.toTypedArray()
@@ -180,8 +179,8 @@ internal class MediaItemAdapter(private val requests: GlideRequests, private val
      */
     private inner class ArrayFilter : Filter() {
 
-        override fun performFiltering(prefix: CharSequence?): Filter.FilterResults {
-            val results = Filter.FilterResults()
+        override fun performFiltering(prefix: CharSequence?): FilterResults {
+            val results = FilterResults()
 
             if (prefix == null || prefix.isEmpty()) {
                 val list: ArrayList<MediaBrowserCompat.MediaItem>
@@ -227,7 +226,7 @@ internal class MediaItemAdapter(private val requests: GlideRequests, private val
             return results
         }
 
-        override fun publishResults(constraint: CharSequence, results: Filter.FilterResults) {
+        override fun publishResults(constraint: CharSequence, results: FilterResults) {
             mDataset = (results.values as List<MediaBrowserCompat.MediaItem>).toMutableList()
             notifyItemsChanged()
         }
@@ -246,6 +245,5 @@ internal class MediaItemAdapter(private val requests: GlideRequests, private val
         init {
             holder.setOnClickListener { mediaItem?.let { listener.onItemClick(it) } }
         }
-
     }
 }

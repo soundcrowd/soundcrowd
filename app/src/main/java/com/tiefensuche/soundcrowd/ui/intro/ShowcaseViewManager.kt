@@ -29,11 +29,7 @@ internal object ShowcaseViewManager {
     }
 
     internal fun introduce(function: ShowcaseFunction, point: Point, activity: Activity) {
-        introduce(function, object: Target {
-            override fun getPoint(): Point {
-                return point
-            }
-        }, activity)
+        introduce(function, Target { point }, activity)
     }
 
     private fun introduce(function: ShowcaseFunction, target: Target, activity: Activity) {
@@ -48,18 +44,20 @@ internal object ShowcaseViewManager {
                     .setStyle(R.style.CustomShowcaseTheme)
                     .hideOnTouchOutside()
                     .setShowcaseEventListener(object : OnShowcaseEventListener {
-                        override fun onShowcaseViewHide(showcaseView: ShowcaseView) {}
+                        override fun onShowcaseViewHide(showcaseView: ShowcaseView) {
+                            // nothing
+                        }
 
                         override fun onShowcaseViewDidHide(showcaseView: ShowcaseView) {
                             blocked = false
                         }
 
                         override fun onShowcaseViewShow(showcaseView: ShowcaseView) {
-
+                            // nothing
                         }
 
                         override fun onShowcaseViewTouchBlocked(motionEvent: MotionEvent) {
-
+                            // nothing
                         }
                     }).build()
             prefs.edit().putBoolean(function.function, true).apply()

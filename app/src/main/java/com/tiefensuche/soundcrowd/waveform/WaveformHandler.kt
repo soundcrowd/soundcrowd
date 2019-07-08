@@ -7,21 +7,19 @@ package com.tiefensuche.soundcrowd.waveform
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.support.v4.media.MediaMetadataCompat
+import android.view.View
 import com.bumptech.glide.load.DataSource
 import com.bumptech.glide.load.engine.GlideException
 import com.bumptech.glide.request.RequestListener
 import com.bumptech.glide.request.RequestOptions
 import com.bumptech.glide.request.target.Target
 import com.tiefensuche.soundcrowd.R
-import com.tiefensuche.soundcrowd.database.DatabaseHelper
-import com.tiefensuche.soundcrowd.images.GlideRequests
+import com.tiefensuche.soundcrowd.database.Database
 import com.tiefensuche.soundcrowd.extensions.MediaMetadataCompatExt
-import com.tiefensuche.soundcrowd.utils.LogHelper
-
+import com.tiefensuche.soundcrowd.images.GlideRequests
 
 internal class WaveformHandler(private val waveformView: WaveformView) {
 
-    private val TAG = LogHelper.makeLogTag(WaveformHandler::class.java)
     private val cuePoint: Bitmap = BitmapFactory.decodeResource(waveformView.resources,
             R.drawable.ic_star_on)
     private val play: Bitmap = BitmapFactory.decodeResource(waveformView.resources,
@@ -29,8 +27,9 @@ internal class WaveformHandler(private val waveformView: WaveformView) {
 
     internal fun loadWaveform(requests: GlideRequests, metadata: MediaMetadataCompat, duration: Int) {
         if (waveformView.context != null) {
-            waveformView.setVisible(false)
-            val waveform = metadata.getString(MediaMetadataCompatExt.METADATA_KEY_WAVEFORM_URL) ?: return
+            waveformView.setVisible(View.INVISIBLE)
+            val waveform = metadata.getString(MediaMetadataCompatExt.METADATA_KEY_WAVEFORM_URL)
+                    ?: return
             requests.asBitmap()
                     .load(StringKey(waveform))
                     .apply(RequestOptions.overrideOf(waveformView.desiredWidth, waveformView.desiredHeight))
@@ -41,6 +40,7 @@ internal class WaveformHandler(private val waveformView: WaveformView) {
 
                         override fun onResourceReady(resource: Bitmap, model: Any, target: Target<Bitmap>, dataSource: DataSource, isFirstResource: Boolean): Boolean {
                             waveformView.setWaveform(resource, duration)
+                            waveformView.setVisible(View.VISIBLE)
                             loadCuePoints(metadata)
                             return true
                         }
@@ -49,24 +49,23 @@ internal class WaveformHandler(private val waveformView: WaveformView) {
         }
     }
 
-
     private fun loadCuePoints(metadata: MediaMetadataCompat) {
         metadata.description.mediaId?.let {
             val duration = metadata.getLong(MediaMetadataCompat.METADATA_KEY_DURATION).toInt()
-            val lastPosition = DatabaseHelper.instance.getLastPosition(metadata.description.mediaId)
+            val lastPosition = Database.instance.getLastPosition(metadata.description.mediaId)
             if (lastPosition > 0) {
                 waveformView.drawCuePoint(CuePoint(it, lastPosition.toInt(), waveformView.context.getString(R.string.last_position)), duration, play)
             }
-            for (cuePoint in DatabaseHelper.instance.getCuePoints(it)) {
+            for (cuePoint in Database.instance.getCuePoints(it)) {
                 waveformView.drawCuePoint(cuePoint, duration, this.cuePoint)
             }
         }
     }
 
-    internal fun addCuePoint(metadata: MediaMetadataCompat, position: Int, duration: Int) {
+    internal fun addCuePoint(metadata: MediaMetadataCompat, position: Int, duration: Int, text: String = "") {
         metadata.description.mediaId?.let {
-            DatabaseHelper.instance.addCuePoint(metadata, position)
-            waveformView.drawCuePoint(CuePoint(it, position, ""), duration, cuePoint)
+            Database.instance.addCuePoint(metadata, position, text)
+            waveformView.drawCuePoint(CuePoint(it, position, text), duration, cuePoint)
         }
     }
 }

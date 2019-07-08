@@ -36,8 +36,8 @@ interface Playback {
      */
     val currentStreamPosition: Int
 
-
     var currentMediaId: String
+
     /**
      * Start/setup the playback.
      * Resources/listeners would be allocated by implementations.

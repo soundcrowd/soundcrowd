@@ -23,9 +23,9 @@ import android.support.v4.media.MediaMetadataCompat
 import android.support.v4.media.session.MediaControllerCompat
 import android.support.v4.media.session.MediaSessionCompat
 import android.support.v4.media.session.PlaybackStateCompat
+import android.util.Log
 import com.tiefensuche.soundcrowd.R
 import com.tiefensuche.soundcrowd.ui.MusicPlayerActivity
-import com.tiefensuche.soundcrowd.utils.LogHelper
 import com.tiefensuche.soundcrowd.utils.Utils
 
 /**
@@ -55,14 +55,12 @@ constructor(private val mService: MusicService) : BroadcastReceiver() {
     private val mCb = object : MediaControllerCompat.Callback() {
         override fun onPlaybackStateChanged(state: PlaybackStateCompat?) {
             mPlaybackState = state
-            LogHelper.d(TAG, "Received new playback state", state)
             state?.let {
                 if (state.state == PlaybackStateCompat.STATE_STOPPED || state.state == PlaybackStateCompat.STATE_NONE) {
                     stopNotification()
                 } else {
                     val notification = createNotification()
                     if (state.state >= PlaybackStateCompat.STATE_PLAYING) {
-                        LogHelper.d(TAG, "startForeground", state)
                         mService.startForeground(NOTIFICATION_ID, notification)
                     } else {
                         mService.stopForeground(false)
@@ -74,7 +72,6 @@ constructor(private val mService: MusicService) : BroadcastReceiver() {
 
         override fun onMetadataChanged(metadata: MediaMetadataCompat?) {
             mMetadata = metadata
-            LogHelper.d(TAG, "Received new metadata ", metadata)
             val notification = createNotification()
             if (notification != null) {
                 mNotificationManager.notify(NOTIFICATION_ID, notification)
@@ -83,13 +80,11 @@ constructor(private val mService: MusicService) : BroadcastReceiver() {
 
         override fun onSessionDestroyed() {
             super.onSessionDestroyed()
-            LogHelper.d(TAG, "Session was destroyed, resetting to the new session token")
             try {
                 updateSessionToken()
             } catch (e: RemoteException) {
-                LogHelper.e(TAG, e, "could not connect media controller")
+                Log.e(TAG, "could not connect media controller", e)
             }
-
         }
     }
 
@@ -99,7 +94,8 @@ constructor(private val mService: MusicService) : BroadcastReceiver() {
         mNotificationColor = Utils.getThemeColor(mService, R.attr.colorPrimary,
                 Color.DKGRAY)
 
-        mNotificationManager = mService.getSystemService(Context.NOTIFICATION_SERVICE) as? NotificationManager ?: throw RuntimeException()
+        mNotificationManager = mService.getSystemService(Context.NOTIFICATION_SERVICE) as? NotificationManager
+                ?: throw IllegalStateException("can not get notification service")
 
         val pkg = mService.packageName
         mPauseIntent = PendingIntent.getBroadcast(mService, REQUEST_CODE,
@@ -133,12 +129,10 @@ constructor(private val mService: MusicService) : BroadcastReceiver() {
             if (notification != null && Looper.myLooper() != null) {
                 mController?.registerCallback(mCb)
                 val filter = IntentFilter()
-                filter.addAction(ACTION_NEXT)
-                filter.addAction(ACTION_PAUSE)
-                filter.addAction(ACTION_PLAY)
-                filter.addAction(ACTION_PREV)
+                for (action in listOf(ACTION_NEXT, ACTION_PAUSE, ACTION_PLAY, ACTION_PREV)) {
+                    filter.addAction(action)
+                }
                 mService.registerReceiver(this, filter)
-                LogHelper.d(TAG, "startForeground")
                 mService.startForeground(NOTIFICATION_ID, notification)
                 mStarted = true
             }
@@ -166,13 +160,13 @@ constructor(private val mService: MusicService) : BroadcastReceiver() {
 
     override fun onReceive(context: Context, intent: Intent) {
         val action = intent.action
-        LogHelper.d(TAG, "Received intent with action $action")
+        Log.d(TAG, "Received intent with action $action")
         when (action) {
             ACTION_PAUSE -> mTransportControls.pause()
             ACTION_PLAY -> mTransportControls.play()
             ACTION_NEXT -> mTransportControls.skipToNext()
             ACTION_PREV -> mTransportControls.skipToPrevious()
-            else -> LogHelper.w(TAG, "Unknown intent ignored. Action=", action)
+            else -> Log.w(TAG, "Unknown intent ignored. Action=$action")
         }
     }
 
@@ -186,7 +180,6 @@ constructor(private val mService: MusicService) : BroadcastReceiver() {
         mService.sessionToken?.let {
             if (mSessionToken == null || mSessionToken != null && mSessionToken != it) {
                 mController?.unregisterCallback(mCb)
-
                 mSessionToken = it
                 val controller = MediaControllerCompat(mService, it)
                 mController = controller
@@ -196,7 +189,6 @@ constructor(private val mService: MusicService) : BroadcastReceiver() {
                 }
             }
         }
-
     }
 
     private fun createContentIntent(description: MediaDescriptionCompat?): PendingIntent {
@@ -211,8 +203,6 @@ constructor(private val mService: MusicService) : BroadcastReceiver() {
     }
 
     private fun createNotification(): Notification? {
-        LogHelper.d(TAG, "updateNotificationMetadata. mMetadata=", mMetadata)
-
         val actions = mPlaybackState?.actions ?: return null
         val description = mMetadata?.description ?: return null
 
@@ -281,7 +271,6 @@ constructor(private val mService: MusicService) : BroadcastReceiver() {
     }
 
     private fun addPlayPauseAction(builder: NotificationCompat.Builder) {
-        LogHelper.d(TAG, "updatePlayPauseAction")
         val label: String
         val icon: Int
         val intent: PendingIntent
@@ -298,22 +287,17 @@ constructor(private val mService: MusicService) : BroadcastReceiver() {
     }
 
     private fun setNotificationPlaybackState(builder: NotificationCompat.Builder) {
-        LogHelper.d(TAG, "updateNotificationPlaybackState. mPlaybackState=$mPlaybackState")
         if (mPlaybackState == null) {
-            LogHelper.d(TAG, "updateNotificationPlaybackState. cancelling notification!")
             mService.stopForeground(true)
             return
         }
         mPlaybackState?.let {
             if (it.state == PlaybackStateCompat.STATE_PLAYING && it.position >= 0) {
-                LogHelper.d(TAG, "updateNotificationPlaybackState. updating playback position to ",
-                        (System.currentTimeMillis() - it.position) / 1000, " seconds")
                 builder
                         .setWhen(System.currentTimeMillis() - it.position)
                         .setShowWhen(true)
                         .setUsesChronometer(true)
             } else {
-                LogHelper.d(TAG, "updateNotificationPlaybackState. hiding playback position")
                 builder
                         .setWhen(0)
                         .setShowWhen(false)
@@ -333,7 +317,7 @@ constructor(private val mService: MusicService) : BroadcastReceiver() {
         private const val ACTION_STOP = "com.tiefensuche.soundcrowd.stop"
         private const val REQUEST_CODE = 100
         private const val CHANNEL_ID = "com.tiefensuche.soundcrowd.CHANNEL_ID"
-        private val TAG = LogHelper.makeLogTag(MediaNotificationManager::class.java)
+        private val TAG = MediaNotificationManager::class.simpleName
         private const val NOTIFICATION_ID = 412
     }
 }

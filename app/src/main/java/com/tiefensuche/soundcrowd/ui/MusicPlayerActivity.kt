@@ -4,7 +4,6 @@
 package com.tiefensuche.soundcrowd.ui
 
 import android.Manifest
-import android.content.Intent
 import android.content.SharedPreferences
 import android.content.pm.PackageManager
 import android.os.Bundle
@@ -19,6 +18,7 @@ import android.support.v4.media.session.MediaControllerCompat
 import android.support.v4.view.MenuItemCompat
 import android.support.v7.widget.SearchView
 import android.text.TextUtils
+import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
@@ -28,10 +28,8 @@ import com.sothree.slidinguppanel.SlidingUpPanelLayout
 import com.tiefensuche.soundcrowd.R
 import com.tiefensuche.soundcrowd.extensions.MediaMetadataCompatExt
 import com.tiefensuche.soundcrowd.ui.intro.ShowcaseViewManager
-import com.tiefensuche.soundcrowd.utils.LogHelper
 import com.tiefensuche.soundcrowd.utils.MediaIDHelper.CATEGORY_SEPARATOR
 import com.tiefensuche.soundcrowd.utils.MediaIDHelper.MEDIA_ID_MUSICS_BY_SEARCH
-
 
 /**
  * Main activity for the music player.
@@ -40,17 +38,18 @@ import com.tiefensuche.soundcrowd.utils.MediaIDHelper.MEDIA_ID_MUSICS_BY_SEARCH
  * connected while this activity is running.
  */
 internal class MusicPlayerActivity : BaseActivity(), MediaBrowserFragment.MediaFragmentListener, SharedPreferences.OnSharedPreferenceChangeListener {
-    private lateinit var searchView: SearchView
+
+    private var searchView: SearchView? = null
     private var searchItem: MenuItem? = null
     internal lateinit var controls: RelativeLayout
     internal lateinit var collapsingToolbarLayout: CollapsingToolbarLayout
-    private lateinit var toolbarHeader: View
+    private var toolbarHeader: View? = null
     private lateinit var preferences: SharedPreferences
 
     private val mediaId: String?
         get() {
             val fragment = browseFragment ?: return null
-            return fragment.mMediaId
+            return fragment.mediaId
         }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -67,7 +66,6 @@ internal class MusicPlayerActivity : BaseActivity(), MediaBrowserFragment.MediaF
         val playPauseButton = findViewById<ImageView>(R.id.play_pause)
         val controlsContainer = findViewById<RelativeLayout>(R.id.controls_layout)
 
-        slidingUpPanelLayout = findViewById(R.id.sliding_layout)
         slidingUpPanelLayout.addPanelSlideListener(object : SlidingUpPanelLayout.PanelSlideListener {
             override fun onPanelSlide(panel: View, slideOffset: Float) {
                 controls.alpha = 1 - slideOffset
@@ -85,11 +83,6 @@ internal class MusicPlayerActivity : BaseActivity(), MediaBrowserFragment.MediaF
                 }
             }
         })
-
-        // Only check if a full screen player is needed on the first time:
-        if (savedInstanceState == null) {
-            startFullScreenActivityIfNeeded(intent)
-        }
 
         checkPermissions()
 
@@ -115,18 +108,17 @@ internal class MusicPlayerActivity : BaseActivity(), MediaBrowserFragment.MediaF
             }
         })
 
-        searchView = MenuItemCompat.getActionView(searchItem) as? SearchView ?: throw RuntimeException()
-        searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
+        searchView = MenuItemCompat.getActionView(searchItem) as? SearchView
+                ?: throw RuntimeException()
+        searchView?.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
             override fun onQueryTextSubmit(query: String): Boolean {
-                LogHelper.d(TAG, "onQueryTextSubmit, query=", query)
                 browseFragment?.let {
                     val bundle = Bundle()
                     bundle.putString(MediaMetadataCompatExt.METADATA_KEY_TYPE, MediaMetadataCompatExt.MediaType.STREAM.name)
-                    navigateToBrowser(it.mMediaId + CATEGORY_SEPARATOR +
-                            MEDIA_ID_MUSICS_BY_SEARCH + CATEGORY_SEPARATOR + query,
-                            MediaDescriptionCompat.Builder().setExtras(bundle).build())
-                    closeSearchMenu()
-                    searchView.clearFocus()
+                    val mediaId = it.mediaId + CATEGORY_SEPARATOR +
+                            MEDIA_ID_MUSICS_BY_SEARCH + CATEGORY_SEPARATOR + query
+                    navigateToBrowser(mediaId, MediaDescriptionCompat.Builder().setTitle(query).setSubtitle("Search").setExtras(bundle).build())
+                    searchView?.clearFocus()
                 }
                 return true
             }
@@ -162,34 +154,28 @@ internal class MusicPlayerActivity : BaseActivity(), MediaBrowserFragment.MediaF
     override fun onMediaItemSelected(item: MediaBrowserCompat.MediaItem) {
         when {
             item.isPlayable -> {
-                LogHelper.d(TAG, "isPlayable: " + item.mediaId)
+                Log.d(TAG, "isPlayable: ${item.mediaId}")
 
                 MediaControllerCompat.getMediaController(this).transportControls
                         .playFromMediaId(item.mediaId, null)
-
             }
             item.isBrowsable -> navigateToBrowser(item.mediaId, item.description)
-            else -> LogHelper.w(TAG, "Ignoring MediaItem that is neither browsable nor playable: ",
-                    "mediaId=", item.mediaId)
+            else -> Log.w(TAG, "Ignoring MediaItem that is neither browsable nor playable: mediaId=${item.mediaId}")
         }
     }
 
     override fun setToolbarTitle(title: CharSequence?) {
-        LogHelper.d(TAG, "Setting toolbar title to ", title)
         collapsingToolbarLayout.title = title
         setTitle(title)
     }
 
     override fun enableCollapse(enable: Boolean) {
-        if (toolbarHeader.visibility == View.VISIBLE && !enable || toolbarHeader.visibility == View.GONE && enable) {
-            toolbarHeader.visibility = if (enable) View.VISIBLE else View.GONE
-            collapsingToolbarLayout.isTitleEnabled = enable
+        toolbarHeader?.let {
+            if (it.visibility == View.VISIBLE && !enable || it.visibility == View.GONE && enable) {
+                it.visibility = if (enable) View.VISIBLE else View.GONE
+                collapsingToolbarLayout.isTitleEnabled = enable
+            }
         }
-    }
-
-    override fun onNewIntent(intent: Intent) {
-        LogHelper.d(TAG, "onNewIntent, intent=$intent")
-        startFullScreenActivityIfNeeded(intent)
     }
 
     private fun checkPermissions() {
@@ -208,20 +194,13 @@ internal class MusicPlayerActivity : BaseActivity(), MediaBrowserFragment.MediaF
             PERMISSIONS_REQUEST_WRITE_EXTERNAL_STORAGE -> {
                 for (i in permissions.indices) {
                     if (Manifest.permission.WRITE_EXTERNAL_STORAGE == permissions[i] && grantResults[i] == PackageManager.PERMISSION_DENIED) {
-                        LogHelper.d(TAG, "Permission denied!")
+                        Log.d(TAG, "Permission denied!")
                         Snackbar.make(findViewById(R.id.controls), resources.getString(R.string.permission), Snackbar.LENGTH_INDEFINITE).show()
                     } else if (mediaBrowser.isConnected) {
                         onMediaControllerConnected()
                     }
                 }
             }
-        }
-    }
-
-    private fun startFullScreenActivityIfNeeded(intent: Intent?) {
-        if (intent != null && intent.getBooleanExtra(EXTRA_START_FULLSCREEN, false)) {
-            showPlaybackControls()
-            slidingUpPanelLayout.panelState = SlidingUpPanelLayout.PanelState.EXPANDED
         }
     }
 
@@ -237,20 +216,16 @@ internal class MusicPlayerActivity : BaseActivity(), MediaBrowserFragment.MediaF
     }
 
     private fun navigateToBrowser(mediaId: String?, description: MediaDescriptionCompat?) {
-        LogHelper.d(TAG, "navigateToBrowser, mediaId=", mediaId)
+        Log.d(TAG, "navigateToBrowser, mediaId=$mediaId")
         var fragment: MediaBrowserFragment? = browseFragment
 
-        if (fragment == null || !TextUtils.equals(fragment.mMediaId, mediaId)) {
+        if (fragment == null || !TextUtils.equals(fragment.mediaId, mediaId)) {
             fragment = MediaBrowserFragment()
             val bundle = Bundle()
-            bundle.putString("media_id", mediaId)
+            bundle.putString(MediaBrowserFragment.ARG_MEDIA_ID, mediaId)
+            bundle.putParcelable(MediaBrowserFragment.ARG_MEDIA_DESCRIPTION, description)
             fragment.arguments = bundle
-            fragment.setDescription(description)
-            val transaction = supportFragmentManager.beginTransaction()
-            transaction.setCustomAnimations(
-                    R.animator.slide_in_from_right, R.animator.slide_out_to_left,
-                    R.animator.slide_in_from_left, R.animator.slide_out_to_right)
-            transaction.replace(R.id.container, fragment, MediaBrowserFragment::class.java.name)
+            val transaction = supportFragmentManager.beginTransaction().replace(R.id.container, fragment, MediaBrowserFragment::class.java.name)
             // If this is not the top level media (root), we add it to the fragment back stack,
             // so that actionbar toggle and Back will work appropriately:
             if (mediaId != null) {
@@ -260,17 +235,18 @@ internal class MusicPlayerActivity : BaseActivity(), MediaBrowserFragment.MediaF
         }
     }
 
-    override fun closeSearchMenu() {
-        //        MenuItemCompat.collapseActionView(searchItem);
-    }
-
     override fun showSearchButton(show: Boolean) {
         searchItem?.isVisible = show
+        searchView?.visibility = if (show) {
+            View.VISIBLE
+        } else {
+            View.GONE
+        }
     }
 
     override fun onMediaControllerConnected() {
         super.onMediaControllerConnected()
-        LogHelper.d(TAG, "onMediaControllerConnected")
+        Log.d(TAG, "onMediaControllerConnected")
         val fragment = supportFragmentManager.findFragmentById(R.id.container)
         if (fragment is MediaBrowserFragment) {
             fragment.onConnected()
@@ -286,13 +262,14 @@ internal class MusicPlayerActivity : BaseActivity(), MediaBrowserFragment.MediaF
     companion object {
 
         const val EXTRA_START_FULLSCREEN = "com.tiefensuche.soundcrowd.EXTRA_START_FULLSCREEN"
+
         /**
          * Optionally used with [.EXTRA_START_FULLSCREEN] to carry a MediaDescription to
          * the [FullScreenPlayerFragment], speeding up the screen rendering
          * while the [android.support.v4.media.session.MediaControllerCompat] is connecting.
          */
         const val EXTRA_CURRENT_MEDIA_DESCRIPTION = "com.tiefensuche.soundcrowd.CURRENT_MEDIA_DESCRIPTION"
-        private val TAG = LogHelper.makeLogTag(MusicPlayerActivity::class.java)
+        private val TAG = MusicPlayerActivity::class.simpleName
         private const val SAVED_MEDIA_ID = "com.tiefensuche.soundcrowd.MEDIA_ID"
         private const val PERMISSIONS_REQUEST_WRITE_EXTERNAL_STORAGE = 0
         private var mPanelState: SlidingUpPanelLayout.PanelState = SlidingUpPanelLayout.PanelState.COLLAPSED

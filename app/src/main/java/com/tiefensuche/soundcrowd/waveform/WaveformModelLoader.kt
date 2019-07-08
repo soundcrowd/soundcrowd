@@ -18,7 +18,6 @@ import com.bumptech.glide.load.model.MultiModelLoaderFactory
 
 internal class WaveformModelLoader private constructor(private val context: Context) : ModelLoader<StringKey, Bitmap> {
 
-
     override fun buildLoadData(model: StringKey, width: Int, height: Int, options: Options): ModelLoader.LoadData<Bitmap>? {
         return ModelLoader.LoadData(model, WaveformGeneratorGlideWrapper(context, model, width, height))
     }
@@ -29,13 +28,12 @@ internal class WaveformModelLoader private constructor(private val context: Cont
 
     internal class Factory(private val context: Context) : ModelLoaderFactory<StringKey, Bitmap> {
 
-
         override fun build(multiFactory: MultiModelLoaderFactory): ModelLoader<StringKey, Bitmap> {
             return WaveformModelLoader(context)
         }
 
         override fun teardown() {
-
+            // nothing
         }
     }
 }

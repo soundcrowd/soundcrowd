@@ -4,20 +4,16 @@
 
 package com.tiefensuche.soundcrowd.plugins
 
-
-
 import android.content.Context
-import com.tiefensuche.soundcrowd.utils.LogHelper
+import android.util.Log
 import org.json.JSONArray
 import org.json.JSONObject
-import java.lang.reflect.InvocationHandler
-import java.lang.reflect.Method
 import java.lang.reflect.Proxy
 
 internal object PluginLoader {
 
     internal fun loadPlugin(context: Context, packageName: String): IPlugin? {
-        return PluginLoader.loadPlugin<IPlugin>(context, packageName, "Plugin")
+        return loadPlugin<IPlugin>(context, packageName, "Plugin")
     }
 
     internal fun <T> loadPlugin(context: Context, packageName: String, className: String): T? {
@@ -38,7 +34,7 @@ internal object PluginLoader {
             return Proxy.newProxyInstance(PluginLoader::class.java.classLoader, arrayOf<Class<*>>(IPlugin::class.java)) { _, method, objects ->
                 // Get the parameter types from the invoked method and swap the callback classes
                 val parameterTypes = arrayOfNulls<Class<*>>(method.parameterTypes.size)
-                for (i in 0 until parameterTypes.size) {
+                for (i in parameterTypes.indices) {
                     if (method.parameterTypes[i].name == "com.tiefensuche.soundcrowd.plugins.Callback") {
                         parameterTypes[i] = callbackClass
                     } else {
@@ -49,43 +45,50 @@ internal object PluginLoader {
                 // Get the method from the foreign class
                 val m = pluginClass.getMethod(method.name, *parameterTypes)
 
+                var clb: Callback<Any>? = null
+
                 // Go through all the passed objects and search for the callback class,
                 // it is in the interface currently the only special object.
                 if (objects != null) {
                     for (i in objects.indices) {
                         // search in the objects for the callback class
-                        val clb = objects[i]
-                        if (clb is Callback<*>) {
+                        if (objects[i] is Callback<*>) {
+                            clb = objects[i] as Callback<Any>
                             // Proxy the other way around, now from the foreign context and with the
                             // previously loaded foreign callback class and replace it with the proxy
-                            objects[i] = Proxy.newProxyInstance(pluginContext.classLoader, arrayOf(callbackClass), object: InvocationHandler {
-                                override fun invoke(o: Any?, method: Method?, objects: Array<out Any>?) {
-                                    // simply invoke in sole callback method
-                                    objects?.get(0).let {
-                                        // Could not find a better working solution yet
-                                        // to support arbitrary types
-                                        when (it) {
-                                            is String -> (clb as Callback<String>).onResult(it)
-                                            is JSONObject -> (clb as Callback<JSONObject>).onResult(it)
-                                            is JSONArray -> (clb as Callback<JSONArray>).onResult(it)
-                                            else -> throw RuntimeException("unknown callback type")
-                                        }
+                            objects[i] = Proxy.newProxyInstance(pluginContext.classLoader, arrayOf(callbackClass)) { _, _, objects ->
+                                // simply invoke in sole callback method
+                                objects?.get(0).let {
+                                    // Could not find a better working solution yet
+                                    // to support arbitrary types
+                                    when (it) {
+                                        is String -> (clb as Callback<String>).onResult(it)
+                                        is JSONObject -> (clb as Callback<JSONObject>).onResult(it)
+                                        is JSONArray -> (clb as Callback<JSONArray>).onResult(it)
+                                        is Boolean -> (clb as Callback<Boolean>).onResult(it)
+                                        else -> throw RuntimeException("unknown callback type")
                                     }
                                 }
-                            })
+                            }
                         }
                     }
                 }
 
-                // Invoke the foreign method with the parameters and return the result
-                if (objects == null) {
-                    m.invoke(instance)
-                } else {
-                    m.invoke(instance, *objects)
+                try {
+                    // Invoke the foreign method with the parameters and return the result
+                    if (objects == null) {
+                        m.invoke(instance)
+                    } else {
+                        m.invoke(instance, *objects)
+                    }
+                } catch (e: Exception) {
+                    Log.e(PluginLoader::class.java.simpleName, "error invoking method", e)
+                    clb?.onResult(e)
                 }
+
             } as? T
         } catch (e: Exception) {
-            LogHelper.e(PluginLoader::class.java.simpleName, e, "error loading plugin")
+            Log.e(PluginLoader::class.java.simpleName, "error loading plugin", e)
         }
 
         return null

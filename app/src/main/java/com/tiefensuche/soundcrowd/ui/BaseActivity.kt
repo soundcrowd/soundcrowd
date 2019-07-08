@@ -15,11 +15,11 @@ import android.support.v4.media.MediaMetadataCompat
 import android.support.v4.media.session.MediaControllerCompat
 import android.support.v4.media.session.MediaSessionCompat
 import android.support.v4.media.session.PlaybackStateCompat
+import android.util.Log
 import com.sothree.slidinguppanel.SlidingUpPanelLayout
 import com.tiefensuche.soundcrowd.R
 import com.tiefensuche.soundcrowd.service.MusicService
 import com.tiefensuche.soundcrowd.ui.intro.ShowcaseViewManager
-import com.tiefensuche.soundcrowd.utils.LogHelper
 import com.tiefensuche.soundcrowd.utils.MediaIDHelper
 import com.tiefensuche.soundcrowd.utils.Utils
 
@@ -28,18 +28,13 @@ import com.tiefensuche.soundcrowd.utils.Utils
  */
 abstract class BaseActivity : ActionBarCastActivity(), MediaBrowserProvider {
 
-    companion object {
-
-        private val TAG = LogHelper.makeLogTag(BaseActivity::class.java)
-    }
-
     // Callback that ensures that we are showing the controls
     private val mMediaControllerCallback = object : MediaControllerCompat.Callback() {
         override fun onPlaybackStateChanged(state: PlaybackStateCompat?) {
             if (shouldShowControls()) {
                 showPlaybackControls()
             } else {
-                LogHelper.d(TAG, "mediaControllerCallback.onPlaybackStateChanged: " + "hiding controls because state is ", state?.state)
+                Log.d(TAG, "mediaControllerCallback.onPlaybackStateChanged: hiding controls because state is ${state?.state}")
                 hidePlaybackControls()
             }
             mFullScreenPlayerFragment?.onPlaybackStateChanged(state)
@@ -49,7 +44,7 @@ abstract class BaseActivity : ActionBarCastActivity(), MediaBrowserProvider {
             if (shouldShowControls()) {
                 showPlaybackControls()
             } else {
-                LogHelper.d(TAG, "mediaControllerCallback.onMetadataChanged: " + "hiding controls because metadata is null")
+                Log.d(TAG, "mediaControllerCallback.onMetadataChanged: hiding controls because metadata is null")
                 hidePlaybackControls()
             }
             mFullScreenPlayerFragment?.onMetadataChanged(metadata)
@@ -60,13 +55,12 @@ abstract class BaseActivity : ActionBarCastActivity(), MediaBrowserProvider {
     private var mFullScreenPlayerFragment: FullScreenPlayerFragment? = null
     private val mConnectionCallback = object : MediaBrowserCompat.ConnectionCallback() {
         override fun onConnected() {
-            LogHelper.d(TAG, "onConnected")
             getPlugins()
             try {
                 connectToSession(mediaBrowser.sessionToken)
                 onMediaControllerConnected()
             } catch (e: RemoteException) {
-                LogHelper.e(TAG, e, "could not connect media controller")
+                Log.e(TAG, "could not connect media controller", e)
                 hidePlaybackControls()
             }
         }
@@ -75,7 +69,7 @@ abstract class BaseActivity : ActionBarCastActivity(), MediaBrowserProvider {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        LogHelper.d(TAG, "Activity onCreate")
+        Log.d(TAG, "Activity onCreate")
 
         if (Build.VERSION.SDK_INT >= 21) {
             // Since our app icon has the same color as colorPrimary, our entry in the Recent Apps
@@ -103,21 +97,27 @@ abstract class BaseActivity : ActionBarCastActivity(), MediaBrowserProvider {
 
     override fun onStart() {
         super.onStart()
-        LogHelper.d(TAG, "Activity onStart")
+        Log.d(TAG, "Activity onStart")
 
         mFullScreenPlayerFragment = supportFragmentManager.findFragmentById(R.id.fragment_fullscreen_player) as? FullScreenPlayerFragment
 
-        LogHelper.d(TAG, "MediaBrowser connected=", mediaBrowser.isConnected)
         if (!mediaBrowser.isConnected) {
             mediaBrowser.connect()
         } else {
             connectToSession(mediaBrowser.sessionToken)
+            // update metadata and playback state in case of reconnecting to a running session
+            // when returning to the activity
+            val mediaController = MediaControllerCompat.getMediaController(this)
+            if (mediaController.metadata != null) {
+                mMediaControllerCallback.onMetadataChanged(mediaController.metadata)
+                mMediaControllerCallback.onPlaybackStateChanged(mediaController.playbackState)
+            }
         }
     }
 
     override fun onStop() {
         super.onStop()
-        LogHelper.d(TAG, "Activity onStop")
+        Log.d(TAG, "Activity onStop")
         if (MediaControllerCompat.getMediaController(this) != null) {
             MediaControllerCompat.getMediaController(this).unregisterCallback(mMediaControllerCallback)
         }
@@ -129,7 +129,7 @@ abstract class BaseActivity : ActionBarCastActivity(), MediaBrowserProvider {
     }
 
     override fun onNewIntent(intent: Intent) {
-        LogHelper.d(TAG, "onNewIntent, intent=$intent")
+        Log.d(TAG, "onNewIntent, intent=$intent")
         startFullScreenActivityIfNeeded(intent)
         handleIntent(intent)
     }
@@ -140,7 +140,7 @@ abstract class BaseActivity : ActionBarCastActivity(), MediaBrowserProvider {
 
         if (Intent.ACTION_SEND == action && "text/plain" == type) { //  && mCurrentMetadata != null
             // handle text via share action, that should be a description for a new cue point
-            LogHelper.d(TAG, "add cue point from share action")
+            Log.d(TAG, "add cue point from share action")
             mFullScreenPlayerFragment?.addCuePoint(intent.getStringExtra(Intent.EXTRA_TEXT))
         } else if (Intent.ACTION_VIEW == action && intent.data != null) {
             // handle as file path to a music track, either local or remote (https:// or soundcrowd://)
@@ -160,7 +160,6 @@ abstract class BaseActivity : ActionBarCastActivity(), MediaBrowserProvider {
     }
 
     private fun showPlaybackControls() {
-        LogHelper.d(TAG, "showPlaybackControls")
         if (slidingUpPanelLayout.panelState == SlidingUpPanelLayout.PanelState.HIDDEN) {
             slidingUpPanelLayout.panelState = SlidingUpPanelLayout.PanelState.COLLAPSED
         }
@@ -168,7 +167,6 @@ abstract class BaseActivity : ActionBarCastActivity(), MediaBrowserProvider {
     }
 
     private fun hidePlaybackControls() {
-        LogHelper.d(TAG, "hidePlaybackControls")
         slidingUpPanelLayout.panelState = SlidingUpPanelLayout.PanelState.HIDDEN
     }
 
@@ -202,12 +200,16 @@ abstract class BaseActivity : ActionBarCastActivity(), MediaBrowserProvider {
         if (!plugins.isNullOrEmpty()) {
             return
         }
-        mediaBrowser.subscribe(MediaIDHelper.MEDIA_ID_PLUGINS, Bundle(), object: MediaBrowserCompat.SubscriptionCallback() {
+        mediaBrowser.subscribe(MediaIDHelper.MEDIA_ID_PLUGINS, Bundle(), object : MediaBrowserCompat.SubscriptionCallback() {
             override fun onChildrenLoaded(parentId: String,
                                           children: List<MediaBrowserCompat.MediaItem>,
                                           options: Bundle) {
                 updatePlugins(children)
             }
         })
+    }
+
+    companion object {
+        private val TAG = BaseActivity::class.simpleName
     }
 }

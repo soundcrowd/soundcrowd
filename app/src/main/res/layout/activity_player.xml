@@ -37,11 +37,11 @@
 
             <fragment android:name="com.tiefensuche.soundcrowd.ui.FullScreenPlayerFragment"
                 xmlns:tools="http://schemas.android.com/tools"
-                android:id="@+id/fragment_playback_controls"
+                android:id="@+id/fragment_fullscreen_player"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_alignParentBottom="true"
-                tools:layout="@layout/fragment_playback_controls" />
+                tools:layout="@layout/fragment_fullscreen_player" />
 
             <!--<include layout="@layout/playback_controls" />-->
         </android.support.v7.widget.CardView>

@@ -4,7 +4,6 @@
 
 package com.tiefensuche.soundcrowd.ui.preferences
 
-
 import android.content.Context
 import android.graphics.Canvas
 import android.util.AttributeSet

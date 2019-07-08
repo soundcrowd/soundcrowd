@@ -17,7 +17,7 @@ internal object MediaIDHelper {
     internal const val MEDIA_ID_MUSICS_BY_ALBUM = "__BY_ALBUM__"
 
     internal const val MEDIA_ID_MUSICS_CUE_POINTS = "__CUE_POINTS__"
-    internal const val MEDIA_ID_TEMP = "__TEMP__"
+    internal const val MEDIA_ID_LAST_MEDIA = "__LAST_MEDIA__"
 
     internal const val CATEGORY_SEPARATOR = '/'
     internal const val LEAF_SEPARATOR = '|'

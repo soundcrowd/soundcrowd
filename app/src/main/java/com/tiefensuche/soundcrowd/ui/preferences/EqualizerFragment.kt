@@ -4,8 +4,6 @@
 
 package com.tiefensuche.soundcrowd.ui.preferences
 
-import android.app.Activity
-import android.content.ContentValues.TAG
 import android.content.Context
 import android.content.SharedPreferences
 import android.os.Build
@@ -13,6 +11,7 @@ import android.os.Bundle
 import android.preference.PreferenceManager
 import android.support.annotation.RequiresApi
 import android.support.v4.app.Fragment
+import android.util.Log
 import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
@@ -36,9 +35,7 @@ import com.tiefensuche.soundcrowd.playback.EqualizerControl.Companion.releaseAud
 import com.tiefensuche.soundcrowd.playback.EqualizerControl.Companion.setBassBoost
 import com.tiefensuche.soundcrowd.playback.EqualizerControl.Companion.setLoudness
 import com.tiefensuche.soundcrowd.ui.MediaBrowserFragment
-import com.tiefensuche.soundcrowd.utils.LogHelper
 import java.util.*
-
 
 /**
  * Equalizer with some effects of the android system
@@ -68,19 +65,15 @@ internal class EqualizerFragment : Fragment() {
 
         (activity as? MediaBrowserFragment.MediaFragmentListener)?.let {
             it.setToolbarTitle(getString(R.string.equalizer_title))
+            it.enableCollapse(false)
             it.showSearchButton(false)
         }
-    }
-
-    override fun onAttach(activity: Activity) {
-        super.onAttach(activity)
-        (activity as? MediaBrowserFragment.MediaFragmentListener)?.enableCollapse(false)
     }
 
     private fun setupBands(layout: LinearLayout) {
         val context = layout.context
 
-        EqualizerControl.mEqualizer?.let {
+        mEqualizer?.let {
             val bands = it.numberOfBands
 
             val minEQLevel = it.bandLevelRange[0]
@@ -116,7 +109,7 @@ internal class EqualizerFragment : Fragment() {
                                 it.setBandLevel(i.toShort(), (progress + minEQLevel).toShort())
                             }
                         } catch (e: RuntimeException) {
-                            LogHelper.d(TAG, "can not set band " + i + " to " + (progress + minEQLevel), e)
+                            Log.d(TAG, "can not set band " + i + " to " + (progress + minEQLevel), e)
                         }
                     }
 
@@ -155,7 +148,7 @@ internal class EqualizerFragment : Fragment() {
         val adapter = ArrayAdapter<String>(context, android.R.layout.simple_spinner_item)
         mEqualizer?.let {
             for (i in 0 until it.numberOfPresets) {
-                LogHelper.d(TAG, "preset available: ", it.getPresetName(i.toShort()))
+                Log.d(TAG, "preset available: ${it.getPresetName(i.toShort())}")
                 adapter.add(it.getPresetName(i.toShort()))
             }
         }
@@ -235,13 +228,17 @@ internal class EqualizerFragment : Fragment() {
                 try {
                     checkboxFunc.invoke(true, i)
                 } catch (e: RuntimeException) {
-                    LogHelper.e(TAG, "can not set audio effect value", e)
+                    Log.e(TAG, "can not set audio effect value", e)
                 }
             }
 
-            override fun onStartTrackingTouch(seekBar: SeekBar) = Unit
+            override fun onStartTrackingTouch(seekBar: SeekBar) {
+                // nothing
+            }
 
-            override fun onStopTrackingTouch(seekBar: SeekBar) = Unit
+            override fun onStopTrackingTouch(seekBar: SeekBar) {
+                // nothing
+            }
         })
     }
 
@@ -255,12 +252,17 @@ internal class EqualizerFragment : Fragment() {
                 try {
                     checkboxFunc.invoke(true, i)
                 } catch (e: RuntimeException) {
-                    LogHelper.e(TAG, "can not set audio effect value", e)
+                    Log.e(TAG, "can not set audio effect value", e)
                 }
             }
 
-            override fun onNothingSelected(adapterView: AdapterView<*>) = Unit
+            override fun onNothingSelected(adapterView: AdapterView<*>) {
+                // nothing
+            }
         }
     }
 
+    companion object {
+        private val TAG = EqualizerFragment::class.simpleName
+    }
 }

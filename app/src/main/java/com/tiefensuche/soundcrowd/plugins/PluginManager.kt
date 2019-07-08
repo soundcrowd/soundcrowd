@@ -10,7 +10,6 @@ import java.util.*
 internal class PluginManager(private val context: Context) {
 
     companion object {
-
         private const val PLUGIN_PACKAGE_PREFIX = "com.tiefensuche.soundcrowd.plugins"
     }
 
@@ -25,5 +24,14 @@ internal class PluginManager(private val context: Context) {
                 plugins.add(plugin)
             }
         }
+    }
+
+    fun getPlugin(name: String): IPlugin? {
+        for (plugin in plugins) {
+            if (name == plugin.name()) {
+                return plugin
+            }
+        }
+        return null
     }
 }

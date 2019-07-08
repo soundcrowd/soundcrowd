@@ -4,10 +4,10 @@
 
 package com.tiefensuche.soundcrowd.utils
 
-import android.net.Uri
 import android.support.v4.media.MediaMetadataCompat
 import android.support.v4.media.session.MediaSessionCompat
 import android.text.TextUtils
+import android.util.Log
 import com.tiefensuche.soundcrowd.sources.MusicProvider
 import com.tiefensuche.soundcrowd.utils.MediaIDHelper.MEDIA_ID_MUSICS_BY_ALBUM
 import com.tiefensuche.soundcrowd.utils.MediaIDHelper.MEDIA_ID_MUSICS_BY_ARTIST
@@ -20,23 +20,25 @@ import java.util.*
  */
 internal object QueueHelper {
 
-    private val TAG = LogHelper.makeLogTag(QueueHelper::class.java)
+    private val TAG = QueueHelper::class.simpleName
 
     private const val RANDOM_QUEUE_SIZE = 10
 
-
     internal fun getPlayingQueue(mediaId: String,
-                        musicProvider: MusicProvider): List<MediaSessionCompat.QueueItem> {
+                                 musicProvider: MusicProvider): List<MediaSessionCompat.QueueItem> {
 
         // extract the browsing hierarchy from the media ID:
         val hierarchy = MediaIDHelper.getHierarchy(mediaId)
 
         val categoryType = hierarchy[0]
-        LogHelper.d(TAG, "Creating playing queue for ", categoryType)
+        Log.d(TAG, "Creating playing queue for $categoryType")
 
         val tracks = musicProvider.getMusicByCategory(MediaIDHelper.getPath(mediaId))
 
-        val alphabeticalComparator = { o1: MediaMetadataCompat, o2: MediaMetadataCompat -> o1.description.title?.toString()?.compareTo(o2.description.title?.toString() ?: "", ignoreCase = true) ?: 0 }
+        val alphabeticalComparator = { o1: MediaMetadataCompat, o2: MediaMetadataCompat ->
+            o1.description.title?.toString()?.compareTo(o2.description.title?.toString()
+                    ?: "", ignoreCase = true) ?: 0
+        }
 
         for (category in arrayOf(MEDIA_ID_ROOT, MEDIA_ID_MUSICS_BY_ARTIST, MEDIA_ID_MUSICS_BY_ALBUM)) {
             if (category == categoryType) {
@@ -48,7 +50,7 @@ internal object QueueHelper {
     }
 
     internal fun getMusicIndexOnQueue(queue: Iterable<MediaSessionCompat.QueueItem>,
-                             mediaId: String): Int {
+                                      mediaId: String): Int {
         for ((index, item) in queue.withIndex()) {
             if (mediaId == item.description.mediaId) {
                 return index
@@ -58,17 +60,7 @@ internal object QueueHelper {
     }
 
     internal fun getMusicIndexOnQueue(queue: Iterable<MediaSessionCompat.QueueItem>,
-                             uri: Uri): Int {
-        for ((index, item) in queue.withIndex()) {
-            if (uri == item.description.mediaUri) {
-                return index
-            }
-        }
-        return -1
-    }
-
-    internal fun getMusicIndexOnQueue(queue: Iterable<MediaSessionCompat.QueueItem>,
-                             queueId: Long): Int {
+                                      queueId: Long): Int {
         for ((index, item) in queue.withIndex()) {
             if (queueId == item.queueId) {
                 return index
@@ -76,7 +68,6 @@ internal object QueueHelper {
         }
         return -1
     }
-
 
     private fun convertToQueue(
             tracks: Iterable<MediaMetadataCompat>, vararg categories: String): List<MediaSessionCompat.QueueItem> {
@@ -99,7 +90,6 @@ internal object QueueHelper {
             queue.add(item)
         }
         return queue
-
     }
 
     /**
@@ -118,7 +108,6 @@ internal object QueueHelper {
             }
             result.add(metadata)
         }
-        LogHelper.d(TAG, "getRandomQueue: result.size=", result.size)
 
         return convertToQueue(result, MEDIA_ID_MUSICS_BY_SEARCH, "random")
     }
@@ -135,7 +124,7 @@ internal object QueueHelper {
      * @return boolean indicating whether the queue's match
      */
     internal fun equals(list1: List<MediaSessionCompat.QueueItem>?,
-               list2: List<MediaSessionCompat.QueueItem>?): Boolean {
+                        list2: List<MediaSessionCompat.QueueItem>?): Boolean {
         if (list1 === list2) {
             return true
         }

@@ -12,8 +12,7 @@ import com.tiefensuche.soundcrowd.R
 import com.tiefensuche.soundcrowd.ui.MediaBrowserFragment
 import org.json.JSONArray
 
-
-class PreferenceFragment: PreferenceFragmentCompat() {
+class PreferenceFragment : PreferenceFragmentCompat() {
 
     var prefs = HashMap<String, JSONArray>()
 
@@ -43,5 +42,4 @@ class PreferenceFragment: PreferenceFragmentCompat() {
             }
         }
     }
-
 }

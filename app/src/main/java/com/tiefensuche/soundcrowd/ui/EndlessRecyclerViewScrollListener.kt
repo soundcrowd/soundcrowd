@@ -15,15 +15,20 @@ import android.support.v7.widget.StaggeredGridLayoutManager
 internal abstract class EndlessRecyclerViewScrollListener : RecyclerView.OnScrollListener {
 
     private val mLayoutManager: RecyclerView.LayoutManager
+
     // The minimum amount of items to have below your current scroll position
     // before loading more.
     private var visibleThreshold = 5
+
     // The current offset index of data you have loaded
     private var currentPage = 0
+
     // The total number of items in the dataset after the last load
     private var previousTotalItemCount = 0
+
     // True if we are still waiting for the last set of data to load.
     private var loading = true
+
     // Sets the starting page index
     private val startingPageIndex = 0
 
@@ -33,12 +38,12 @@ internal abstract class EndlessRecyclerViewScrollListener : RecyclerView.OnScrol
 
     constructor(layoutManager: GridLayoutManager) {
         this.mLayoutManager = layoutManager
-        visibleThreshold = visibleThreshold * layoutManager.spanCount
+        visibleThreshold *= layoutManager.spanCount
     }
 
     constructor(layoutManager: StaggeredGridLayoutManager) {
         this.mLayoutManager = layoutManager
-        visibleThreshold = visibleThreshold * layoutManager.spanCount
+        visibleThreshold *= layoutManager.spanCount
     }
 
     private fun getLastVisibleItem(lastVisibleItemPositions: IntArray): Int {
@@ -70,7 +75,7 @@ internal abstract class EndlessRecyclerViewScrollListener : RecyclerView.OnScrol
             is LinearLayoutManager -> lastVisibleItemPosition = mLayoutManager.findLastVisibleItemPosition()
         }
 
-            // If the total item count is zero and the previous isn't, assume the
+        // If the total item count is zero and the previous isn't, assume the
         // list is invalidated and should be reset back to initial state
         // If it’s still loading, we check to see if the dataset count has
         // changed, if so we conclude it has finished loading and update the current page
@@ -118,6 +123,4 @@ internal abstract class EndlessRecyclerViewScrollListener : RecyclerView.OnScrol
 
     // Defines the process for actually loading more data based on page
     abstract fun onLoadMore(page: Int, totalItemsCount: Int, view: RecyclerView)
-
-
 }

@@ -7,24 +7,28 @@ package com.tiefensuche.soundcrowd.playback
 import android.content.SharedPreferences
 import android.content.res.Resources
 import android.net.Uri
+import android.os.AsyncTask
 import android.os.Bundle
 import android.os.SystemClock
+import android.support.v4.media.MediaMetadataCompat
+import android.support.v4.media.RatingCompat
 import android.support.v4.media.session.MediaSessionCompat
 import android.support.v4.media.session.PlaybackStateCompat
-
+import android.util.Log
 import com.tiefensuche.soundcrowd.R
-import com.tiefensuche.soundcrowd.database.DatabaseHelper
+import com.tiefensuche.soundcrowd.database.Database
+import com.tiefensuche.soundcrowd.extensions.MediaMetadataCompatExt
+import com.tiefensuche.soundcrowd.plugins.Callback
 import com.tiefensuche.soundcrowd.sources.MusicProvider
-import com.tiefensuche.soundcrowd.utils.LogHelper
-
 import com.tiefensuche.soundcrowd.utils.MediaIDHelper.extractMusicIDFromMediaID
 
 /**
  * Manage the interactions among the container service, the queue manager and the actual playback.
  */
 internal class PlaybackManager(private val mServiceCallback: PlaybackServiceCallback, private val mResources: Resources,
-                      private val mMusicProvider: MusicProvider, private val mQueueManager: com.tiefensuche.soundcrowd.playback.QueueManager,
-                      val playback: Playback, private val mPreferences: SharedPreferences) : Playback.Callback {
+                               private val mMusicProvider: MusicProvider, private val mQueueManager: QueueManager,
+                               val playback: Playback, private val mPreferences: SharedPreferences) : Playback.Callback {
+
     private val mMediaSessionCallback: MediaSessionCallback
 
     internal val mediaSessionCallback: MediaSessionCompat.Callback
@@ -54,7 +58,6 @@ internal class PlaybackManager(private val mServiceCallback: PlaybackServiceCall
      * Handle a request to play music
      */
     internal fun handlePlayRequest() {
-        LogHelper.d(TAG, "handlePlayRequest: mState=" + playback.state)
         val currentMusic = mQueueManager.currentMusic
         if (currentMusic != null) {
             mServiceCallback.onPlaybackStart()
@@ -66,7 +69,6 @@ internal class PlaybackManager(private val mServiceCallback: PlaybackServiceCall
      * Handle a request to play music
      */
     private fun handlePlayRequestAtPosition(position: Int) {
-        LogHelper.d(TAG, "handlePlayRequestAtPosition: mState=" + playback.state)
         val currentMusic = mQueueManager.currentMusic
         if (currentMusic != null) {
             mServiceCallback.onPlaybackStart()
@@ -78,7 +80,6 @@ internal class PlaybackManager(private val mServiceCallback: PlaybackServiceCall
      * Handle a request to pause music
      */
     internal fun handlePauseRequest() {
-        LogHelper.d(TAG, "handlePauseRequest: mState=" + playback.state)
         if (playback.isPlaying) {
             playback.pause()
             mServiceCallback.onPlaybackStop()
@@ -93,12 +94,10 @@ internal class PlaybackManager(private val mServiceCallback: PlaybackServiceCall
      * MediaController clients.
      */
     internal fun handleStopRequest(withError: String?) {
-        LogHelper.d(TAG, "handleStopRequest: mState=" + playback.state + " error=", withError)
         playback.stop(true)
         mServiceCallback.onPlaybackStop()
         updatePlaybackState(withError)
     }
-
 
     /**
      * Update the current media player state, optionally showing an error message.
@@ -106,12 +105,11 @@ internal class PlaybackManager(private val mServiceCallback: PlaybackServiceCall
      * @param error if not null, error message to present to the user.
      */
     internal fun updatePlaybackState(error: String?) {
-        LogHelper.d(TAG, "updatePlaybackState, playback state=" + playback.state)
+        Log.d(TAG, "updatePlaybackState, playback state=${playback.state}")
         var position = -1
         if (playback.isConnected) {
             position = playback.currentStreamPosition
         }
-
 
         val stateBuilder = PlaybackStateCompat.Builder()
                 .setActions(availableActions)
@@ -151,10 +149,7 @@ internal class PlaybackManager(private val mServiceCallback: PlaybackServiceCall
             R.drawable.ic_star_on
         else
             R.drawable.ic_star_off
-        LogHelper.d(TAG, "updatePlaybackState, setting Favorite custom action of music ",
-                musicId, " current favorite=", mMusicProvider.isFavorite(musicId))
         val customActionExtras = Bundle()
-        //        WearHelper.setShowCustomActionOnWear(customActionExtras, true);
         stateBuilder.addCustomAction(PlaybackStateCompat.CustomAction.Builder(
                 CUSTOM_ACTION_THUMBS_UP, mResources.getString(R.string.favorite), favoriteIcon)
                 .setExtras(customActionExtras)
@@ -185,23 +180,25 @@ internal class PlaybackManager(private val mServiceCallback: PlaybackServiceCall
     }
 
     override fun setCurrentMediaId(mediaId: String) {
-        LogHelper.d(TAG, "setCurrentMediaId", mediaId)
         mQueueManager.setQueueFromMusic(mediaId)
     }
 
-    private fun updateLastPosition() {
+    internal fun updateLastPosition() {
         mQueueManager.currentMusic?.description?.mediaId?.let {
-            DatabaseHelper.instance.updatePosition(extractMusicIDFromMediaID(it), playback.currentStreamPosition)
-            mPreferences.edit().putString("last_media_id", it).apply()
+            val musicId = extractMusicIDFromMediaID(it)
+            mMusicProvider.getMusic(musicId)?.let {
+                Database.instance.updatePosition(it, playback.currentStreamPosition)
+                mPreferences.edit().putString("last_media_id", musicId).apply()
+            }
         }
     }
 
     internal fun loadLastTrack() {
         val lastMediaId = mPreferences.getString("last_media_id", null)
-        LogHelper.d(TAG, "load metadata for lastMediaId=", lastMediaId)
         if (lastMediaId != null) {
-            val musicId = extractMusicIDFromMediaID(lastMediaId)
-            mQueueManager.update(musicId)
+            if (mMusicProvider.loadLastMedia(lastMediaId)) {
+                mQueueManager.update(lastMediaId)
+            }
         }
     }
 
@@ -214,36 +211,29 @@ internal class PlaybackManager(private val mServiceCallback: PlaybackServiceCall
 
     interface PlaybackServiceCallback {
         fun onPlaybackStart()
-
         fun onNotificationRequired()
-
         fun onPlaybackStop()
-
         fun onPlaybackStateUpdated(newState: PlaybackStateCompat)
     }
 
     internal inner class MediaSessionCallback : MediaSessionCompat.Callback() {
         override fun onPlay() {
-            LogHelper.d(TAG, "play")
-            if (mQueueManager.currentMusic == null) {
-                mQueueManager.setRandomQueue()
+            if (mQueueManager.currentMusic == null && !mQueueManager.setLastItem()) {
+                return
             }
             handlePlayRequest()
         }
 
         override fun onSkipToQueueItem(queueId: Long) {
-            LogHelper.d(TAG, "OnSkipToQueueItem:$queueId")
             mQueueManager.setCurrentQueueItem(queueId)
             mQueueManager.updateMetadata()
         }
 
         override fun onSeekTo(position: Long) {
-            LogHelper.d(TAG, "onSeekTo:", position)
             playback.seekTo(position.toInt())
         }
 
         override fun onPlayFromMediaId(mediaId: String, extras: Bundle?) {
-            LogHelper.d(TAG, "playFromMediaId mediaId:", mediaId, "  extras=", extras)
             mQueueManager.currentMusic?.let {
                 if (mediaId == it.description.mediaId) {
                     return
@@ -255,7 +245,6 @@ internal class PlaybackManager(private val mServiceCallback: PlaybackServiceCall
         }
 
         override fun onPlayFromUri(uri: Uri, extras: Bundle?) {
-            LogHelper.d(TAG, "playFromUri uri:", uri, "  extras=", extras)
             if (mQueueManager.currentMusic != null) {
                 updateLastPosition()
             }
@@ -264,19 +253,16 @@ internal class PlaybackManager(private val mServiceCallback: PlaybackServiceCall
         }
 
         override fun onPause() {
-            LogHelper.d(TAG, "pause. current state=" + playback.state)
             updateLastPosition()
             handlePauseRequest()
         }
 
         override fun onStop() {
-            LogHelper.d(TAG, "stop. current state=" + playback.state)
             updateLastPosition()
             handleStopRequest(null)
         }
 
         override fun onSkipToNext() {
-            LogHelper.d(TAG, "skipToNext")
             updateLastPosition()
             if (mQueueManager.skipQueuePosition(1)) {
                 handlePlayRequest()
@@ -297,9 +283,9 @@ internal class PlaybackManager(private val mServiceCallback: PlaybackServiceCall
         }
 
         override fun onCustomAction(action: String?, extras: Bundle?) {
-            when {
-                CUSTOM_ACTION_THUMBS_UP == action -> {
-                    LogHelper.d(TAG, "onCustomAction: favorite for current track")
+            when (action) {
+                CUSTOM_ACTION_THUMBS_UP -> {
+                    Log.d(TAG, "onCustomAction: favorite for current track")
                     val currentMusic = mQueueManager.currentMusic
                     if (currentMusic != null) {
                         val mediaId = currentMusic.description.mediaId
@@ -312,9 +298,35 @@ internal class PlaybackManager(private val mServiceCallback: PlaybackServiceCall
                     // custom action will change to reflect the new favorite state.
                     updatePlaybackState(null)
                 }
-                CUSTOM_ACTION_PLAY_SEEK == action -> extras?.getString("mediaId")?.let { playAtPosition(it, extras.getInt("position")) }
-                else -> LogHelper.e(TAG, "Unsupported action: ", action)
+                CUSTOM_ACTION_PLAY_SEEK -> extras?.getString("mediaId")?.let { playAtPosition(it, extras.getInt("position")) }
+                else -> Log.e(TAG, "Unsupported action: $action")
             }
+        }
+
+        override fun onSetRating(rating: RatingCompat) {
+            Log.d(TAG, "onSetRating. hasHeart=" + rating.hasHeart())
+
+            mQueueManager.currentMusic?.description?.mediaId?.let {
+                val metadata = mMusicProvider.getMusic(extractMusicIDFromMediaID(it)) ?: return
+                AsyncTask.execute {
+                    mMusicProvider.favorite(metadata, object : Callback<Boolean> {
+                        override fun onResult(result: Boolean) {
+                            if (result) {
+                                triggerUpdate(metadata, rating)
+                            } else {
+                                Log.d(TAG, "failed to favorite track")
+                            }
+                        }
+                    })
+                }
+            }
+        }
+
+        private fun triggerUpdate(metadata: MediaMetadataCompat, rating: RatingCompat) {
+            val builder = MediaMetadataCompat.Builder(metadata)
+                    .putRating(MediaMetadataCompatExt.METADATA_KEY_FAVORITE, rating)
+            mQueueManager.mListener.onMetadataChanged(builder.build())
+            updatePlaybackState(null)
         }
     }
 
@@ -323,6 +335,6 @@ internal class PlaybackManager(private val mServiceCallback: PlaybackServiceCall
         // Action to thumbs up a media item
         private const val CUSTOM_ACTION_THUMBS_UP = "com.tiefensuche.soundcrowd.THUMBS_UP"
         const val CUSTOM_ACTION_PLAY_SEEK = "com.tiefensuche.soundcrowd.PLAY_SEEK"
-        private val TAG = LogHelper.makeLogTag(PlaybackManager::class.java)
+        private val TAG = PlaybackManager::class.simpleName
     }
 }

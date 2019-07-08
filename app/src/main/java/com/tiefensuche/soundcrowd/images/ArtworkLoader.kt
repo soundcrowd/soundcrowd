@@ -21,7 +21,6 @@ import java.nio.ByteBuffer
  */
 internal class ArtworkLoader(private val context: Context) : ModelLoader<MediaDescriptionCompat, ByteBuffer> {
 
-
     override fun buildLoadData(model: MediaDescriptionCompat, width: Int, height: Int, options: Options): ModelLoader.LoadData<ByteBuffer>? {
         return model.mediaId?.let { ModelLoader.LoadData(StringKey(it), ArtworkExtractor(context, model)) }
     }
@@ -32,13 +31,12 @@ internal class ArtworkLoader(private val context: Context) : ModelLoader<MediaDe
 
     internal class Factory(private val context: Context) : ModelLoaderFactory<MediaDescriptionCompat, ByteBuffer> {
 
-
         override fun build(multiFactory: MultiModelLoaderFactory): ModelLoader<MediaDescriptionCompat, ByteBuffer> {
             return ArtworkLoader(context)
         }
 
         override fun teardown() {
-
+            // nothing
         }
     }
 }
