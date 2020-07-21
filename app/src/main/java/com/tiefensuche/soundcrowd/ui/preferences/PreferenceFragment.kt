@@ -19,6 +19,7 @@ class PreferenceFragment : PreferenceFragmentCompat() {
     override fun onCreatePreferences(savedInstanceState: Bundle?, p1: String?) {
         (activity as? MediaBrowserFragment.MediaFragmentListener)?.let {
             it.setToolbarTitle(getString(R.string.preferences_title))
+            it.enableCollapse(false)
             it.showSearchButton(false)
         }
 
@@ -37,7 +38,9 @@ class PreferenceFragment : PreferenceFragmentCompat() {
                 editText.key = json.getString("key")
                 editText.title = json.getString("name")
                 editText.summary = json.getString("description")
-                editText.dialogLayoutResource = android.support.v7.preference.R.layout.preference_dialog_edittext
+                editText.dialogTitle = json.getString("name")
+                editText.dialogMessage = json.getString("description")
+                editText.dialogLayoutResource = if (editText.key == "password") R.layout.preference_dialog_edittext_password else R.layout.preference_dialog_edittext
                 category.addPreference(editText)
             }
         }
