@@ -17,3 +17,7 @@
 #}
 -keep class android.support.v7.widget.SearchView { *; }
 -dontwarn com.bumptech.glide.load.resource.bitmap.VideoDecoder
+-keep class com.tiefensuche.soundcrowd.plugins.IPlugin { *; }
+-keep class com.tiefensuche.soundcrowd.plugins.Callback { *; }
+-keep class com.tiefensuche.soundcrowd.extensions.UrlResolver { *; }
+-ignorewarnings
