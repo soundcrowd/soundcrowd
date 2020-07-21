@@ -33,6 +33,7 @@ internal class SoundCrowdGlideModule : AppGlideModule() {
 
         registry.append(Bitmap::class.java, Bitmap::class.java, WaveformResourceDecoder(glide.bitmapPool))
                 .append(StringKey::class.java, Bitmap::class.java, WaveformModelLoader.Factory(context)) // Waveform generation from JSON and extraction for local files
+                .append(MediaDescriptionCompat::class.java, Bitmap::class.java, MetadataArtworkLoader.Factory()) // Artwork directly from media description
                 .append(MediaDescriptionCompat::class.java, ByteBuffer::class.java, ArtworkLoader.Factory(context)) // Artwork extraction from local files
                 .append(MediaDescriptionCompat::class.java, InputStream::class.java, RemoteArtworkLoader.Factory()) // Remote artwork download
                 .register(Bitmap::class.java, PaletteBitmap::class.java, PaletteBitmapTranscoder()) // Bitmap -> PaletteBitmap that contains generated palette colors
