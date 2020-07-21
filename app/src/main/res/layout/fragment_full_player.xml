@@ -49,6 +49,30 @@
             android:src="@drawable/shazam"
             android:tint="@android:color/white" />
 
+        <ImageView
+            android:id="@+id/share"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:layout_toStartOf="@id/shazam"
+            android:background="?selectableItemBackgroundBorderless"
+            android:padding="8dp"
+            android:src="@android:drawable/ic_menu_share"
+            android:tint="@android:color/white"
+            android:layout_toLeftOf="@id/shazam" />
+
+        <ImageView
+            android:id="@+id/favorite"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:layout_toStartOf="@id/share"
+            android:background="?selectableItemBackgroundBorderless"
+            android:padding="8dp"
+            android:src="@drawable/favorite"
+            android:tint="@android:color/white"
+            android:layout_toLeftOf="@id/share" />
+
     </RelativeLayout>
 
     <TextView
@@ -61,13 +85,6 @@
         android:shadowRadius="20"
         android:textAppearance="?android:attr/textAppearanceSmall"
         android:textColor="@android:color/white" />
-
-    <SurfaceView
-        android:id="@+id/surface_view"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_centerVertical="true"
-        android:visibility="gone" />
 
     <com.tiefensuche.soundcrowd.waveform.WaveformView
         android:id="@+id/waveformView"
@@ -218,4 +235,9 @@
         android:layout_height="wrap_content"
         android:layout_centerInParent="true"
         android:visibility="gone" />
+
+    <include
+        layout="@layout/playback_controls"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" />
 </RelativeLayout>
