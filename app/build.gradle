@@ -11,12 +11,12 @@ android {
 
     defaultConfig {
         applicationId 'com.tiefensuche.soundcrowd'
-        versionName "3.0.0-test"
+        versionName "3.1.0"
         compileSdkVersion 28
         minSdkVersion 16
         targetSdkVersion 28
-        versionCode 1
-        proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        versionCode 62
+        proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
     }
 
     compileOptions {
@@ -38,7 +38,7 @@ android {
             versionNameSuffix '-release'
             minifyEnabled true
             shrinkResources true
-            useProguard false
+            useProguard true
         }
     }
 
