@@ -5,7 +5,6 @@
 package com.tiefensuche.soundcrowd.playback
 
 import android.content.Context
-import android.content.res.Resources
 import android.graphics.Bitmap
 import android.net.Uri
 import android.preference.PreferenceManager
@@ -13,7 +12,9 @@ import android.support.v4.media.MediaMetadataCompat
 import android.support.v4.media.session.MediaSessionCompat
 import com.tiefensuche.soundcrowd.images.ArtworkHelper
 import com.tiefensuche.soundcrowd.sources.MusicProvider
+import com.tiefensuche.soundcrowd.sources.MusicProvider.Media.LAST_MEDIA
 import com.tiefensuche.soundcrowd.utils.MediaIDHelper
+import com.tiefensuche.soundcrowd.utils.MediaIDHelper.LEAF_SEPARATOR
 import com.tiefensuche.soundcrowd.utils.QueueHelper
 import com.tiefensuche.soundcrowd.utils.Utils
 import java.util.*
@@ -24,7 +25,6 @@ import java.util.*
  * given MusicProvider to provide the actual media metadata.
  */
 internal class QueueManager(private val mMusicProvider: MusicProvider,
-                            private val mResources: Resources,
                             internal val mListener: MetadataUpdateListener,
                             private val mContext: Context) {
 
@@ -33,9 +33,10 @@ internal class QueueManager(private val mMusicProvider: MusicProvider,
     private var mCurrentIndex: Int = 0
 
     internal val currentMusic: MediaSessionCompat.QueueItem?
-        get() = if (!QueueHelper.isIndexPlayable(mCurrentIndex, mPlayingQueue)) {
+        get() = if (QueueHelper.isIndexPlayable(mCurrentIndex, mPlayingQueue))
+            mPlayingQueue[mCurrentIndex]
+        else
             null
-        } else mPlayingQueue[mCurrentIndex]
 
     init {
         mPlayingQueue = Collections.synchronizedList<MediaSessionCompat.QueueItem>(ArrayList<MediaSessionCompat.QueueItem>())
@@ -73,9 +74,8 @@ internal class QueueManager(private val mMusicProvider: MusicProvider,
     }
 
     internal fun skipQueuePosition(amount: Int): Boolean {
-        if (mPlayingQueue.isEmpty() || mPlayingQueue.size == 1) {
+        if (mPlayingQueue.isEmpty() || mPlayingQueue.size == 1)
             return false
-        }
         var index = mCurrentIndex + amount
         if (index < 0) {
             // skip backwards before the first song will keep you on the first song
@@ -84,22 +84,15 @@ internal class QueueManager(private val mMusicProvider: MusicProvider,
             // skip forwards when in last song will cycle back to start of the queue
             index %= mPlayingQueue.size
         }
-        if (!QueueHelper.isIndexPlayable(index, mPlayingQueue)) {
+        if (!QueueHelper.isIndexPlayable(index, mPlayingQueue))
             return false
-        }
         mCurrentIndex = index
         return true
     }
 
-    internal fun setRandomQueue() {
-        setCurrentQueue(mResources.getString(com.tiefensuche.soundcrowd.R.string.random_queue_title),
-                QueueHelper.getRandomQueue(mMusicProvider))
-        updateMetadata()
-    }
-
     internal fun setLastItem(): Boolean {
-        PreferenceManager.getDefaultSharedPreferences(mContext).getString("last_media_id", null)?.let {
-            setQueueFromMusic(MediaIDHelper.MEDIA_ID_LAST_MEDIA + "|" + it)
+        PreferenceManager.getDefaultSharedPreferences(mContext).getString(LAST_MEDIA, null)?.let {
+            setQueueFromMusic(LAST_MEDIA + LEAF_SEPARATOR + it)
             return true
         }
         return false
@@ -116,9 +109,7 @@ internal class QueueManager(private val mMusicProvider: MusicProvider,
             canReuseQueue = setCurrentQueueItem(mediaId)
         }
         if (!canReuseQueue) {
-            val queueTitle = mResources.getString(com.tiefensuche.soundcrowd.R.string.browse_musics_by_genre_subtitle,
-                    MediaIDHelper.extractBrowseCategoryValueFromMediaID(mediaId))
-            setCurrentQueue(queueTitle,
+            setCurrentQueue(MediaIDHelper.getPath(mediaId),
                     QueueHelper.getPlayingQueue(mediaId, mMusicProvider), mediaId)
         }
         updateMetadata()
@@ -126,19 +117,17 @@ internal class QueueManager(private val mMusicProvider: MusicProvider,
 
     internal fun setQueueFromMusic(uri: Uri) {
         val mediaId = mMusicProvider.resolve(uri)
-        if (mediaId != null) {
+        if (mediaId != null)
             setQueueFromMusic(mediaId)
-        }
     }
 
     private fun setCurrentQueue(title: String, newQueue: List<MediaSessionCompat.QueueItem>,
                                 initialMediaId: String? = null) {
         mPlayingQueue = newQueue
         var index = 0
-        if (initialMediaId != null) {
+        if (initialMediaId != null)
             index = QueueHelper.getMusicIndexOnQueue(mPlayingQueue, initialMediaId)
-        }
-        mCurrentIndex = Math.max(index, 0)
+        mCurrentIndex = index.coerceAtLeast(0)
         mListener.onQueueUpdated(title, newQueue)
     }
 
@@ -164,16 +153,14 @@ internal class QueueManager(private val mMusicProvider: MusicProvider,
     }
 
     private fun setArtwork(musicId: String, bitmap: Bitmap) {
-        val icon = Utils.scaleBitmap(bitmap,
-                ArtworkHelper.MAX_ART_WIDTH_ICON, ArtworkHelper.MAX_ART_HEIGHT_ICON)
+        val icon = Utils.scaleBitmap(bitmap, ArtworkHelper.MAX_ART_WIDTH_ICON, ArtworkHelper.MAX_ART_HEIGHT_ICON)
         mMusicProvider.updateMusicArt(musicId, bitmap, icon)
 
         // If we are still playing the same music, notify the listeners:
         currentMusic?.description?.mediaId?.let {
             val currentPlayingId = MediaIDHelper.extractMusicIDFromMediaID(it)
-            if (musicId == currentPlayingId) {
+            if (musicId == currentPlayingId)
                 mListener.onMetadataChanged(mMusicProvider.getMusic(currentPlayingId))
-            }
         }
     }
 

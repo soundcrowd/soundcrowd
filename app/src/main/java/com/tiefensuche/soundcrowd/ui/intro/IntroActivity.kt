@@ -14,6 +14,7 @@ import com.github.paolorotolo.appintro.AppIntroFragment
 import com.github.paolorotolo.appintro.model.SliderPage
 import com.tiefensuche.soundcrowd.R
 import com.tiefensuche.soundcrowd.ui.MusicPlayerActivity
+import com.tiefensuche.soundcrowd.ui.SplashActivity.Companion.FIRST_START
 
 /**
  * Intro that will be shown on first start to introduce into the activity
@@ -52,7 +53,7 @@ internal class IntroActivity : AppIntro() {
 
     override fun onDonePressed() {
         super.onDonePressed()
-        PreferenceManager.getDefaultSharedPreferences(this).edit().putBoolean("first_start", false).apply()
+        PreferenceManager.getDefaultSharedPreferences(this).edit().putBoolean(FIRST_START, false).apply()
         startActivity(Intent(this, MusicPlayerActivity::class.java))
         finish()
     }

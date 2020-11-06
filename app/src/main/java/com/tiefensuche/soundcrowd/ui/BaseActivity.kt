@@ -19,8 +19,10 @@ import android.util.Log
 import com.sothree.slidinguppanel.SlidingUpPanelLayout
 import com.tiefensuche.soundcrowd.R
 import com.tiefensuche.soundcrowd.service.MusicService
+import com.tiefensuche.soundcrowd.service.MusicService.Companion.ARG_URL
+import com.tiefensuche.soundcrowd.sources.MusicProvider
+import com.tiefensuche.soundcrowd.sources.MusicProvider.Companion.RESULT
 import com.tiefensuche.soundcrowd.ui.intro.ShowcaseViewManager
-import com.tiefensuche.soundcrowd.utils.MediaIDHelper
 import com.tiefensuche.soundcrowd.utils.Utils
 
 /**
@@ -138,16 +140,16 @@ abstract class BaseActivity : ActionBarCastActivity(), MediaBrowserProvider {
         val action = intent.action
         val type = intent.type
 
-        if (Intent.ACTION_SEND == action && "text/plain" == type) { //  && mCurrentMetadata != null
+        if (Intent.ACTION_SEND == action && MIME_TEXT == type) {
             // handle text via share action, that should be a description for a new cue point
             Log.d(TAG, "add cue point from share action")
             mFullScreenPlayerFragment?.addCuePoint(intent.getStringExtra(Intent.EXTRA_TEXT))
         } else if (Intent.ACTION_VIEW == action && intent.data != null) {
-            // handle as file path to a music track, either local or remote (https:// or soundcrowd://)
+            // handle as file path to a music track
             val service = Intent(this, MusicService::class.java)
             service.action = MusicService.ACTION_CMD
             service.putExtra(MusicService.CMD_NAME, MusicService.CMD_RESOLVE)
-            service.putExtra("url", intent.data)
+            service.putExtra(ARG_URL, intent.data)
             startService(service)
         }
     }
@@ -197,19 +199,15 @@ abstract class BaseActivity : ActionBarCastActivity(), MediaBrowserProvider {
     }
 
     private fun getPlugins() {
-        if (!plugins.isNullOrEmpty()) {
-            return
-        }
-        mediaBrowser.subscribe(MediaIDHelper.MEDIA_ID_PLUGINS, Bundle(), object : MediaBrowserCompat.SubscriptionCallback() {
-            override fun onChildrenLoaded(parentId: String,
-                                          children: List<MediaBrowserCompat.MediaItem>,
-                                          options: Bundle) {
-                updatePlugins(children)
+        mediaBrowser.sendCustomAction(MusicProvider.ACTION_GET_PLUGINS, Bundle(), object : MediaBrowserCompat.CustomActionCallback() {
+            override fun onResult(action: String, extras: Bundle, resultData: Bundle) {
+                updatePlugins(resultData.getParcelableArrayList(RESULT))
             }
         })
     }
 
     companion object {
         private val TAG = BaseActivity::class.simpleName
+        const val MIME_TEXT = "text/plain"
     }
 }

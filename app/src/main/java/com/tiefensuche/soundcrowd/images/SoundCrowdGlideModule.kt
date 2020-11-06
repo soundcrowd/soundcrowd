@@ -7,7 +7,9 @@ package com.tiefensuche.soundcrowd.images
 import android.content.Context
 import android.graphics.Bitmap
 import android.support.v4.media.MediaDescriptionCompat
+import android.util.Log
 import com.bumptech.glide.Glide
+import com.bumptech.glide.GlideBuilder
 import com.bumptech.glide.Registry
 import com.bumptech.glide.annotation.GlideModule
 import com.bumptech.glide.module.AppGlideModule
@@ -37,6 +39,10 @@ internal class SoundCrowdGlideModule : AppGlideModule() {
                 .append(MediaDescriptionCompat::class.java, ByteBuffer::class.java, ArtworkLoader.Factory(context)) // Artwork extraction from local files
                 .append(MediaDescriptionCompat::class.java, InputStream::class.java, RemoteArtworkLoader.Factory()) // Remote artwork download
                 .register(Bitmap::class.java, PaletteBitmap::class.java, PaletteBitmapTranscoder()) // Bitmap -> PaletteBitmap that contains generated palette colors
+    }
+
+    override fun applyOptions(context: Context, builder: GlideBuilder) {
+        builder.setLogLevel(Log.ERROR)
     }
 
     companion object {

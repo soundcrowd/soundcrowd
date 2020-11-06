@@ -116,7 +116,7 @@ internal class MediaItemAdapter(private val requests: GlideRequests, private val
 
     private fun sort() {
         mDataset.sortWith(Comparator { o1, o2 ->
-            Utils.getIndexCharacter(o1.description.title).compareTo(Utils.getIndexCharacter(o2.description.title))
+            o1.description.title.toString().compareTo(o2.description.title.toString())
         })
     }
 
@@ -125,9 +125,9 @@ internal class MediaItemAdapter(private val requests: GlideRequests, private val
         val sectionList = ArrayList<Char>()
         val positionForSection = ArrayList<Int>()
 
-        var currentIndex = 'a'
+        var currentIndex = '#'
         for ((currentCount, item) in objects.withIndex()) {
-            val index = Utils.getIndexCharacter(item.description.title)
+            val index = item.description.title?.first()?.toUpperCase() ?: '#'
             if (currentIndex != index) {
                 currentIndex = index
                 sectionList.add(index)

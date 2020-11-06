@@ -7,7 +7,6 @@ package com.tiefensuche.soundcrowd.ui
 import android.app.Activity
 import android.os.Bundle
 import android.support.v4.app.Fragment
-import android.support.v4.media.MediaBrowserCompat
 import android.support.v4.media.session.MediaControllerCompat
 import android.text.format.DateUtils
 import android.view.LayoutInflater
@@ -17,10 +16,11 @@ import android.widget.ArrayAdapter
 import android.widget.ListView
 import com.tiefensuche.soundcrowd.R
 import com.tiefensuche.soundcrowd.database.Database
+import com.tiefensuche.soundcrowd.database.Database.Companion.MEDIA_ID
+import com.tiefensuche.soundcrowd.database.Database.Companion.POSITION
 import com.tiefensuche.soundcrowd.playback.PlaybackManager.Companion.CUSTOM_ACTION_PLAY_SEEK
-import com.tiefensuche.soundcrowd.sources.MusicProvider
-import com.tiefensuche.soundcrowd.utils.MediaIDHelper
-import com.tiefensuche.soundcrowd.utils.MediaIDHelper.MEDIA_ID_MUSICS_CUE_POINTS
+import com.tiefensuche.soundcrowd.sources.MusicProvider.Media.CUE_POINTS
+import com.tiefensuche.soundcrowd.utils.MediaIDHelper.LEAF_SEPARATOR
 import com.tiefensuche.soundcrowd.waveform.CuePoint
 import java.util.*
 
@@ -31,11 +31,26 @@ import java.util.*
  */
 internal class CueListFragment : Fragment() {
 
-    private lateinit var adapter: ArrayAdapter<CuePoint>
-
-    private val cuePoints = ArrayList<CuePoint>()
+    private lateinit var adapter: ArrayAdapter<CueItem>
     private lateinit var mNoMediaView: View
     private lateinit var mMediaFragmentListener: MediaBrowserFragment.MediaFragmentListener
+    private val cuePoints = ArrayList<CueItem>()
+
+    class CueItem(val cuePoint: CuePoint, val artist: String, val title: String) {
+        override fun toString(): String {
+            val text = StringBuilder()
+                    .append(artist)
+                    .append(" - ")
+                    .append(title)
+                    .append(" @ ")
+                    .append(DateUtils.formatElapsedTime((cuePoint.position / 1000).toLong()))
+
+            if (cuePoint.description.isNotEmpty()) {
+                text.append(": ").append(cuePoint.description)
+            }
+            return text.toString()
+        }
+    }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         val rootView = inflater.inflate(R.layout.fragment_cue_list, container, false)
@@ -46,16 +61,15 @@ internal class CueListFragment : Fragment() {
             adapter = ArrayAdapter(it, android.R.layout.simple_list_item_1, cuePoints)
             listView.adapter = adapter
             listView.setOnItemClickListener { _, _, i, _ ->
-                val point = listView.getItemAtPosition(i)
-                if (point is CuePoint && MediaControllerCompat.getMediaController(it) != null) {
+                val item = listView.getItemAtPosition(i)
+                if (item is CueItem && MediaControllerCompat.getMediaController(it) != null) {
                     val bundle = Bundle()
-                    bundle.putString("mediaId", point.mediaId)
-                    bundle.putInt("position", point.position)
+                    bundle.putString(MEDIA_ID, CUE_POINTS + LEAF_SEPARATOR + item.cuePoint.mediaId)
+                    bundle.putInt(POSITION, item.cuePoint.position)
                     MediaControllerCompat.getMediaController(it).transportControls.sendCustomAction(CUSTOM_ACTION_PLAY_SEEK, bundle)
                 }
             }
         }
-
         return rootView
     }
 
@@ -70,7 +84,7 @@ internal class CueListFragment : Fragment() {
     override fun onStart() {
         super.onStart()
         val mediaBrowser = mMediaFragmentListener.mediaBrowser
-        if (mediaBrowser?.isConnected == true) {
+        if (mediaBrowser?.isConnected == true && adapter.isEmpty) {
             loadItems()
         }
         mMediaFragmentListener.setToolbarTitle(getString(R.string.drawer_cue_points_title))
@@ -79,28 +93,10 @@ internal class CueListFragment : Fragment() {
     }
 
     internal fun loadItems() {
-        val options = Bundle()
-        options.putString(MusicProvider.ACTION, MusicProvider.OPTION_REFRESH)
-        mMediaFragmentListener.mediaBrowser?.subscribe(MEDIA_ID_MUSICS_CUE_POINTS, options, object : MediaBrowserCompat.SubscriptionCallback() {
-            override fun onChildrenLoaded(parentId: String, children: List<MediaBrowserCompat.MediaItem>, options: Bundle) {
-                cuePoints.clear()
-                for (item in children) {
-                    item.mediaId?.let { musicId ->
-                        item.description.mediaId?.let {
-                            if (!MediaIDHelper.isBrowseable(it)) {
-                                for (cuePoint in Database.instance.getCuePoints(MediaIDHelper.extractMusicIDFromMediaID(it))) {
-                                    cuePoint.mediaId = musicId
-                                    cuePoint.description = item.description.subtitle.toString() + " - " + item.description.title.toString() + " @ " + DateUtils.formatElapsedTime((cuePoint.position / 1000).toLong()) + if (cuePoint.description != null) ": " + cuePoint.description else ""
-                                    cuePoints.add(cuePoint)
-                                }
-                                adapter.notifyDataSetChanged()
-                            }
-                        }
-                    }
-                }
-                mNoMediaView.visibility = if (cuePoints.isEmpty()) View.VISIBLE else View.GONE
-            }
-        })
+        cuePoints.addAll(Database.instance.getCueItems())
+        if (cuePoints.isEmpty())
+            mNoMediaView.visibility = View.VISIBLE
+        adapter.notifyDataSetChanged()
     }
 
     internal fun setFilter(filter: CharSequence?) {

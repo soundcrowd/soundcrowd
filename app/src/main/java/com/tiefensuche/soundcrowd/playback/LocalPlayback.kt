@@ -24,7 +24,6 @@ import com.tiefensuche.soundcrowd.plugins.PluginLoader
 import com.tiefensuche.soundcrowd.service.MusicService
 import com.tiefensuche.soundcrowd.sources.MusicProvider
 import org.json.JSONObject
-import java.io.IOException
 
 /**
  * A class that implements local media playback using [android.media.MediaPlayer]
@@ -160,7 +159,7 @@ internal class LocalPlayback(private val mContext: Context, private val mMusicPr
 
                                     mCallback?.onPlaybackStatusChanged(state)
                                 }
-                            } catch (e: IOException) {
+                            } catch (e: Exception) {
                                 Log.e(TAG, "Exception playing song", e)
                                 mCallback?.onError(e.message ?: "")
                             }

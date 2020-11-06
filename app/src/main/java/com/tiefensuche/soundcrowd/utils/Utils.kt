@@ -57,25 +57,9 @@ internal object Utils {
         if (metadata.getString(MediaMetadataCompatExt.METADATA_KEY_TYPE) != null) {
             bundle.putString(MediaMetadataCompatExt.METADATA_KEY_TYPE, metadata.getString(MediaMetadataCompatExt.METADATA_KEY_TYPE))
         }
-        if (metadata.getString(MediaMetadataCompatExt.METADATA_KEY_PREFERENCES) != null) {
-            bundle.putString(MediaMetadataCompatExt.METADATA_KEY_PREFERENCES, metadata.getString(MediaMetadataCompatExt.METADATA_KEY_PREFERENCES))
-        }
 
         bob.setExtras(bundle)
         return bob.build()
-    }
-
-    internal fun getIndexCharacter(text: CharSequence?): Char {
-        if (text == null) {
-            return '#'
-        }
-        val string = text.toString().toUpperCase()
-        for (i in string.indices) {
-            if (Character.isLetter(string[i])) {
-                return string[i]
-            }
-        }
-        return '#'
     }
 
     internal fun scaleBitmap(src: Bitmap, maxWidth: Int, maxHeight: Int): Bitmap {

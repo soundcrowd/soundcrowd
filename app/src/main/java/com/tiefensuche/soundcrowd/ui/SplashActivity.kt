@@ -20,11 +20,15 @@ internal class SplashActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
 
         val prefs = PreferenceManager.getDefaultSharedPreferences(this)
-        if (prefs.getBoolean("first_start", true)) {
+        if (prefs.getBoolean(FIRST_START, true)) {
             startActivity(Intent(this, IntroActivity::class.java))
         } else {
             startActivity(Intent(this, MusicPlayerActivity::class.java))
         }
         finish()
+    }
+
+    companion object {
+        const val FIRST_START = "first_start"
     }
 }

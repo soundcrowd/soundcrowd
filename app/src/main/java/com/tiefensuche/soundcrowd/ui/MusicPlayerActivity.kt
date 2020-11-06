@@ -9,7 +9,6 @@ import android.content.pm.PackageManager
 import android.os.Bundle
 import android.preference.PreferenceManager
 import android.support.design.widget.CollapsingToolbarLayout
-import android.support.design.widget.Snackbar
 import android.support.v4.app.ActivityCompat
 import android.support.v4.content.ContextCompat
 import android.support.v4.media.MediaBrowserCompat
@@ -27,9 +26,12 @@ import android.widget.RelativeLayout
 import com.sothree.slidinguppanel.SlidingUpPanelLayout
 import com.tiefensuche.soundcrowd.R
 import com.tiefensuche.soundcrowd.extensions.MediaMetadataCompatExt
+import com.tiefensuche.soundcrowd.sources.MusicProvider.Companion.MEDIA_ID
+import com.tiefensuche.soundcrowd.sources.MusicProvider.Companion.QUERY
+import com.tiefensuche.soundcrowd.sources.MusicProvider.Media.LOCAL
 import com.tiefensuche.soundcrowd.ui.intro.ShowcaseViewManager
+import com.tiefensuche.soundcrowd.utils.MediaIDHelper
 import com.tiefensuche.soundcrowd.utils.MediaIDHelper.CATEGORY_SEPARATOR
-import com.tiefensuche.soundcrowd.utils.MediaIDHelper.MEDIA_ID_MUSICS_BY_SEARCH
 
 /**
  * Main activity for the music player.
@@ -37,7 +39,7 @@ import com.tiefensuche.soundcrowd.utils.MediaIDHelper.MEDIA_ID_MUSICS_BY_SEARCH
  * when it is created and connect/disconnect on start/stop. Thus, a MediaBrowser will be always
  * connected while this activity is running.
  */
-internal class MusicPlayerActivity : BaseActivity(), MediaBrowserFragment.MediaFragmentListener, SharedPreferences.OnSharedPreferenceChangeListener {
+internal class MusicPlayerActivity : BaseActivity(), MediaBrowserFragment.MediaFragmentListener {
 
     private var searchView: SearchView? = null
     private var searchItem: MenuItem? = null
@@ -114,10 +116,13 @@ internal class MusicPlayerActivity : BaseActivity(), MediaBrowserFragment.MediaF
             override fun onQueryTextSubmit(query: String): Boolean {
                 browseFragment?.let {
                     val bundle = Bundle()
-                    bundle.putString(MediaMetadataCompatExt.METADATA_KEY_TYPE, MediaMetadataCompatExt.MediaType.STREAM.name)
-                    val mediaId = it.mediaId + CATEGORY_SEPARATOR +
-                            MEDIA_ID_MUSICS_BY_SEARCH + CATEGORY_SEPARATOR + query
-                    navigateToBrowser(mediaId, MediaDescriptionCompat.Builder().setTitle(query).setSubtitle("Search").setExtras(bundle).build())
+                    if (mediaId?.startsWith(LOCAL) != true)
+                        bundle.putString(MediaMetadataCompatExt.METADATA_KEY_TYPE, MediaMetadataCompatExt.MediaType.STREAM.name)
+                    navigateToBrowser(QUERY + CATEGORY_SEPARATOR + MediaIDHelper.toBrowsableName(query),
+                            MediaDescriptionCompat.Builder()
+                                    .setTitle(query)
+                                    .setSubtitle(getString(R.string.search_title))
+                                    .setExtras(bundle).build())
                     searchView?.clearFocus()
                 }
                 return true
@@ -137,14 +142,7 @@ internal class MusicPlayerActivity : BaseActivity(), MediaBrowserFragment.MediaF
         return true
     }
 
-    public override fun onStart() {
-        super.onStart()
-        preferences.registerOnSharedPreferenceChangeListener(this)
-    }
-
     override fun onSaveInstanceState(outState: Bundle) {
-        val mediaId = mediaId
-
         if (mediaId != null) {
             outState.putString(SAVED_MEDIA_ID, mediaId)
         }
@@ -179,7 +177,6 @@ internal class MusicPlayerActivity : BaseActivity(), MediaBrowserFragment.MediaF
     }
 
     private fun checkPermissions() {
-        preferences.registerOnSharedPreferenceChangeListener(this)
         if (ContextCompat.checkSelfPermission(this,
                         Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(this,
@@ -195,7 +192,7 @@ internal class MusicPlayerActivity : BaseActivity(), MediaBrowserFragment.MediaF
                 for (i in permissions.indices) {
                     if (Manifest.permission.WRITE_EXTERNAL_STORAGE == permissions[i] && grantResults[i] == PackageManager.PERMISSION_DENIED) {
                         Log.d(TAG, "Permission denied!")
-                        Snackbar.make(findViewById(R.id.controls), resources.getString(R.string.permission), Snackbar.LENGTH_INDEFINITE).show()
+                        browseFragment?.showMessage(resources.getString(R.string.permission))
                     } else if (mediaBrowser.isConnected) {
                         onMediaControllerConnected()
                     }
@@ -205,13 +202,8 @@ internal class MusicPlayerActivity : BaseActivity(), MediaBrowserFragment.MediaF
     }
 
     private fun initializeFromParams(savedInstanceState: Bundle?) {
-        var mediaId: String? = null
-        if (savedInstanceState != null) {
-            // If there is a saved media ID, use it
-            mediaId = savedInstanceState.getString(SAVED_MEDIA_ID)
-        }
         if (supportFragmentManager.findFragmentById(R.id.container) == null) {
-            navigateToBrowser(mediaId, null)
+            navigateToBrowser(savedInstanceState?.getString(SAVED_MEDIA_ID), null)
         }
     }
 
@@ -222,7 +214,14 @@ internal class MusicPlayerActivity : BaseActivity(), MediaBrowserFragment.MediaF
         if (fragment == null || !TextUtils.equals(fragment.mediaId, mediaId)) {
             fragment = MediaBrowserFragment()
             val bundle = Bundle()
-            bundle.putString(MediaBrowserFragment.ARG_MEDIA_ID, mediaId)
+            if (mediaId != null) {
+                browseFragment?.mediaId?.let {
+                    var path = it
+                    if (mediaId.contains(QUERY) && path.contains(CATEGORY_SEPARATOR))
+                        path = path.substring(0, path.indexOf(CATEGORY_SEPARATOR))
+                    bundle.putString(MEDIA_ID, path + CATEGORY_SEPARATOR + mediaId)
+                }
+            }
             bundle.putParcelable(MediaBrowserFragment.ARG_MEDIA_DESCRIPTION, description)
             fragment.arguments = bundle
             val transaction = supportFragmentManager.beginTransaction().replace(R.id.container, fragment, MediaBrowserFragment::class.java.name)
@@ -237,11 +236,7 @@ internal class MusicPlayerActivity : BaseActivity(), MediaBrowserFragment.MediaF
 
     override fun showSearchButton(show: Boolean) {
         searchItem?.isVisible = show
-        searchView?.visibility = if (show) {
-            View.VISIBLE
-        } else {
-            View.GONE
-        }
+        searchView?.visibility = if (show) View.VISIBLE else View.GONE
     }
 
     override fun onMediaControllerConnected() {
@@ -249,14 +244,10 @@ internal class MusicPlayerActivity : BaseActivity(), MediaBrowserFragment.MediaF
         Log.d(TAG, "onMediaControllerConnected")
         val fragment = supportFragmentManager.findFragmentById(R.id.container)
         if (fragment is MediaBrowserFragment) {
-            fragment.onConnected()
+            fragment.requestMedia()
         } else if (fragment is CueListFragment) {
             fragment.loadItems()
         }
-    }
-
-    override fun onSharedPreferenceChanged(sharedPreferences: SharedPreferences, s: String) {
-        checkPermissions()
     }
 
     companion object {

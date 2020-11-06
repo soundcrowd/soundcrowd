@@ -9,10 +9,6 @@ import android.support.v4.media.session.MediaSessionCompat
 import android.text.TextUtils
 import android.util.Log
 import com.tiefensuche.soundcrowd.sources.MusicProvider
-import com.tiefensuche.soundcrowd.utils.MediaIDHelper.MEDIA_ID_MUSICS_BY_ALBUM
-import com.tiefensuche.soundcrowd.utils.MediaIDHelper.MEDIA_ID_MUSICS_BY_ARTIST
-import com.tiefensuche.soundcrowd.utils.MediaIDHelper.MEDIA_ID_MUSICS_BY_SEARCH
-import com.tiefensuche.soundcrowd.utils.MediaIDHelper.MEDIA_ID_ROOT
 import java.util.*
 
 /**
@@ -22,31 +18,14 @@ internal object QueueHelper {
 
     private val TAG = QueueHelper::class.simpleName
 
-    private const val RANDOM_QUEUE_SIZE = 10
-
     internal fun getPlayingQueue(mediaId: String,
                                  musicProvider: MusicProvider): List<MediaSessionCompat.QueueItem> {
-
         // extract the browsing hierarchy from the media ID:
         val hierarchy = MediaIDHelper.getHierarchy(mediaId)
+        Log.d(TAG, "Creating playing queue for ${hierarchy[0]}")
 
-        val categoryType = hierarchy[0]
-        Log.d(TAG, "Creating playing queue for $categoryType")
-
-        val tracks = musicProvider.getMusicByCategory(MediaIDHelper.getPath(mediaId))
-
-        val alphabeticalComparator = { o1: MediaMetadataCompat, o2: MediaMetadataCompat ->
-            o1.description.title?.toString()?.compareTo(o2.description.title?.toString()
-                    ?: "", ignoreCase = true) ?: 0
-        }
-
-        for (category in arrayOf(MEDIA_ID_ROOT, MEDIA_ID_MUSICS_BY_ARTIST, MEDIA_ID_MUSICS_BY_ALBUM)) {
-            if (category == categoryType) {
-                Collections.sort(tracks, alphabeticalComparator)
-            }
-        }
-
-        return convertToQueue(tracks, MediaIDHelper.getPath(mediaId))
+        return convertToQueue(musicProvider.getMusicByCategory(MediaIDHelper.getPath(mediaId)),
+                MediaIDHelper.getPath(mediaId))
     }
 
     internal fun getMusicIndexOnQueue(queue: Iterable<MediaSessionCompat.QueueItem>,
@@ -90,26 +69,6 @@ internal object QueueHelper {
             queue.add(item)
         }
         return queue
-    }
-
-    /**
-     * Create a random queue with at most [.RANDOM_QUEUE_SIZE] elements.
-     *
-     * @param musicProvider the provider used for fetching music.
-     * @return list containing [MediaSessionCompat.QueueItem]'s
-     */
-
-    internal fun getRandomQueue(musicProvider: MusicProvider): List<MediaSessionCompat.QueueItem> {
-        val result = ArrayList<MediaMetadataCompat>(RANDOM_QUEUE_SIZE)
-        val shuffled = musicProvider.shuffledMusic
-        for (metadata in shuffled) {
-            if (result.size == RANDOM_QUEUE_SIZE) {
-                break
-            }
-            result.add(metadata)
-        }
-
-        return convertToQueue(result, MEDIA_ID_MUSICS_BY_SEARCH, "random")
     }
 
     internal fun isIndexPlayable(index: Int, queue: List<MediaSessionCompat.QueueItem>?): Boolean {

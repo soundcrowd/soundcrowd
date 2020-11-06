@@ -15,11 +15,13 @@ import android.support.v4.media.RatingCompat
 import android.support.v4.media.session.MediaSessionCompat
 import android.support.v4.media.session.PlaybackStateCompat
 import android.util.Log
-import com.tiefensuche.soundcrowd.R
 import com.tiefensuche.soundcrowd.database.Database
+import com.tiefensuche.soundcrowd.database.Database.Companion.MEDIA_ID
+import com.tiefensuche.soundcrowd.database.Database.Companion.POSITION
 import com.tiefensuche.soundcrowd.extensions.MediaMetadataCompatExt
 import com.tiefensuche.soundcrowd.plugins.Callback
 import com.tiefensuche.soundcrowd.sources.MusicProvider
+import com.tiefensuche.soundcrowd.sources.MusicProvider.Media.LAST_MEDIA
 import com.tiefensuche.soundcrowd.utils.MediaIDHelper.extractMusicIDFromMediaID
 
 /**
@@ -114,7 +116,6 @@ internal class PlaybackManager(private val mServiceCallback: PlaybackServiceCall
         val stateBuilder = PlaybackStateCompat.Builder()
                 .setActions(availableActions)
 
-        setCustomAction(stateBuilder)
         var state = playback.state
 
         // If there is an error message, send it to the playback state:
@@ -138,22 +139,6 @@ internal class PlaybackManager(private val mServiceCallback: PlaybackServiceCall
         if (state >= PlaybackStateCompat.STATE_PAUSED) {
             mServiceCallback.onNotificationRequired()
         }
-    }
-
-    private fun setCustomAction(stateBuilder: PlaybackStateCompat.Builder) {
-        val currentMusic = mQueueManager.currentMusic ?: return
-        // Set appropriate "Favorite" icon on Custom action:
-        val mediaId = currentMusic.description.mediaId ?: return
-        val musicId = extractMusicIDFromMediaID(mediaId)
-        val favoriteIcon = if (mMusicProvider.isFavorite(musicId))
-            R.drawable.ic_star_on
-        else
-            R.drawable.ic_star_off
-        val customActionExtras = Bundle()
-        stateBuilder.addCustomAction(PlaybackStateCompat.CustomAction.Builder(
-                CUSTOM_ACTION_THUMBS_UP, mResources.getString(R.string.favorite), favoriteIcon)
-                .setExtras(customActionExtras)
-                .build())
     }
 
     /**
@@ -188,13 +173,13 @@ internal class PlaybackManager(private val mServiceCallback: PlaybackServiceCall
             val musicId = extractMusicIDFromMediaID(it)
             mMusicProvider.getMusic(musicId)?.let {
                 Database.instance.updatePosition(it, playback.currentStreamPosition)
-                mPreferences.edit().putString("last_media_id", musicId).apply()
+                mPreferences.edit().putString(LAST_MEDIA, musicId).apply()
             }
         }
     }
 
     internal fun loadLastTrack() {
-        val lastMediaId = mPreferences.getString("last_media_id", null)
+        val lastMediaId = mPreferences.getString(LAST_MEDIA, null)
         if (lastMediaId != null) {
             if (mMusicProvider.loadLastMedia(lastMediaId)) {
                 mQueueManager.update(lastMediaId)
@@ -284,21 +269,8 @@ internal class PlaybackManager(private val mServiceCallback: PlaybackServiceCall
 
         override fun onCustomAction(action: String?, extras: Bundle?) {
             when (action) {
-                CUSTOM_ACTION_THUMBS_UP -> {
-                    Log.d(TAG, "onCustomAction: favorite for current track")
-                    val currentMusic = mQueueManager.currentMusic
-                    if (currentMusic != null) {
-                        val mediaId = currentMusic.description.mediaId
-                        if (mediaId != null) {
-                            val musicId = extractMusicIDFromMediaID(mediaId)
-                            mMusicProvider.setFavorite(musicId, !mMusicProvider.isFavorite(musicId))
-                        }
-                    }
-                    // playback state needs to be updated because the "Favorite" icon on the
-                    // custom action will change to reflect the new favorite state.
-                    updatePlaybackState(null)
-                }
-                CUSTOM_ACTION_PLAY_SEEK -> extras?.getString("mediaId")?.let { playAtPosition(it, extras.getInt("position")) }
+                CUSTOM_ACTION_PLAY_SEEK -> extras?.getString(MEDIA_ID)?.let {
+                    playAtPosition(it, extras.getInt(POSITION)) }
                 else -> Log.e(TAG, "Unsupported action: $action")
             }
         }
@@ -319,7 +291,7 @@ internal class PlaybackManager(private val mServiceCallback: PlaybackServiceCall
                         }
                     })
                 }
-            }
+            } ?: Log.d(TAG, "failed to get media id")
         }
 
         private fun triggerUpdate(metadata: MediaMetadataCompat, rating: RatingCompat) {
@@ -331,9 +303,6 @@ internal class PlaybackManager(private val mServiceCallback: PlaybackServiceCall
     }
 
     companion object {
-
-        // Action to thumbs up a media item
-        private const val CUSTOM_ACTION_THUMBS_UP = "com.tiefensuche.soundcrowd.THUMBS_UP"
         const val CUSTOM_ACTION_PLAY_SEEK = "com.tiefensuche.soundcrowd.PLAY_SEEK"
         private val TAG = PlaybackManager::class.simpleName
     }

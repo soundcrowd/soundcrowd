@@ -36,7 +36,7 @@ internal class LocalSource(private val context: MusicService) {
         mmr.release()
 
         return MediaMetadataCompat.Builder()
-                .putString(MediaMetadataCompat.METADATA_KEY_MEDIA_ID, Integer.toString(uri.toString().hashCode()))
+                .putString(MediaMetadataCompat.METADATA_KEY_MEDIA_ID, uri.toString().hashCode().toString())
                 .putString(MediaMetadataCompat.METADATA_KEY_MEDIA_URI, uri.toString())
                 .putString(MediaMetadataCompatExt.METADATA_KEY_TYPE, MediaMetadataCompatExt.MediaType.MEDIA.name)
                 .putString(MediaMetadataCompatExt.METADATA_KEY_WAVEFORM_URL, uri.toString())
@@ -48,6 +48,7 @@ internal class LocalSource(private val context: MusicService) {
                 .build()
     }
 
+    @Throws(Exception::class)
     private fun loadMusic() {
 
         // check for read storage permission
@@ -80,7 +81,7 @@ internal class LocalSource(private val context: MusicService) {
                     val trackUri = ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, id)
 
                     tracks.add(MediaMetadataCompat.Builder()
-                            .putString(MediaMetadataCompat.METADATA_KEY_MEDIA_ID, java.lang.Long.toString(id))
+                            .putString(MediaMetadataCompat.METADATA_KEY_MEDIA_ID, id.toString())
                             .putString(MediaMetadataCompat.METADATA_KEY_MEDIA_URI, trackUri.toString())
                             .putString(MediaMetadataCompatExt.METADATA_KEY_TYPE, MediaMetadataCompatExt.MediaType.MEDIA.name)
                             .putString(MediaMetadataCompatExt.METADATA_KEY_WAVEFORM_URL, trackUri.toString())
@@ -100,6 +101,7 @@ internal class LocalSource(private val context: MusicService) {
         musicCursor?.close()
     }
 
+    @Throws(Exception::class)
     internal operator fun iterator(): Iterator<MediaMetadataCompat> {
         if (tracks.isEmpty()) {
             loadMusic()

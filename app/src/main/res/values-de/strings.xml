@@ -11,6 +11,8 @@
     <string name="permission">Berechtigung zum Lesen des Speichers wird benötigt, um die gesamte lokale Musik zu laden.</string>
     <string name="drawer_allmusic_title">Lokale Musik</string>
     <string name="last_position">Letzte Position</string>
+    <string name="share_via">Teilen mit</string>
+    <string name="plugins">Module</string>
 
     <!-- AppIntro -->
     <string name="intro_welcome_title">Willkommen beim SoundCrowd Music Player</string>

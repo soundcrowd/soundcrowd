@@ -4,21 +4,14 @@
 
 package com.tiefensuche.soundcrowd.utils
 
+import java.util.*
+
 /**
  * Utility class to help on queue related tasks.
  */
 internal object MediaIDHelper {
 
     // Media IDs used on browseable items of MediaBrowser
-    internal const val MEDIA_ID_ROOT = "__ROOT__"
-    internal const val MEDIA_ID_PLUGINS = "__PLUGINS__"
-    internal const val MEDIA_ID_MUSICS_BY_SEARCH = "__BY_SEARCH__"
-    internal const val MEDIA_ID_MUSICS_BY_ARTIST = "__BY_ARTIST__"
-    internal const val MEDIA_ID_MUSICS_BY_ALBUM = "__BY_ALBUM__"
-
-    internal const val MEDIA_ID_MUSICS_CUE_POINTS = "__CUE_POINTS__"
-    internal const val MEDIA_ID_LAST_MEDIA = "__LAST_MEDIA__"
-
     internal const val CATEGORY_SEPARATOR = '/'
     internal const val LEAF_SEPARATOR = '|'
 
@@ -85,21 +78,21 @@ internal object MediaIDHelper {
         if (pos >= 0) {
             mediaID = mediaID.substring(0, pos)
         }
-        return mediaID.split(CATEGORY_SEPARATOR.toString().toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
+        return mediaID.split(CATEGORY_SEPARATOR).toTypedArray()
     }
 
-    internal fun extractBrowseCategoryValueFromMediaID(mediaID: String): String? {
+    internal fun extractSourceValueFromMediaID(mediaID: String): String? {
         val hierarchy = getHierarchy(mediaID)
-        return if (hierarchy.size == 2) {
-            hierarchy[1]
+        return if (hierarchy.isNotEmpty()) {
+            hierarchy[0]
         } else null
-    }
-
-    internal fun isBrowseable(mediaID: String): Boolean {
-        return mediaID.indexOf(LEAF_SEPARATOR) < 0
     }
 
     internal fun getPath(mediaID: String): String {
         return mediaID.substring(0, mediaID.indexOf(LEAF_SEPARATOR))
+    }
+
+    internal fun toBrowsableName(text: String): String {
+        return text.trim().toLowerCase(Locale.ROOT).replace(CATEGORY_SEPARATOR, '-')
     }
 }

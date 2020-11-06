@@ -45,7 +45,7 @@ internal object PluginLoader {
                 // Get the method from the foreign class
                 val m = pluginClass.getMethod(method.name, *parameterTypes)
 
-                var clb: Callback<Any>? = null
+                var clb: Callback<Any>?
 
                 // Go through all the passed objects and search for the callback class,
                 // it is in the interface currently the only special object.
@@ -74,16 +74,11 @@ internal object PluginLoader {
                     }
                 }
 
-                try {
-                    // Invoke the foreign method with the parameters and return the result
-                    if (objects == null) {
-                        m.invoke(instance)
-                    } else {
-                        m.invoke(instance, *objects)
-                    }
-                } catch (e: Exception) {
-                    Log.e(PluginLoader::class.java.simpleName, "error invoking method", e)
-                    clb?.onResult(e)
+                // Invoke the foreign method with the parameters and return the result
+                if (objects == null) {
+                    m.invoke(instance)
+                } else {
+                    m.invoke(instance, *objects)
                 }
 
             } as? T

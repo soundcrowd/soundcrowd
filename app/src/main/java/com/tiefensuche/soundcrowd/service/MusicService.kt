@@ -23,7 +23,11 @@ import com.tiefensuche.soundcrowd.playback.LocalPlayback
 import com.tiefensuche.soundcrowd.playback.PlaybackManager
 import com.tiefensuche.soundcrowd.playback.QueueManager
 import com.tiefensuche.soundcrowd.sources.MusicProvider
-import com.tiefensuche.soundcrowd.utils.MediaIDHelper.MEDIA_ID_ROOT
+import com.tiefensuche.soundcrowd.sources.MusicProvider.Companion.ACTION_ADD_CUE_POINT
+import com.tiefensuche.soundcrowd.sources.MusicProvider.Companion.ACTION_GET_MEDIA
+import com.tiefensuche.soundcrowd.sources.MusicProvider.Companion.ACTION_GET_PLUGINS
+import com.tiefensuche.soundcrowd.sources.MusicProvider.Companion.RESULT
+import com.tiefensuche.soundcrowd.sources.MusicProvider.Media.LOCAL
 import java.lang.ref.WeakReference
 
 /**
@@ -102,7 +106,7 @@ internal class MusicService : MediaBrowserServiceCompat(), PlaybackManager.Playb
         databaseHelper = Database(this)
         mMusicProvider = MusicProvider(this)
 
-        mQueueManager = QueueManager(mMusicProvider, resources,
+        mQueueManager = QueueManager(mMusicProvider,
                 object : QueueManager.MetadataUpdateListener {
                     override fun onMetadataChanged(metadata: MediaMetadataCompat?) {
                         mSession.setMetadata(metadata)
@@ -159,7 +163,7 @@ internal class MusicService : MediaBrowserServiceCompat(), PlaybackManager.Playb
                 mPlaybackManager.handlePauseRequest()
             } else if (CMD_RESOLVE == command) {
                 try {
-                    val uri = startIntent.getParcelableExtra<Uri>("url")
+                    val uri = startIntent.getParcelableExtra<Uri>(ARG_URL)
                     val mediaId = mMusicProvider.resolve(uri)
                     if (mediaId != null) {
                         mPlaybackManager.setCurrentMediaId(mediaId)
@@ -203,42 +207,54 @@ internal class MusicService : MediaBrowserServiceCompat(), PlaybackManager.Playb
         mSession.release()
     }
 
-    override fun onGetRoot(clientPackageName: String, clientUid: Int,
-                           rootHints: Bundle?): BrowserRoot? {
-        return BrowserRoot(MEDIA_ID_ROOT, null)
+    override fun onGetRoot(clientPackageName: String, clientUid: Int, rootHints: Bundle?): BrowserRoot? {
+        return BrowserRoot(LOCAL, null)
     }
 
-    override fun onLoadChildren(parentMediaId: String,
-                                result: Result<List<MediaItem>>) {
+    override fun onLoadChildren(parentMediaId: String, result: Result<List<MediaItem>>) {
         onLoadChildren(parentMediaId, result, Bundle())
     }
 
-    override fun onLoadChildren(parentMediaId: String,
-                                result: Result<List<MediaItem>>,
-                                options: Bundle) {
-        Log.d(TAG, "OnLoadChildren: parentMediaId=$parentMediaId")
-        if (mMusicProvider.hasItems(parentMediaId, options) && MusicProvider.OPTION_REFRESH != options.getString(MusicProvider.ACTION)) {
-            result.sendResult(mMusicProvider.getChildren(parentMediaId, options))
-        } else {
-            result.detach()
-            // To make the app more responsive, fetch and cache catalog information now.
-            // This can help improve the response time in the method
-            // {@link #onLoadChildren(String, Result<List<MediaItem>>) onLoadChildren()}.
-            mMusicProvider.retrieveMediaAsync(parentMediaId, options, object : MusicProvider.Callback<Any?> {
+    override fun onCustomAction(action: String, extras: Bundle, result: Result<Bundle>) {
+        val data = Bundle()
+        when (action) {
+            ACTION_GET_PLUGINS -> {
+                data.putParcelableArrayList(RESULT, mMusicProvider.getPlugins())
+                result.sendResult(data)
+            }
+            ACTION_GET_MEDIA -> {
+                val request = mMusicProvider.Request(extras)
+                if (mMusicProvider.hasItems(request)) {
+                    data.putParcelableArrayList(RESULT, mMusicProvider.getChildren(request))
+                    result.sendResult(data)
+                } else {
+                    result.detach()
+                    // To make the app more responsive, fetch and cache catalog information now.
+                    // This can help improve the response time in the method
+                    // {@link #onLoadChildren(String, Result<List<MediaItem>>) onLoadChildren()}.
+                    mMusicProvider.retrieveMediaAsync(request, object : MusicProvider.Callback<Any?> {
 
-                override fun onMusicCatalogReady(success: Boolean) {
-                    if (success) {
-                        Log.d(TAG, "getChildren parentMediaId=$parentMediaId")
-                        result.sendResult(mMusicProvider.getChildren(parentMediaId, options))
-                    } else {
-                        result.sendResult(ArrayList())
-                    }
-                }
+                        override fun onSuccess() {
+                            data.putParcelableArrayList(RESULT, mMusicProvider.getChildren(request))
+                            result.sendResult(data)
+                        }
 
-                override fun onMusicCatalogReady(error: String) {
-                    result.sendResult(ArrayList())
+                        override fun onError(message: String, e: Exception?) {
+                            Log.d(TAG, message, e)
+                            data.putString(ARG_ERROR, message)
+                            result.sendError(data)
+                        }
+                    })
                 }
-            })
+            }
+            ACTION_ADD_CUE_POINT -> {
+                mMusicProvider.addCuePoint(mSession.controller.metadata, extras)
+                result.sendResult(data)
+            }
+            else -> {
+                data.putString(ARG_ERROR, "Unknown command")
+                result.sendError(data)
+            }
         }
     }
 
@@ -317,6 +333,9 @@ internal class MusicService : MediaBrowserServiceCompat(), PlaybackManager.Playb
         // indicates that the music playback should be paused (see {@link #onStartCommand})
         const val CMD_PAUSE = "CMD_PAUSE"
         const val CMD_RESOLVE = "CMD_RESOLVE"
+
+        const val ARG_URL = "ARG_URL"
+        const val ARG_ERROR = "ERROR"
 
         private val TAG = MusicService::class.simpleName
 

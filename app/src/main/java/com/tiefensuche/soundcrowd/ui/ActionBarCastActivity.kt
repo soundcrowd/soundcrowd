@@ -4,12 +4,12 @@
 package com.tiefensuche.soundcrowd.ui
 
 import android.content.res.Configuration
+import android.graphics.Bitmap
 import android.graphics.drawable.BitmapDrawable
 import android.os.Bundle
 import android.support.design.widget.NavigationView
 import android.support.v4.app.Fragment
 import android.support.v4.app.FragmentManager
-import android.support.v4.media.MediaBrowserCompat
 import android.support.v4.view.GravityCompat
 import android.support.v4.widget.DrawerLayout
 import android.support.v7.app.ActionBarDrawerToggle
@@ -21,9 +21,14 @@ import android.view.View
 import com.sothree.slidinguppanel.SlidingUpPanelLayout
 import com.tiefensuche.soundcrowd.R
 import com.tiefensuche.soundcrowd.extensions.MediaMetadataCompatExt
+import com.tiefensuche.soundcrowd.sources.MusicProvider
+import com.tiefensuche.soundcrowd.sources.MusicProvider.Companion.MEDIA_ID
+import com.tiefensuche.soundcrowd.sources.MusicProvider.PluginMetadata.CATEGORY
+import com.tiefensuche.soundcrowd.sources.MusicProvider.PluginMetadata.ICON
+import com.tiefensuche.soundcrowd.sources.MusicProvider.PluginMetadata.MEDIA_TYPE
+import com.tiefensuche.soundcrowd.sources.MusicProvider.PluginMetadata.NAME
 import com.tiefensuche.soundcrowd.ui.preferences.EqualizerFragment
 import com.tiefensuche.soundcrowd.ui.preferences.PreferenceFragment
-import com.tiefensuche.soundcrowd.utils.MediaIDHelper
 import org.json.JSONArray
 
 /**
@@ -45,7 +50,8 @@ abstract class ActionBarCastActivity : AppCompatActivity() {
     internal lateinit var slidingUpPanelLayout: SlidingUpPanelLayout
     private lateinit var mDrawerToggle: ActionBarDrawerToggle
 
-    internal var plugins: List<MediaBrowserCompat.MediaItem> = ArrayList()
+    private val prefs = HashMap<String, JSONArray>()
+    private val paths = ArrayList<String>()
 
     private val mBackStackChangedListener = FragmentManager.OnBackStackChangedListener { this.updateDrawerToggle() }
 
@@ -81,7 +87,7 @@ abstract class ActionBarCastActivity : AppCompatActivity() {
     override fun onStart() {
         super.onStart()
         if (!mToolbarInitialized) {
-            throw IllegalStateException("You must run super.initializeToolbar at " + "the end of your onCreate method")
+            throw IllegalStateException("You must run super.initializeToolbar at the end of your onCreate method")
         }
     }
 
@@ -141,7 +147,7 @@ abstract class ActionBarCastActivity : AppCompatActivity() {
         // Otherwise, it may return to the previous fragment stack
         when {
             supportFragmentManager.backStackEntryCount > 0 -> supportFragmentManager.popBackStack()
-            browseFragment?.mediaId != MediaIDHelper.MEDIA_ID_ROOT -> {
+            browseFragment?.mediaId != MediaBrowserFragment.DEFAULT_MEDIA_ID -> {
                 setFragment(MediaBrowserFragment())
                 mNavigationView.setCheckedItem(R.id.navigation_allmusic)
             }
@@ -181,13 +187,14 @@ abstract class ActionBarCastActivity : AppCompatActivity() {
     private fun populateDrawerItems(navigationView: NavigationView) {
 
         navigationView.setNavigationItemSelectedListener(fun(menuItem: MenuItem): Boolean {
-            // if it is the current fragment already, not need to reload
+            // if it is the current fragment already, no need to reload
             if (menuItem.isChecked) {
                 mDrawerLayout.closeDrawers()
                 return true
             }
 
-            supportFragmentManager.popBackStack()
+            mToolbar.collapseActionView()
+            supportFragmentManager.popBackStack(null, FragmentManager.POP_BACK_STACK_INCLUSIVE)
 
             when (menuItem.itemId) {
                 R.id.navigation_allmusic -> setFragment(MediaBrowserFragment())
@@ -195,19 +202,14 @@ abstract class ActionBarCastActivity : AppCompatActivity() {
                 R.id.navigation_equalizer -> setFragment(EqualizerFragment())
                 R.id.navigation_preferences -> {
                     val fragment = PreferenceFragment()
-                    val prefs = HashMap<String, JSONArray>()
-                    for (plugin in plugins) {
-                        plugin.description.extras?.getString(MediaMetadataCompatExt.METADATA_KEY_PREFERENCES)?.let { json ->
-                            prefs.put(plugin.description.subtitle.toString(), JSONArray(json))
-                        }
-                    }
                     fragment.prefs = prefs
                     setFragment(fragment)
                 }
                 else -> { // handle as addon category
                     val fragment = MediaBrowserFragment()
                     val args = Bundle()
-                    args.putParcelable(MediaBrowserFragment.ARG_MEDIA_DESCRIPTION, plugins[menuItem.itemId].description)
+                    args.putString(MEDIA_ID, paths[menuItem.itemId])
+                    args.putString(MEDIA_TYPE, MediaMetadataCompatExt.MediaType.STREAM.name)
                     fragment.arguments = args
                     setFragment(fragment)
                 }
@@ -238,17 +240,21 @@ abstract class ActionBarCastActivity : AppCompatActivity() {
         }
     }
 
-    internal fun updatePlugins(plugins: List<MediaBrowserCompat.MediaItem>) {
-        this.plugins = plugins
-
+    internal fun updatePlugins(plugins: List<Bundle>) {
         // add addon category
-        val addonCategory = mNavigationView.menu.addSubMenu("Addons")
+        val addonCategory = mNavigationView.menu.addSubMenu(getString(R.string.plugins))
 
         // add the categories of all addons
-        for ((i, plugin) in plugins.withIndex()) {
-            val item = addonCategory.add(0, i, 0, plugin.description.title)
-            item.isCheckable = true
-            item.icon = BitmapDrawable(resources, plugin.description.iconBitmap)
+        for (plugin in plugins) {
+            for (category in plugin.getParcelableArrayList<Bundle>(CATEGORY)) {
+                val item = addonCategory.add(0, paths.size, 0, category.getString(CATEGORY))
+                paths.add(category.getString(NAME))
+                item.isCheckable = true
+                item.icon = BitmapDrawable(resources, plugin.getParcelable(ICON) as Bitmap)
+            }
+            plugin.getString(MusicProvider.PluginMetadata.PREFERENCES)?.let { json ->
+                prefs.put(plugin.getString(NAME), JSONArray(json))
+            }
         }
     }
 }

@@ -64,7 +64,6 @@ internal class WaveformHandler(private val waveformView: WaveformView) {
 
     internal fun addCuePoint(metadata: MediaMetadataCompat, position: Int, duration: Int, text: String = "") {
         metadata.description.mediaId?.let {
-            Database.instance.addCuePoint(metadata, position, text)
             waveformView.drawCuePoint(CuePoint(it, position, text), duration, cuePoint)
         }
     }

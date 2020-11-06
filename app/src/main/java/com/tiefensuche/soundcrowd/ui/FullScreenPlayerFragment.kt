@@ -5,6 +5,7 @@ package com.tiefensuche.soundcrowd.ui
 
 import android.animation.ArgbEvaluator
 import android.animation.ValueAnimator
+import android.app.Activity
 import android.content.Intent
 import android.graphics.Color
 import android.graphics.Point
@@ -31,10 +32,13 @@ import android.widget.*
 import com.sothree.slidinguppanel.SlidingUpPanelLayout
 import com.tiefensuche.soundcrowd.R
 import com.tiefensuche.soundcrowd.database.Database
+import com.tiefensuche.soundcrowd.database.Database.Companion.POSITION
 import com.tiefensuche.soundcrowd.extensions.MediaMetadataCompatExt
 import com.tiefensuche.soundcrowd.images.ArtworkHelper
 import com.tiefensuche.soundcrowd.images.GlideApp
 import com.tiefensuche.soundcrowd.images.GlideRequests
+import com.tiefensuche.soundcrowd.sources.MusicProvider
+import com.tiefensuche.soundcrowd.ui.BaseActivity.Companion.MIME_TEXT
 import com.tiefensuche.soundcrowd.ui.intro.ShowcaseViewManager
 import com.tiefensuche.soundcrowd.utils.Utils
 import com.tiefensuche.soundcrowd.waveform.WaveformHandler
@@ -56,6 +60,7 @@ internal class FullScreenPlayerFragment : Fragment() {
     private var mLastPlaybackState: PlaybackStateCompat? = null
     private var currentPosition: Int = 0
     private lateinit var mControllers: View
+    private lateinit var mMediaBrowserProvider: MediaBrowserProvider
     private var mCurrentMetadata: MediaMetadataCompat? = null
     private lateinit var waveformView: WaveformView
     private var mDuration: Int = 0
@@ -135,7 +140,7 @@ internal class FullScreenPlayerFragment : Fragment() {
         mLine1 = rootView.findViewById(R.id.line1)
         mLine2 = rootView.findViewById(R.id.line2)
         mLine3 = rootView.findViewById(R.id.line3)
-        mLoading = rootView.findViewById(R.id.progressBar1)
+        mLoading = rootView.findViewById(R.id.progressBar)
         mControllers = rootView.findViewById(R.id.controllers)
         mLike = rootView.findViewById(R.id.favorite)
 
@@ -207,17 +212,15 @@ internal class FullScreenPlayerFragment : Fragment() {
             mCurrentMetadata?.let {
                 val sharingIntent = Intent(Intent.ACTION_SEND)
                 it.getString(MediaMetadataCompatExt.METADATA_KEY_URL)?.let {
-                    sharingIntent.type = "text/plain"
+                    sharingIntent.type = MIME_TEXT
                     sharingIntent.putExtra(Intent.EXTRA_TEXT, it)
-                    startActivity(Intent.createChooser(sharingIntent, "Share via"))
+                    startActivity(Intent.createChooser(sharingIntent, getString(R.string.share_via)))
                 }
             }
         }
 
         rootView.findViewById<View>(R.id.star).setOnClickListener {
-            mCurrentMetadata?.let {
-                mWaveformHandler.addCuePoint(it, currentPosition, mDuration)
-            }
+            addCuePoint()
         }
 
         val startShazam = rootView.findViewById<ImageView>(R.id.shazam)
@@ -247,6 +250,13 @@ internal class FullScreenPlayerFragment : Fragment() {
         })
 
         return rootView
+    }
+
+    override fun onAttach(activity: Activity) {
+        super.onAttach(activity)
+
+        if (activity is MediaBrowserProvider)
+            mMediaBrowserProvider = activity
     }
 
     internal fun onMediaControllerConnected() {
@@ -481,8 +491,11 @@ internal class FullScreenPlayerFragment : Fragment() {
         }
     }
 
-    internal fun addCuePoint(text: String?) {
+    internal fun addCuePoint(text: String? = null) {
         mCurrentMetadata?.let {
+            val bundle = Bundle()
+            bundle.putInt(POSITION, currentPosition)
+            mMediaBrowserProvider.mediaBrowser?.sendCustomAction(MusicProvider.ACTION_ADD_CUE_POINT, bundle, null)
             mWaveformHandler.addCuePoint(it, currentPosition, mDuration, text ?: "")
         }
     }
