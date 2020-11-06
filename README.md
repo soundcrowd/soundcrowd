@@ -1,4 +1,5 @@
 # SoundCrowd
+
 An extensible music player app for android
 
 [![Build Status](https://travis-ci.org/soundcrowd/soundcrowd.svg?branch=master)](https://travis-ci.org/soundcrowd/soundcrowd)
@@ -25,14 +26,26 @@ SoundCrowd is extensible via plugins to support online media providers.
       height="80">](https://play.google.com/store/apps/details?id=com.tiefensuche.soundcrowd)
 
 ## Screenshots
+
 <img src="https://soundcrowd.github.io/images/screenshot-browser.png" width="300"/> <img src="https://soundcrowd.github.io/images/screenshot-player.png" width="300"/>
 
 
+## Building
+
+    $ git clone --recursive https://github.com/soundcrowd/soundcrowd
+    $ cd soundcrowd
+    $ ./gradlew assembleDebug
+
+Install via ADB:
+
+    $ adb install app/build/outputs/apk/debug/app-debug.apk
+
 ## License
+
 SoundCrowd and its modules are licensed under GPLv3.
 
-
 ## Dependencies
+
   - [Glide](https://github.com/bumptech/glide) - BSD, part MIT and Apache 2.0
   - [AndroidSlidingUpPanel](https://github.com/umano/AndroidSlidingUpPanel) - Apache 2.0
   - [AlphabetIndex-Fast-Scroll-RecyclerView](https://github.com/myinnos/AlphabetIndex-Fast-Scroll-RecyclerView) - Apache 2.0
