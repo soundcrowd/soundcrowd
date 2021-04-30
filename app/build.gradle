@@ -65,7 +65,7 @@ dependencies {
     implementation 'com.sothree.slidinguppanel:library:3.4.0'
     implementation 'com.github.apl-devs:appintro:v4.2.3'
     implementation 'com.github.amlcurran.showcaseview:library:5.4.3'
-    implementation 'com.github.myinnos:AlphabetIndex-Fast-Scroll-RecyclerView:1.0.92'
+    implementation 'com.github.myinnos:AlphabetIndex-Fast-Scroll-RecyclerView:1.9.11'
 }
 
 repositories {
