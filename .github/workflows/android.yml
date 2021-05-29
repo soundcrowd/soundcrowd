@@ -1,0 +1,14 @@
+name: android
+on: [push, pull_request]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: recursive
+      - run: ./gradlew assembleDebug
+      - uses: actions/upload-artifact@v1
+        with:
+          name: soundcrowd.apk
+          path: app/build/outputs/apk/debug/app-debug.apk
