@@ -7,9 +7,9 @@ package com.tiefensuche.soundcrowd.images
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.Color
-import android.support.v4.content.res.ResourcesCompat
+import androidx.core.content.res.ResourcesCompat
 import android.support.v4.media.MediaDescriptionCompat
-import android.support.v7.graphics.Palette
+import androidx.palette.graphics.Palette
 import android.widget.ImageView
 import com.bumptech.glide.request.RequestOptions
 import com.bumptech.glide.request.target.ImageViewTarget

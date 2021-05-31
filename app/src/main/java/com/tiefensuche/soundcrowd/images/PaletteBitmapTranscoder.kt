@@ -5,7 +5,7 @@
 package com.tiefensuche.soundcrowd.images
 
 import android.graphics.Bitmap
-import android.support.v7.graphics.Palette
+import androidx.palette.graphics.Palette
 
 import com.bumptech.glide.load.Options
 import com.bumptech.glide.load.engine.Resource
