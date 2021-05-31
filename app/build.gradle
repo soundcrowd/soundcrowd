@@ -60,7 +60,7 @@ dependencies {
     implementation 'com.github.bumptech.glide:glide:4.8.0'
     kapt 'com.github.bumptech.glide:compiler:4.8.0'
     implementation 'com.sothree.slidinguppanel:library:3.4.0'
-    implementation 'com.github.apl-devs:appintro:v4.2.3'
+    implementation 'com.github.apl-devs:appintro:6.1.0'
     implementation 'com.github.amlcurran.showcaseview:library:5.4.3'
     implementation 'com.github.myinnos:AlphabetIndex-Fast-Scroll-RecyclerView:1.9.11'
 }
