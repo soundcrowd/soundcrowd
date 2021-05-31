@@ -10,7 +10,7 @@ import android.content.pm.PackageManager
 import android.media.MediaMetadataRetriever
 import android.net.Uri
 import android.provider.MediaStore
-import android.support.v4.content.ContextCompat
+import androidx.core.content.ContextCompat
 import android.support.v4.media.MediaMetadataCompat
 import android.util.Log
 import com.tiefensuche.soundcrowd.extensions.MediaMetadataCompatExt

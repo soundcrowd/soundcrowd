@@ -9,13 +9,13 @@ import android.app.Activity
 import android.content.Context
 import android.graphics.Point
 import android.os.Bundle
-import android.support.v4.app.Fragment
-import android.support.v4.content.ContextCompat
+import androidx.fragment.app.Fragment
+import androidx.core.content.ContextCompat
 import android.support.v4.media.MediaBrowserCompat
 import android.support.v4.media.MediaDescriptionCompat
-import android.support.v4.widget.SwipeRefreshLayout
-import android.support.v7.widget.GridLayoutManager
-import android.support.v7.widget.RecyclerView
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+import androidx.recyclerview.widget.GridLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
@@ -121,7 +121,10 @@ internal class MediaBrowserFragment : Fragment() {
 
         mSwipeRefreshLayout = rootView.findViewById(R.id.swipeContainer)
         mRecyclerView = rootView.findViewById(R.id.list_view)
-        val mLayoutManager = GridLayoutManager(rootView.context, calculateNoOfColumns(rootView.context))
+        val mLayoutManager = GridLayoutManager(
+            rootView.context,
+            calculateNoOfColumns(rootView.context)
+        )
         mRecyclerView.layoutManager = mLayoutManager
         mRecyclerView.adapter = mBrowserAdapter
 

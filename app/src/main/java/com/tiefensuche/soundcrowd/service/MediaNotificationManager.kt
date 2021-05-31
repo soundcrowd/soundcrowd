@@ -16,8 +16,8 @@ import android.graphics.Color
 import android.os.Build
 import android.os.Looper
 import android.os.RemoteException
-import android.support.annotation.RequiresApi
-import android.support.v4.app.NotificationCompat
+import androidx.annotation.RequiresApi
+import androidx.core.app.NotificationCompat
 import android.support.v4.media.MediaDescriptionCompat
 import android.support.v4.media.MediaMetadataCompat
 import android.support.v4.media.session.MediaControllerCompat
@@ -235,7 +235,7 @@ constructor(private val mService: MusicService) : BroadcastReceiver() {
         }
 
         notificationBuilder
-                .setStyle(android.support.v4.media.app.NotificationCompat.MediaStyle()
+                .setStyle(androidx.media.app.NotificationCompat.MediaStyle()
                         .setShowActionsInCompactView(
                                 playPauseButtonPosition)  // show only play/pause in compact view
                         .setShowCancelButton(true)

@@ -7,7 +7,7 @@ package com.tiefensuche.soundcrowd.ui
 import android.content.Intent
 import android.os.Bundle
 import android.preference.PreferenceManager
-import android.support.v7.app.AppCompatActivity
+import androidx.appcompat.app.AppCompatActivity
 import com.tiefensuche.soundcrowd.ui.intro.IntroActivity
 
 /**
