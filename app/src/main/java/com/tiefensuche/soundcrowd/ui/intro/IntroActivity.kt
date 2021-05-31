@@ -8,10 +8,11 @@ import android.Manifest
 import android.content.Intent
 import android.os.Bundle
 import android.preference.PreferenceManager
-import android.support.v4.content.ContextCompat
-import com.github.paolorotolo.appintro.AppIntro
-import com.github.paolorotolo.appintro.AppIntroFragment
-import com.github.paolorotolo.appintro.model.SliderPage
+import androidx.core.content.ContextCompat
+import androidx.fragment.app.Fragment
+import com.github.appintro.AppIntro
+import com.github.appintro.AppIntroFragment
+import com.github.appintro.model.SliderPage
 import com.tiefensuche.soundcrowd.R
 import com.tiefensuche.soundcrowd.ui.MusicPlayerActivity
 import com.tiefensuche.soundcrowd.ui.SplashActivity.Companion.FIRST_START
@@ -29,30 +30,30 @@ internal class IntroActivity : AppIntro() {
         sliderPage.title = getString(R.string.intro_welcome_title)
         sliderPage.description = getString(R.string.intro_welcome_text)
         sliderPage.imageDrawable = R.drawable.intro_waveform
-        sliderPage.bgColor = ContextCompat.getColor(this, R.color.colorPrimary)
+        sliderPage.backgroundColor = ContextCompat.getColor(this, R.color.colorPrimary)
         addSlide(AppIntroFragment.newInstance(sliderPage))
 
         sliderPage = SliderPage()
         sliderPage.title = getString(R.string.intro_welcome_cue_points_title)
         sliderPage.description = getString(R.string.intro_welcome_cue_points_text)
         sliderPage.imageDrawable = R.drawable.intro_cuepoint
-        sliderPage.bgColor = ContextCompat.getColor(this, R.color.colorPrimary)
+        sliderPage.backgroundColor = ContextCompat.getColor(this, R.color.colorPrimary)
         addSlide(AppIntroFragment.newInstance(sliderPage))
 
         sliderPage = SliderPage()
         sliderPage.title = getString(R.string.intro_welcome_local_music_title)
         sliderPage.description = getString(R.string.intro_welcome_local_music_text)
         sliderPage.imageDrawable = R.drawable.files_icon
-        sliderPage.bgColor = ContextCompat.getColor(this, R.color.intro_files)
+        sliderPage.backgroundColor = ContextCompat.getColor(this, R.color.intro_files)
         addSlide(AppIntroFragment.newInstance(sliderPage))
 
         askForPermissions(arrayOf(Manifest.permission.WRITE_EXTERNAL_STORAGE), 3)
 
-        showSkipButton(false)
+        isSkipButtonEnabled = false
     }
 
-    override fun onDonePressed() {
-        super.onDonePressed()
+    override fun onDonePressed(currentFragment: Fragment?) {
+        super.onDonePressed(currentFragment)
         PreferenceManager.getDefaultSharedPreferences(this).edit().putBoolean(FIRST_START, false).apply()
         startActivity(Intent(this, MusicPlayerActivity::class.java))
         finish()
