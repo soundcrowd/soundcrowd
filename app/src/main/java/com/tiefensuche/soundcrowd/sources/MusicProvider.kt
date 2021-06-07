@@ -353,7 +353,7 @@ internal class MusicProvider(context: MusicService) {
     }
 
     private fun loadCuePoints() {
-        val cuePoints = Database.instance.cuePointItems
+        val cuePoints = MusicService.database.cuePointItems
         addMusic(cuePoints.iterator())
         val item = BrowsableItem()
         item.items.addAll(cuePoints)
@@ -361,7 +361,7 @@ internal class MusicProvider(context: MusicService) {
     }
 
     internal fun loadLastMedia(musicId: String): Boolean {
-        Database.instance.getMediaItem(musicId)?.let {
+        MusicService.database.getMediaItem(musicId)?.let {
             val track = MediaMetadataCompatExt.fromJson(it)
             track.description.mediaId?.let {
                 library.keys[it] = MutableMediaMetadata(it, track)
@@ -527,7 +527,7 @@ internal class MusicProvider(context: MusicService) {
     }
 
     fun addCuePoint(metadata: MediaMetadataCompat, extras: Bundle) {
-        Database.instance.addCuePoint(metadata,
+        MusicService.database.addCuePoint(metadata,
                 extras.getInt(Database.POSITION),
                 extras.getString(Database.DESCRIPTION, ""))
         library.root.edges[CUE_POINTS]?.items?.add(metadata)

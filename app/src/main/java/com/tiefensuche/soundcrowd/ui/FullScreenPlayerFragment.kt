@@ -37,6 +37,7 @@ import com.tiefensuche.soundcrowd.extensions.MediaMetadataCompatExt
 import com.tiefensuche.soundcrowd.images.ArtworkHelper
 import com.tiefensuche.soundcrowd.images.GlideApp
 import com.tiefensuche.soundcrowd.images.GlideRequests
+import com.tiefensuche.soundcrowd.service.MusicService
 import com.tiefensuche.soundcrowd.sources.MusicProvider
 import com.tiefensuche.soundcrowd.ui.BaseActivity.Companion.MIME_TEXT
 import com.tiefensuche.soundcrowd.ui.intro.ShowcaseViewManager
@@ -161,11 +162,11 @@ internal class FullScreenPlayerFragment : Fragment() {
             }
 
             override fun onCuePointSetText(mediaId: String, position: Int, text: String) {
-                Database.instance.setDescription(mediaId, position, text)
+                MusicService.database.setDescription(mediaId, position, text)
             }
 
             override fun onCuePointDelete(mediaId: String, position: Int) {
-                Database.instance.deleteCuePoint(mediaId, position)
+                MusicService.database.deleteCuePoint(mediaId, position)
             }
 
             override fun onWaveformLoaded() {

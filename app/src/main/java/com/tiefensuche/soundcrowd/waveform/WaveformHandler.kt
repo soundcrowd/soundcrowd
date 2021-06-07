@@ -17,6 +17,7 @@ import com.tiefensuche.soundcrowd.R
 import com.tiefensuche.soundcrowd.database.Database
 import com.tiefensuche.soundcrowd.extensions.MediaMetadataCompatExt
 import com.tiefensuche.soundcrowd.images.GlideRequests
+import com.tiefensuche.soundcrowd.service.MusicService
 
 internal class WaveformHandler(private val waveformView: WaveformView) {
 
@@ -52,12 +53,12 @@ internal class WaveformHandler(private val waveformView: WaveformView) {
     private fun loadCuePoints(metadata: MediaMetadataCompat) {
         metadata.description.mediaId?.let {
             val duration = metadata.getLong(MediaMetadataCompat.METADATA_KEY_DURATION).toInt()
-            val lastPosition = Database.instance.getLastPosition(metadata.description.mediaId)
+            val lastPosition = MusicService.database.getLastPosition(metadata.description.mediaId)
             if (lastPosition > 0) {
                 waveformView.drawCuePoint(CuePoint(it, lastPosition.toInt(), waveformView.context.getString(R.string.last_position)), duration, play)
             }
-            for (cuePoint in Database.instance.getCuePoints(it)) {
-                waveformView.drawCuePoint(cuePoint, duration, this.cuePoint)
+            for (cuePoint in MusicService.database.getCuePoints(it)) {
+                waveformView.drawCuePoint(cuePoint, duration, this.cuePoint!!)
             }
         }
     }

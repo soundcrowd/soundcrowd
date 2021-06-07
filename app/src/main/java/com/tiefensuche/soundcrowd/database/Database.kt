@@ -39,13 +39,10 @@ internal class Database(context: Context) : MetadataDatabase(context) {
 
         private const val DATABASE_MEDIA_ITEMS_METADATA_NAME = "MediaItemsMetadata"
         private const val DATABASE_MEDIA_ITEMS_METADATA_CREATE = "create table if not exists $DATABASE_MEDIA_ITEMS_METADATA_NAME ($ID text primary key, $POSITION long, $ALBUM_ART_URL text, vibrant_color int, text_color int)"
-
-        lateinit var instance: Database
     }
 
     init {
         writableDatabase.execSQL(DATABASE_MEDIA_ITEMS_CUE_POINTS_CREATE)
-        instance = this
     }
 
     internal val cuePointItems: ArrayList<MediaMetadataCompat>

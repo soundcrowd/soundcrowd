@@ -91,7 +91,6 @@ internal class MusicService : MediaBrowserServiceCompat(), PlaybackManager.Playb
     private lateinit var mSession: MediaSessionCompat
     private lateinit var mMediaNotificationManager: MediaNotificationManager
     private lateinit var mQueueManager: QueueManager
-    private lateinit var databaseHelper: Database
     private lateinit var preferences: SharedPreferences
 
     /*
@@ -103,7 +102,7 @@ internal class MusicService : MediaBrowserServiceCompat(), PlaybackManager.Playb
         Log.d(TAG, "create service")
 
         preferences = PreferenceManager.getDefaultSharedPreferences(this)
-        databaseHelper = Database(this)
+        database = Database(this)
         mMusicProvider = MusicProvider(this)
 
         mQueueManager = QueueManager(mMusicProvider,
@@ -342,5 +341,6 @@ internal class MusicService : MediaBrowserServiceCompat(), PlaybackManager.Playb
         // Delay stopSelf by using a handler.
         private const val STOP_DELAY = 600000
         private lateinit var mMusicProvider: MusicProvider
+        lateinit var database: Database
     }
 }

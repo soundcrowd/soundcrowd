@@ -5,7 +5,6 @@
 package com.tiefensuche.soundcrowd.playback
 
 import android.content.SharedPreferences
-import android.content.res.Resources
 import android.net.Uri
 import android.os.AsyncTask
 import android.os.Bundle
@@ -15,11 +14,11 @@ import android.support.v4.media.RatingCompat
 import android.support.v4.media.session.MediaSessionCompat
 import android.support.v4.media.session.PlaybackStateCompat
 import android.util.Log
-import com.tiefensuche.soundcrowd.database.Database
 import com.tiefensuche.soundcrowd.database.Database.Companion.MEDIA_ID
 import com.tiefensuche.soundcrowd.database.Database.Companion.POSITION
 import com.tiefensuche.soundcrowd.extensions.MediaMetadataCompatExt
 import com.tiefensuche.soundcrowd.plugins.Callback
+import com.tiefensuche.soundcrowd.service.MusicService
 import com.tiefensuche.soundcrowd.sources.MusicProvider
 import com.tiefensuche.soundcrowd.sources.MusicProvider.Media.LAST_MEDIA
 import com.tiefensuche.soundcrowd.utils.MediaIDHelper.extractMusicIDFromMediaID
@@ -172,7 +171,7 @@ internal class PlaybackManager(private val mServiceCallback: PlaybackServiceCall
         mQueueManager.currentMusic?.description?.mediaId?.let {
             val musicId = extractMusicIDFromMediaID(it)
             mMusicProvider.getMusic(musicId)?.let {
-                Database.instance.updatePosition(it, playback.currentStreamPosition)
+                MusicService.database.updatePosition(it, playback.currentStreamPosition)
                 mPreferences.edit().putString(LAST_MEDIA, musicId).apply()
             }
         }
