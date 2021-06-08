@@ -32,7 +32,6 @@ import android.view.ViewGroup
 import android.widget.*
 import com.sothree.slidinguppanel.SlidingUpPanelLayout
 import com.tiefensuche.soundcrowd.R
-import com.tiefensuche.soundcrowd.database.Database
 import com.tiefensuche.soundcrowd.database.Database.Companion.POSITION
 import com.tiefensuche.soundcrowd.extensions.MediaMetadataCompatExt
 import com.tiefensuche.soundcrowd.images.ArtworkHelper
@@ -243,6 +242,14 @@ internal class FullScreenPlayerFragment : Fragment() {
 
         rootView.findViewById<View>(R.id.star).setOnClickListener {
             addCuePoint()
+        }
+
+        rootView.findViewById<View>(R.id.replay).setOnClickListener {
+            seek((currentPosition - 10000).toLong())
+        }
+
+        rootView.findViewById<View>(R.id.forward).setOnClickListener {
+            seek((currentPosition + 10000).toLong())
         }
 
         val startShazam = rootView.findViewById<ImageView>(R.id.shazam)

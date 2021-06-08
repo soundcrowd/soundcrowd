@@ -105,11 +105,36 @@
         android:textAppearance="?android:attr/textAppearanceSmall"
         android:textColor="@android:color/white" />
 
-    <com.tiefensuche.soundcrowd.waveform.WaveformView
-        android:id="@+id/waveformView"
+    <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_centerVertical="true" />
+        android:layout_centerVertical="true">
+
+        <com.tiefensuche.soundcrowd.waveform.WaveformView
+            android:id="@+id/waveformView"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_centerVertical="true" />
+
+        <ImageView
+            android:id="@+id/replay"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:layout_alignParentStart="true"
+            android:layout_alignParentLeft="true"
+            android:layout_centerVertical="true"
+            android:src="@drawable/ic_baseline_replay_10_24" />
+
+        <ImageView
+            android:id="@+id/forward"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:layout_alignParentEnd="true"
+            android:layout_alignParentRight="true"
+            android:layout_centerVertical="true"
+            android:src="@drawable/ic_baseline_forward_10_24" />
+
+    </RelativeLayout>
 
     <RelativeLayout
         android:layout_width="fill_parent"
