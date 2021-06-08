@@ -35,7 +35,7 @@
             android:layout_marginRight="8dp"
             android:background="?selectableItemBackgroundBorderless"
             android:padding="8dp"
-            android:src="@drawable/ic_star_on" />
+            android:src="@drawable/ic_round_star_24" />
 
         <ImageView
             android:id="@+id/shazam"
@@ -46,8 +46,7 @@
             android:layout_toLeftOf="@id/star"
             android:background="?selectableItemBackgroundBorderless"
             android:padding="8dp"
-            android:src="@drawable/shazam"
-            android:tint="@android:color/white" />
+            android:src="@drawable/shazam" />
 
         <ImageView
             android:id="@+id/share"
@@ -55,11 +54,10 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="24dp"
             android:layout_toStartOf="@id/shazam"
+            android:layout_toLeftOf="@id/shazam"
             android:background="?selectableItemBackgroundBorderless"
             android:padding="8dp"
-            android:src="@android:drawable/ic_menu_share"
-            android:tint="@android:color/white"
-            android:layout_toLeftOf="@id/shazam" />
+            android:src="@drawable/ic_round_share_24" />
 
         <ImageView
             android:id="@+id/favorite"
@@ -67,11 +65,10 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="24dp"
             android:layout_toStartOf="@id/share"
+            android:layout_toLeftOf="@id/share"
             android:background="?selectableItemBackgroundBorderless"
             android:padding="8dp"
-            android:src="@drawable/favorite"
-            android:tint="@android:color/white"
-            android:layout_toLeftOf="@id/share" />
+            android:src="@drawable/ic_round_favorite_24" />
 
     </RelativeLayout>
 
@@ -203,7 +200,7 @@
                     android:layout_weight="1"
                     android:background="?selectableItemBackgroundBorderless"
                     android:contentDescription="@string/skip_prev"
-                    android:src="@drawable/ic_skip_previous_white_48dp" />
+                    android:src="@drawable/ic_round_skip_previous_24" />
 
                 <ImageView
                     android:id="@+id/play_pause_fullscreen"
@@ -212,7 +209,7 @@
                     android:layout_weight="2"
                     android:background="?selectableItemBackgroundBorderless"
                     android:contentDescription="@string/play_pause"
-                    android:src="@drawable/ic_play_arrow_white_48dp" />
+                    android:src="@drawable/ic_round_play_arrow_24" />
 
                 <ImageView
                     android:id="@+id/next"
@@ -221,7 +218,7 @@
                     android:layout_weight="1"
                     android:background="?selectableItemBackgroundBorderless"
                     android:contentDescription="@string/skip_next"
-                    android:src="@drawable/ic_skip_next_white_48dp" />
+                    android:src="@drawable/ic_round_skip_next_24" />
             </LinearLayout>
 
         </LinearLayout>

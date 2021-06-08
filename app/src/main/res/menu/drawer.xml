@@ -10,11 +10,11 @@
             android:title="@string/drawer_allmusic_title" />
         <item
             android:id="@+id/navigation_cue_points"
-            android:icon="@drawable/ic_star_on"
+            android:icon="@drawable/ic_round_star_24"
             android:title="@string/drawer_cue_points_title" />
         <item
             android:id="@+id/navigation_equalizer"
-            android:icon="@drawable/ic_equalizer_white_36dp"
+            android:icon="@drawable/ic_round_equalizer_24"
             android:title="@string/equalizer_title" />
         <item
             android:id="@+id/navigation_preferences"

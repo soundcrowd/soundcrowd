@@ -63,7 +63,7 @@
         android:background="?selectableItemBackgroundBorderless"
         android:contentDescription="@string/play_pause"
         android:padding="8dp"
-        android:src="@drawable/ic_play_arrow_black_36dp"
+        android:src="@drawable/ic_round_play_arrow_24"
         android:tint="@color/bt_accent"
         android:tintMode="src_in" />
 

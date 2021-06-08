@@ -22,6 +22,7 @@ import android.support.v4.media.MediaMetadataCompat
 import android.support.v4.media.RatingCompat
 import android.support.v4.media.session.MediaControllerCompat
 import android.support.v4.media.session.PlaybackStateCompat
+import android.support.v4.media.session.PlaybackStateCompat.*
 import android.text.format.DateUtils
 import android.util.Log
 import android.view.LayoutInflater
@@ -99,18 +100,14 @@ internal class FullScreenPlayerFragment : Fragment() {
     private val mButtonListener = OnClickListener(function = fun(view: View) {
         val activity = activity ?: return
         val controller = MediaControllerCompat.getMediaController(activity)
-        val state = controller.playbackState?.state ?: PlaybackStateCompat.STATE_NONE
+        val state = controller.playbackState?.state ?: STATE_NONE
         Log.d(TAG, "Button pressed, in state $state")
         when (view.id) {
             R.id.play_pause -> {
                 Log.d(TAG, "Play button pressed, in state $state")
                 when (state) {
-                    PlaybackStateCompat.STATE_PAUSED,
-                    PlaybackStateCompat.STATE_STOPPED,
-                    PlaybackStateCompat.STATE_NONE -> playMedia()
-                    PlaybackStateCompat.STATE_PLAYING,
-                    PlaybackStateCompat.STATE_BUFFERING,
-                    PlaybackStateCompat.STATE_CONNECTING -> pauseMedia()
+                    STATE_PAUSED, STATE_STOPPED, STATE_NONE -> playMedia()
+                    STATE_PLAYING, STATE_BUFFERING, STATE_CONNECTING -> pauseMedia()
                 }
             }
         }
@@ -130,8 +127,8 @@ internal class FullScreenPlayerFragment : Fragment() {
         requests = GlideApp.with(this)
 
         mBackgroundImage = rootView.findViewById(R.id.background_image)
-        mPauseDrawable = ContextCompat.getDrawable(rootView.context, R.drawable.ic_pause_white_48dp)
-        mPlayDrawable = ContextCompat.getDrawable(rootView.context, R.drawable.ic_play_arrow_white_48dp)
+        mPauseDrawable = ContextCompat.getDrawable(rootView.context, R.drawable.ic_round_pause_24)
+        mPlayDrawable = ContextCompat.getDrawable(rootView.context, R.drawable.ic_round_play_arrow_24)
         mPlayPause = rootView.findViewById(R.id.play_pause_fullscreen)
         mSkipNext = rootView.findViewById(R.id.next)
         mSkipPrev = rootView.findViewById(R.id.prev)
@@ -195,11 +192,11 @@ internal class FullScreenPlayerFragment : Fragment() {
                 val state = MediaControllerCompat.getMediaController(it).playbackState
                 val controls = MediaControllerCompat.getMediaController(it).transportControls
                 when (state.state) {
-                    PlaybackStateCompat.STATE_PLAYING, PlaybackStateCompat.STATE_BUFFERING -> {
+                    STATE_PLAYING, STATE_BUFFERING -> {
                         controls.pause()
                         stopSeekbarUpdate()
                     }
-                    PlaybackStateCompat.STATE_NONE, PlaybackStateCompat.STATE_PAUSED, PlaybackStateCompat.STATE_STOPPED -> {
+                    STATE_NONE, STATE_PAUSED, STATE_STOPPED -> {
                         controls.play()
                         scheduleSeekbarUpdate()
                     }
@@ -268,7 +265,7 @@ internal class FullScreenPlayerFragment : Fragment() {
             onMetadataChanged(controller.metadata)
 
             updateProgress()
-            if (state != null && (state.state == PlaybackStateCompat.STATE_PLAYING || state.state == PlaybackStateCompat.STATE_BUFFERING)) {
+            if (state != null && (state.state == STATE_PLAYING || state.state == STATE_BUFFERING)) {
                 scheduleSeekbarUpdate()
             }
         }
@@ -312,17 +309,17 @@ internal class FullScreenPlayerFragment : Fragment() {
         Log.d(TAG, "Received playback state change to state ${state?.state}")
         var enablePlay = false
         when (state?.state) {
-            PlaybackStateCompat.STATE_NONE, PlaybackStateCompat.STATE_PAUSED, PlaybackStateCompat.STATE_STOPPED -> enablePlay = true
-            PlaybackStateCompat.STATE_ERROR -> Log.e(TAG, "error playbackstate: ${state.errorMessage}")
+            STATE_NONE, STATE_PAUSED, STATE_STOPPED -> enablePlay = true
+            STATE_ERROR -> Log.e(TAG, "error playbackstate: ${state.errorMessage}")
         }
 
         context?.let {
             if (enablePlay) {
                 mPlayPauseSmall.setImageDrawable(
-                        ContextCompat.getDrawable(it, R.drawable.ic_play_arrow_black_36dp))
+                        ContextCompat.getDrawable(it, R.drawable.ic_round_play_arrow_24))
             } else {
                 mPlayPauseSmall.setImageDrawable(
-                        ContextCompat.getDrawable(it, R.drawable.ic_pause_black_36dp))
+                        ContextCompat.getDrawable(it, R.drawable.ic_round_pause_24))
             }
         }
 
@@ -437,27 +434,27 @@ internal class FullScreenPlayerFragment : Fragment() {
         mLastPlaybackState = state
         mLine3.text = ""
         when (state.state) {
-            PlaybackStateCompat.STATE_PLAYING -> {
+            STATE_PLAYING -> {
                 mLoading.visibility = INVISIBLE
                 mPlayPause.visibility = VISIBLE
                 mPlayPause.setImageDrawable(mPauseDrawable)
                 mControllers.visibility = VISIBLE
                 scheduleSeekbarUpdate()
             }
-            PlaybackStateCompat.STATE_PAUSED -> {
+            STATE_PAUSED -> {
                 mControllers.visibility = VISIBLE
                 mLoading.visibility = INVISIBLE
                 mPlayPause.visibility = VISIBLE
                 mPlayPause.setImageDrawable(mPlayDrawable)
                 stopSeekbarUpdate()
             }
-            PlaybackStateCompat.STATE_NONE, PlaybackStateCompat.STATE_STOPPED -> {
+            STATE_NONE, STATE_STOPPED -> {
                 mLoading.visibility = INVISIBLE
                 mPlayPause.visibility = VISIBLE
                 mPlayPause.setImageDrawable(mPlayDrawable)
                 stopSeekbarUpdate()
             }
-            PlaybackStateCompat.STATE_BUFFERING -> {
+            STATE_BUFFERING -> {
                 mPlayPause.visibility = INVISIBLE
                 mLoading.visibility = VISIBLE
                 mLine3.text = getString(R.string.loading)
@@ -466,11 +463,11 @@ internal class FullScreenPlayerFragment : Fragment() {
             else -> Log.d(TAG, "Unhandled state ${state.state}")
         }
 
-        mSkipNext.visibility = if (state.actions and PlaybackStateCompat.ACTION_SKIP_TO_NEXT == 0L)
+        mSkipNext.visibility = if (state.actions and ACTION_SKIP_TO_NEXT == 0L)
             INVISIBLE
         else
             VISIBLE
-        mSkipPrev.visibility = if (state.actions and PlaybackStateCompat.ACTION_SKIP_TO_PREVIOUS == 0L)
+        mSkipPrev.visibility = if (state.actions and ACTION_SKIP_TO_PREVIOUS == 0L)
             INVISIBLE
         else
             VISIBLE

@@ -216,7 +216,7 @@ constructor(private val mService: MusicService) : BroadcastReceiver() {
 
         // If skip to previous action is enabled
         if (actions and PlaybackStateCompat.ACTION_SKIP_TO_PREVIOUS != 0L) {
-            notificationBuilder.addAction(R.drawable.ic_skip_previous_white_24dp,
+            notificationBuilder.addAction(R.drawable.ic_round_skip_previous_24,
                     mService.getString(R.string.label_previous), mPreviousIntent)
 
             // If there is a "skip to previous" button, the play/pause button will
@@ -230,7 +230,7 @@ constructor(private val mService: MusicService) : BroadcastReceiver() {
 
         // If skip to next action is enabled
         if (actions and PlaybackStateCompat.ACTION_SKIP_TO_NEXT != 0L) {
-            notificationBuilder.addAction(R.drawable.ic_skip_next_white_24dp,
+            notificationBuilder.addAction(R.drawable.ic_round_skip_next_24,
                     mService.getString(R.string.label_next), mNextIntent)
         }
 
@@ -276,11 +276,11 @@ constructor(private val mService: MusicService) : BroadcastReceiver() {
         val intent: PendingIntent
         if (mPlaybackState?.state == PlaybackStateCompat.STATE_PLAYING) {
             label = mService.getString(R.string.label_pause)
-            icon = R.drawable.ic_pause_white_24dp
+            icon = R.drawable.ic_round_pause_24
             intent = mPauseIntent
         } else {
             label = mService.getString(R.string.label_play)
-            icon = R.drawable.ic_play_arrow_white_24dp
+            icon = R.drawable.ic_round_play_arrow_24
             intent = mPlayIntent
         }
         builder.addAction(NotificationCompat.Action(icon, label, intent))

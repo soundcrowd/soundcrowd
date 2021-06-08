@@ -5,9 +5,9 @@
 package com.tiefensuche.soundcrowd.waveform
 
 import android.graphics.Bitmap
-import android.graphics.BitmapFactory
 import android.support.v4.media.MediaMetadataCompat
 import android.view.View
+import androidx.core.content.ContextCompat
 import com.bumptech.glide.load.DataSource
 import com.bumptech.glide.load.engine.GlideException
 import com.bumptech.glide.request.RequestListener
@@ -21,10 +21,8 @@ import com.tiefensuche.soundcrowd.service.MusicService
 
 internal class WaveformHandler(private val waveformView: WaveformView) {
 
-    private val cuePoint: Bitmap = BitmapFactory.decodeResource(waveformView.resources,
-            R.drawable.ic_star_on)
-    private val play: Bitmap = BitmapFactory.decodeResource(waveformView.resources,
-            R.drawable.ic_play_arrow_black_36dp)
+    private val cuePoint = ContextCompat.getDrawable(waveformView.context, R.drawable.ic_round_star_24)
+    private val play = ContextCompat.getDrawable(waveformView.context, R.drawable.ic_round_play_arrow_24)
 
     internal fun loadWaveform(requests: GlideRequests, metadata: MediaMetadataCompat, duration: Int) {
         if (waveformView.context != null) {
@@ -55,7 +53,7 @@ internal class WaveformHandler(private val waveformView: WaveformView) {
             val duration = metadata.getLong(MediaMetadataCompat.METADATA_KEY_DURATION).toInt()
             val lastPosition = MusicService.database.getLastPosition(metadata.description.mediaId)
             if (lastPosition > 0) {
-                waveformView.drawCuePoint(CuePoint(it, lastPosition.toInt(), waveformView.context.getString(R.string.last_position)), duration, play)
+                waveformView.drawCuePoint(CuePoint(it, lastPosition.toInt(), waveformView.context.getString(R.string.last_position)), duration, play!!)
             }
             for (cuePoint in MusicService.database.getCuePoints(it)) {
                 waveformView.drawCuePoint(cuePoint, duration, this.cuePoint!!)
@@ -65,7 +63,7 @@ internal class WaveformHandler(private val waveformView: WaveformView) {
 
     internal fun addCuePoint(metadata: MediaMetadataCompat, position: Int, duration: Int, text: String = "") {
         metadata.description.mediaId?.let {
-            waveformView.drawCuePoint(CuePoint(it, position, text), duration, cuePoint)
+            waveformView.drawCuePoint(CuePoint(it, position, text), duration, cuePoint!!)
         }
     }
 }
