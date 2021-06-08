@@ -18,7 +18,7 @@
             android:title="@string/equalizer_title" />
         <item
             android:id="@+id/navigation_preferences"
-            android:icon="@android:drawable/ic_menu_preferences"
+            android:icon="@drawable/ic_round_settings_24"
             android:title="@string/preferences_title" />
     </group>
 </menu>
