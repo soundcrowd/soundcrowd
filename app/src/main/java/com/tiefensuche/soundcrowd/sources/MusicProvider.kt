@@ -183,20 +183,18 @@ internal class MusicProvider(context: MusicService) {
         }
     }
 
-    private fun addToCategory(dir: BrowsableItem, items: List<MediaMetadataCompat>) {
+    private fun addToCategory(dir: BrowsableItem, items: Iterator<MediaMetadataCompat>) {
         val descriptions = HashMap<String, String>()
         for (item in items) {
             for (key in listOf(MediaMetadataCompat.METADATA_KEY_ARTIST, MediaMetadataCompat.METADATA_KEY_ALBUM)) {
-                if (item.getString(key) != null) {
-                    val value = MediaIDHelper.toBrowsableName(item.getString(key))
-                    var node = dir.edges[value]
-                    if (node == null) {
-                        node = BrowsableItem()
-                        dir.edges[value] = node
-                        descriptions[value] = key
-                    }
-                    node.add(item)
+                val value = MediaIDHelper.toBrowsableName(item.getString(key))
+                var node = dir.edges[value]
+                if (node == null) {
+                    node = BrowsableItem()
+                    dir.edges[value] = node
+                    descriptions[value] = key
                 }
+                node.add(item)
             }
         }
         buildRootCategory(dir, descriptions)
@@ -233,35 +231,40 @@ internal class MusicProvider(context: MusicService) {
         library.root.edges[LOCAL] = root
     }
 
-    private fun addMusic(tracks: Iterator<MediaMetadataCompat>): ArrayList<MediaMetadataCompat> {
-        val addedTracks = ArrayList<MediaMetadataCompat>()
-
-        while (tracks.hasNext()) {
-            var item = tracks.next()
-
-            var musicId = item.getString(MediaMetadataCompat.METADATA_KEY_MEDIA_ID)
-            val url = item.getString(MediaMetadataCompat.METADATA_KEY_MEDIA_URI)
-            val type = item.getString(MediaMetadataCompatExt.METADATA_KEY_TYPE)
-
-            // skip tracks that have no track url and duplicates
-            if (MediaMetadataCompatExt.MediaType.MEDIA.name == type && url == null) {
-                Log.d(TAG, "skipping track with musicId=$musicId")
-                continue
-            }
-
-            // when no music id exists, default to the md5 of the source
-            if (musicId == null) {
-                musicId = Utils.computeMD5(url)
-            }
-
-            // add the music id to the metadata
-            item = MediaMetadataCompat.Builder(item).putString(MediaMetadataCompat.METADATA_KEY_MEDIA_ID, musicId).build()
-
-            library.keys[musicId] = MutableMediaMetadata(musicId, item)
-            addedTracks.add(item)
+    private fun checkKeys(item: MediaMetadataCompat, keys: List<String>): Boolean {
+        for (key in keys) {
+            if (!item.containsKey(key))
+                return false
         }
+        return true
+    }
 
-        return addedTracks
+    private fun validate(item: MediaMetadataCompat): Boolean {
+        if (!checkKeys(item, listOf(MediaMetadataCompatExt.METADATA_KEY_TYPE, MediaMetadataCompat.METADATA_KEY_ARTIST, MediaMetadataCompat.METADATA_KEY_TITLE, MediaMetadataCompat.METADATA_KEY_ALBUM_ART_URI)))
+            return false
+
+        if (!MediaMetadataCompatExt.MediaType.values().map { it.name }.contains(item.getString(MediaMetadataCompatExt.METADATA_KEY_TYPE)))
+            return false
+
+        if (MediaMetadataCompatExt.MediaType.MEDIA.name != item.getString(MediaMetadataCompatExt.METADATA_KEY_TYPE))
+            return true
+
+        if (!checkKeys(item, listOf(MediaMetadataCompat.METADATA_KEY_MEDIA_URI, MediaMetadataCompat.METADATA_KEY_DURATION)))
+            return false
+
+        if (item.getLong(MediaMetadataCompat.METADATA_KEY_DURATION) == 0L)
+            return false
+
+        return true
+    }
+
+    private fun addMusic(tracks: Iterator<MediaMetadataCompat>): Iterator<MediaMetadataCompat> {
+        val list = tracks.asSequence().filter { validate(it) }.toList()
+        list.forEach {
+            val musicId = it.getString(MediaMetadataCompat.METADATA_KEY_MEDIA_ID)
+            library.keys[musicId] = MutableMediaMetadata(musicId, it)
+        }
+        return list.iterator()
     }
 
     internal fun hasItems(request: Request): Boolean {
@@ -363,6 +366,8 @@ internal class MusicProvider(context: MusicService) {
     internal fun loadLastMedia(musicId: String): Boolean {
         MusicService.database.getMediaItem(musicId)?.let {
             val track = MediaMetadataCompatExt.fromJson(it)
+            if (!validate(track))
+                return false
             track.description.mediaId?.let {
                 library.keys[it] = MutableMediaMetadata(it, track)
                 val request = Request(LAST_MEDIA + LEAF_SEPARATOR + it)
@@ -492,24 +497,26 @@ internal class MusicProvider(context: MusicService) {
 
     @Throws(JSONException::class)
     private fun addMediaFromJSON(source: String, dir: BrowsableItem, request: Request, json: JSONArray) {
-        var result = ArrayList<MediaMetadataCompat>()
+        val result = ArrayList<MediaMetadataCompat>()
         for (i in 0 until json.length()) {
             val obj = json.getJSONObject(i)
             obj.put(MediaMetadataCompatExt.METADATA_KEY_SOURCE, source)
             val metadata = MediaMetadataCompatExt.fromJson(obj)
             result.add(metadata)
         }
-        result = addMusic(result.iterator())
+
         if (request.options.getBoolean(OPTION_REFRESH))
             dir.items.clear()
 
-        for (item in result) {
+        for (item in addMusic(result.iterator())) {
             dir.add(item)
         }
     }
 
     internal fun resolve(uri: Uri): String? {
         val track = localSource.resolve(uri)
+        if (!validate(track))
+            return null
         track.description.mediaId?.let {
             library.keys[it] = MutableMediaMetadata(it, track)
             val request = Request(TEMP + LEAF_SEPARATOR + it)
@@ -521,9 +528,13 @@ internal class MusicProvider(context: MusicService) {
     }
 
     fun favorite(metadata: MediaMetadataCompat, callback: com.tiefensuche.soundcrowd.plugins.Callback<Boolean>) {
-        pluginManager.plugins[metadata.getString(MediaMetadataCompatExt.METADATA_KEY_SOURCE)]?.favorite(
+        try {
+            pluginManager.plugins[metadata.getString(MediaMetadataCompatExt.METADATA_KEY_SOURCE)]?.favorite(
                 metadata.getString(extractMusicIDFromMediaID(MediaMetadataCompat.METADATA_KEY_MEDIA_ID)), callback)
-                ?: Log.d(TAG, "No plugin to handle favorite request for ${metadata.getString(MediaMetadataCompatExt.METADATA_KEY_SOURCE)}")
+                ?: callback.onResult(false)
+        } catch (e: Exception) {
+            callback.onResult(false)
+        }
     }
 
     fun addCuePoint(metadata: MediaMetadataCompat, extras: Bundle) {
