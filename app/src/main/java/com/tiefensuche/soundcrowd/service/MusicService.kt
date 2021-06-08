@@ -127,7 +127,7 @@ internal class MusicService : MediaBrowserServiceCompat(), PlaybackManager.Playb
                     }
                 }, this)
 
-        mPlaybackManager = PlaybackManager(this, resources, mMusicProvider, mQueueManager,
+        mPlaybackManager = PlaybackManager(this, mMusicProvider, mQueueManager,
                 LocalPlayback(this, mMusicProvider), preferences)
 
         // Start a new MediaSession
@@ -296,6 +296,14 @@ internal class MusicService : MediaBrowserServiceCompat(), PlaybackManager.Playb
         } catch (e: IllegalStateException) {
             Log.e(TAG, "error while updating playback state", e)
         }
+    }
+
+    override fun onRepeatModeChanged(repeatMode: Int) {
+        mSession.setRepeatMode(repeatMode)
+    }
+
+    override fun onShuffleModeChanged(shuffleMode: Int) {
+        mSession.setShuffleMode(shuffleMode)
     }
 
     /**

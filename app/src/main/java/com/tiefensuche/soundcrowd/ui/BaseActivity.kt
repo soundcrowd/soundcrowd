@@ -51,6 +51,14 @@ abstract class BaseActivity : ActionBarCastActivity(), MediaBrowserProvider {
             }
             mFullScreenPlayerFragment?.onMetadataChanged(metadata)
         }
+
+        override fun onRepeatModeChanged(repeatMode: Int) {
+            mFullScreenPlayerFragment?.updateRepeatMode(repeatMode)
+        }
+
+        override fun onShuffleModeChanged(shuffleMode: Int) {
+            mFullScreenPlayerFragment?.updateShuffleMode(shuffleMode)
+        }
     }
 
     override lateinit var mediaBrowser: MediaBrowserCompat

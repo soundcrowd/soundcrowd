@@ -120,11 +120,9 @@ internal class LocalPlayback(private val mContext: Context, private val mMusicPr
 
         val mediaHasChanged = !TextUtils.equals(mediaId, currentMediaId)
         if (mediaHasChanged) {
-            mCurrentPosition = position
             currentMediaId = mediaId
-        } else if (position > 0) {
-            mCurrentPosition = position
         }
+        mCurrentPosition = position
 
         if (state == PlaybackStateCompat.STATE_PAUSED && !mediaHasChanged && mMediaPlayer != null) {
             configMediaPlayerState()

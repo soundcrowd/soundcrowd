@@ -29,8 +29,17 @@ internal class QueueManager(private val mMusicProvider: MusicProvider,
                             private val mContext: Context) {
 
     // "Now playing" queue:
-    private var mPlayingQueue: List<MediaSessionCompat.QueueItem>
+    private var mPlayingQueueNormal: List<MediaSessionCompat.QueueItem>
+    private var mPlayingQueueShuffled: List<MediaSessionCompat.QueueItem>
     private var mCurrentIndex: Int = 0
+    private var shuffle = false
+
+    private var mPlayingQueue: List<MediaSessionCompat.QueueItem>
+        get() = if (shuffle) mPlayingQueueShuffled else mPlayingQueueNormal
+        set(value) {
+            mPlayingQueueNormal = value
+            mPlayingQueueShuffled = value.shuffled()
+        }
 
     internal val currentMusic: MediaSessionCompat.QueueItem?
         get() = if (QueueHelper.isIndexPlayable(mCurrentIndex, mPlayingQueue))
@@ -39,7 +48,8 @@ internal class QueueManager(private val mMusicProvider: MusicProvider,
             null
 
     init {
-        mPlayingQueue = Collections.synchronizedList<MediaSessionCompat.QueueItem>(ArrayList<MediaSessionCompat.QueueItem>())
+        mPlayingQueueNormal = Collections.synchronizedList(ArrayList())
+        mPlayingQueueShuffled = Collections.synchronizedList(ArrayList())
         mCurrentIndex = 0
     }
 
@@ -162,6 +172,10 @@ internal class QueueManager(private val mMusicProvider: MusicProvider,
             if (musicId == currentPlayingId)
                 mListener.onMetadataChanged(mMusicProvider.getMusic(currentPlayingId))
         }
+    }
+
+    internal fun setShuffle(shuffle: Boolean) {
+        this.shuffle = shuffle
     }
 
     interface MetadataUpdateListener {

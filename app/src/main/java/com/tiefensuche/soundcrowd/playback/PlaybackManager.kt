@@ -26,7 +26,7 @@ import com.tiefensuche.soundcrowd.utils.MediaIDHelper.extractMusicIDFromMediaID
 /**
  * Manage the interactions among the container service, the queue manager and the actual playback.
  */
-internal class PlaybackManager(private val mServiceCallback: PlaybackServiceCallback, private val mResources: Resources,
+internal class PlaybackManager(private val mServiceCallback: PlaybackServiceCallback,
                                private val mMusicProvider: MusicProvider, private val mQueueManager: QueueManager,
                                val playback: Playback, private val mPreferences: SharedPreferences) : Playback.Callback {
 
@@ -49,6 +49,8 @@ internal class PlaybackManager(private val mServiceCallback: PlaybackServiceCall
             }
             return actions
         }
+
+    private var mRepeatMode = PlaybackStateCompat.REPEAT_MODE_NONE
 
     init {
         mMediaSessionCallback = MediaSessionCallback()
@@ -144,6 +146,11 @@ internal class PlaybackManager(private val mServiceCallback: PlaybackServiceCall
      * Implementation of the Playback.Callback interface
      */
     override fun onCompletion() {
+        if (mRepeatMode == PlaybackStateCompat.REPEAT_MODE_ONE) {
+            handlePlayRequest()
+            return
+        }
+
         // The media player finished playing the current song, so we go ahead
         // and start the next.
         if (mQueueManager.skipQueuePosition(1)) {
@@ -198,6 +205,8 @@ internal class PlaybackManager(private val mServiceCallback: PlaybackServiceCall
         fun onNotificationRequired()
         fun onPlaybackStop()
         fun onPlaybackStateUpdated(newState: PlaybackStateCompat)
+        fun onRepeatModeChanged(repeatMode: Int)
+        fun onShuffleModeChanged(shuffleMode: Int)
     }
 
     internal inner class MediaSessionCallback : MediaSessionCompat.Callback() {
@@ -291,6 +300,16 @@ internal class PlaybackManager(private val mServiceCallback: PlaybackServiceCall
                     })
                 }
             } ?: Log.d(TAG, "failed to get media id")
+        }
+
+        override fun onSetRepeatMode(repeatMode: Int) {
+            mRepeatMode = repeatMode
+            mServiceCallback.onRepeatModeChanged(repeatMode)
+        }
+
+        override fun onSetShuffleMode(shuffleMode: Int) {
+            mQueueManager.setShuffle(shuffleMode == PlaybackStateCompat.SHUFFLE_MODE_ALL)
+            mServiceCallback.onShuffleModeChanged(shuffleMode)
         }
 
         private fun triggerUpdate(metadata: MediaMetadataCompat, rating: RatingCompat) {

@@ -87,6 +87,8 @@ internal class FullScreenPlayerFragment : Fragment() {
     private var mPlayDrawable: Drawable? = null
     private lateinit var mShare: ImageView
     private lateinit var mLike: ImageView
+    private lateinit var mRepeat: ImageView
+    private lateinit var mShuffle: ImageView
     private lateinit var mBackgroundImage: ImageView
     private lateinit var mWaveformHandler: WaveformHandler
 
@@ -141,6 +143,8 @@ internal class FullScreenPlayerFragment : Fragment() {
         mLoading = rootView.findViewById(R.id.progressBar)
         mControllers = rootView.findViewById(R.id.controllers)
         mLike = rootView.findViewById(R.id.favorite)
+        mRepeat = rootView.findViewById(R.id.repeat)
+        mShuffle = rootView.findViewById(R.id.shuffle)
 
         // Init waveform
         val displaySize = Point()
@@ -213,6 +217,26 @@ internal class FullScreenPlayerFragment : Fragment() {
                     sharingIntent.type = MIME_TEXT
                     sharingIntent.putExtra(Intent.EXTRA_TEXT, it)
                     startActivity(Intent.createChooser(sharingIntent, getString(R.string.share_via)))
+                }
+            }
+        }
+
+        mRepeat.setOnClickListener {
+            activity?.let {
+                val controller = MediaControllerCompat.getMediaController(it)
+                when (controller.repeatMode) {
+                    REPEAT_MODE_NONE -> controller.transportControls.setRepeatMode(REPEAT_MODE_ONE)
+                    REPEAT_MODE_ONE -> controller.transportControls.setRepeatMode(REPEAT_MODE_NONE)
+                }
+            }
+        }
+
+        mShuffle.setOnClickListener {
+            activity?.let {
+                val controller = MediaControllerCompat.getMediaController(it)
+                when (controller.shuffleMode) {
+                    SHUFFLE_MODE_NONE -> controller.transportControls.setShuffleMode(SHUFFLE_MODE_ALL)
+                    SHUFFLE_MODE_ALL -> controller.transportControls.setShuffleMode(SHUFFLE_MODE_NONE)
                 }
             }
         }
@@ -324,6 +348,14 @@ internal class FullScreenPlayerFragment : Fragment() {
         }
 
         updatePlaybackState(state)
+    }
+
+    internal fun updateRepeatMode(repeatMode: Int) {
+        mRepeat.setColorFilter(if (repeatMode == 1) Color.RED else Color.WHITE)
+    }
+
+    internal fun updateShuffleMode(shuffleMode: Int) {
+        mShuffle.setColorFilter(if (shuffleMode == 1) Color.RED else Color.WHITE)
     }
 
     private fun playMedia() {

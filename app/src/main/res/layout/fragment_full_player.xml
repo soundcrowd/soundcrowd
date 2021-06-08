@@ -25,7 +25,7 @@
         android:background="@drawable/fullscreen_toolbar_bg_gradient">
 
         <ImageView
-            android:id="@+id/star"
+            android:id="@+id/repeat"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_alignParentEnd="true"
@@ -33,6 +33,28 @@
             android:layout_marginTop="24dp"
             android:layout_marginEnd="8dp"
             android:layout_marginRight="8dp"
+            android:background="?selectableItemBackgroundBorderless"
+            android:padding="8dp"
+            android:src="@drawable/ic_round_repeat_one_24" />
+
+        <ImageView
+            android:id="@+id/shuffle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:layout_toStartOf="@id/repeat"
+            android:layout_toLeftOf="@id/repeat"
+            android:background="?selectableItemBackgroundBorderless"
+            android:padding="8dp"
+            android:src="@drawable/ic_round_shuffle_24" />
+
+        <ImageView
+            android:id="@+id/star"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:layout_toStartOf="@id/shuffle"
+            android:layout_toLeftOf="@id/shuffle"
             android:background="?selectableItemBackgroundBorderless"
             android:padding="8dp"
             android:src="@drawable/ic_round_star_24" />
