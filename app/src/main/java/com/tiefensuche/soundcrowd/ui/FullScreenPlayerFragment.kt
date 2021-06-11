@@ -294,7 +294,8 @@ internal class FullScreenPlayerFragment : Fragment() {
             val state = controller.playbackState
             onPlaybackStateChanged(state)
             onMetadataChanged(controller.metadata)
-
+            updateRepeatMode(controller.repeatMode)
+            updateShuffleMode(controller.shuffleMode)
             updateProgress()
             if (state != null && (state.state == STATE_PLAYING || state.state == STATE_BUFFERING)) {
                 scheduleSeekbarUpdate()
@@ -358,11 +359,11 @@ internal class FullScreenPlayerFragment : Fragment() {
     }
 
     internal fun updateRepeatMode(repeatMode: Int) {
-        mRepeat.setColorFilter(if (repeatMode == 1) Color.RED else Color.WHITE)
+        mRepeat.setColorFilter(if (repeatMode == REPEAT_MODE_ONE) Color.RED else Color.WHITE)
     }
 
     internal fun updateShuffleMode(shuffleMode: Int) {
-        mShuffle.setColorFilter(if (shuffleMode == 1) Color.RED else Color.WHITE)
+        mShuffle.setColorFilter(if (shuffleMode == SHUFFLE_MODE_ALL) Color.RED else Color.WHITE)
     }
 
     private fun playMedia() {
