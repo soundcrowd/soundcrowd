@@ -4,9 +4,9 @@
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/controls"
+    android:background="?attr/colorPrimary"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:background="@color/colorPrimary"
     android:padding="@dimen/playback_controls_padding">
 
     <ImageView
@@ -64,7 +64,6 @@
         android:contentDescription="@string/play_pause"
         android:padding="8dp"
         android:src="@drawable/ic_round_play_arrow_24"
-        android:tint="@color/bt_accent"
         android:tintMode="src_in" />
 
 </RelativeLayout>

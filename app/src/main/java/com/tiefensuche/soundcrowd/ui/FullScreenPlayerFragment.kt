@@ -30,9 +30,10 @@ import android.view.View
 import android.view.View.*
 import android.view.ViewGroup
 import android.widget.*
+import androidx.preference.PreferenceManager.getDefaultSharedPreferences
 import com.sothree.slidinguppanel.SlidingUpPanelLayout
 import com.tiefensuche.soundcrowd.R
-import com.tiefensuche.soundcrowd.database.Database.Companion.POSITION
+import com.tiefensuche.soundcrowd.service.Database.Companion.POSITION
 import com.tiefensuche.soundcrowd.extensions.MediaMetadataCompatExt
 import com.tiefensuche.soundcrowd.images.ArtworkHelper
 import com.tiefensuche.soundcrowd.images.GlideApp
@@ -406,7 +407,8 @@ internal class FullScreenPlayerFragment : Fragment() {
     private fun fetchImageAsync(description: MediaDescriptionCompat) {
         Log.d(TAG, "fetchImageAsync, ${description.mediaId}")
         // get artwork from uri online or from cache
-        ArtworkHelper.loadArtwork(requests, description, mBackgroundImage, object : ArtworkHelper.ColorsListener {
+        ArtworkHelper.loadArtwork(requests, description, mBackgroundImage,
+            if (getDefaultSharedPreferences(context).getString(getString(R.string.preference_theme_key), "System").equals("Adaptive")) object : ArtworkHelper.ColorsListener {
             override fun onColorsReady(colors: IntArray) {
                 val vibrantColor = colors[0]
                 val colorAnimator = ValueAnimator.ofObject(ArgbEvaluator(), mVibrantColor, vibrantColor)
@@ -427,7 +429,7 @@ internal class FullScreenPlayerFragment : Fragment() {
                         val activity = activity
                         if (activity is MusicPlayerActivity) {
                             for (view in listOf(activity.collapsingToolbarLayout, activity.mNavigationView, activity.controls, activity.slidingUpPanelLayout)) {
-                                view.setBackgroundColor(color)
+                                view?.setBackgroundColor(color)
                             }
                         }
                     }
@@ -444,7 +446,7 @@ internal class FullScreenPlayerFragment : Fragment() {
                         mSubtitle.setTextColor(color)
                         val activity = activity
                         if (activity is MusicPlayerActivity) {
-                            activity.mToolbar.setTitleTextColor(color)
+                            activity.mToolbar?.setTitleTextColor(color)
                         }
                     }
                 }
@@ -460,7 +462,7 @@ internal class FullScreenPlayerFragment : Fragment() {
                     waveformView.colorizeWaveform(ContextCompat.getColor(it, R.color.colorPrimary))
                 }
             }
-        })
+        } else null)
 
         // Playback Controls
         ArtworkHelper.loadArtwork(requests, description, mAlbumArt)

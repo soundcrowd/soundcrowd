@@ -18,10 +18,11 @@ import androidx.appcompat.widget.Toolbar
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
+import androidx.core.view.ViewCompat
+import androidx.preference.PreferenceManager.getDefaultSharedPreferences
 import com.sothree.slidinguppanel.SlidingUpPanelLayout
 import com.tiefensuche.soundcrowd.R
 import com.tiefensuche.soundcrowd.extensions.MediaMetadataCompatExt
-import com.tiefensuche.soundcrowd.sources.MusicProvider
 import com.tiefensuche.soundcrowd.sources.MusicProvider.Companion.MEDIA_ID
 import com.tiefensuche.soundcrowd.sources.MusicProvider.PluginMetadata.CATEGORY
 import com.tiefensuche.soundcrowd.sources.MusicProvider.PluginMetadata.ICON
@@ -29,7 +30,7 @@ import com.tiefensuche.soundcrowd.sources.MusicProvider.PluginMetadata.MEDIA_TYP
 import com.tiefensuche.soundcrowd.sources.MusicProvider.PluginMetadata.NAME
 import com.tiefensuche.soundcrowd.ui.preferences.EqualizerFragment
 import com.tiefensuche.soundcrowd.ui.preferences.PreferenceFragment
-import org.json.JSONArray
+import com.tiefensuche.soundcrowd.utils.Utils
 
 /**
  * Abstract activity with toolbar, navigation drawer and cast support. Needs to be extended by
@@ -44,13 +45,12 @@ import org.json.JSONArray
  */
 abstract class ActionBarCastActivity : AppCompatActivity() {
 
-    internal lateinit var mToolbar: Toolbar
+    internal var mToolbar: Toolbar? = null
     internal lateinit var mNavigationView: NavigationView
     private lateinit var mDrawerLayout: DrawerLayout
     internal lateinit var slidingUpPanelLayout: SlidingUpPanelLayout
     private lateinit var mDrawerToggle: ActionBarDrawerToggle
 
-    private val prefs = HashMap<String, JSONArray>()
     private val paths = ArrayList<String>()
 
     private val mBackStackChangedListener = FragmentManager.OnBackStackChangedListener { this.updateDrawerToggle() }
@@ -79,6 +79,7 @@ abstract class ActionBarCastActivity : AppCompatActivity() {
 
     public override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        Utils.applyTheme(getDefaultSharedPreferences(this).getString(getString(R.string.preference_theme_key), "System"))
         setContentView(R.layout.activity_player)
         slidingUpPanelLayout = findViewById(R.id.sliding_layout)
         initializeToolbar()
@@ -167,17 +168,17 @@ abstract class ActionBarCastActivity : AppCompatActivity() {
 
     override fun setTitle(title: CharSequence?) {
         super.setTitle(title)
-        mToolbar.title = title
+        mToolbar?.title = title
     }
 
     override fun setTitle(titleId: Int) {
         super.setTitle(titleId)
-        mToolbar.setTitle(titleId)
+        mToolbar?.setTitle(titleId)
     }
 
     private fun initializeToolbar() {
         mToolbar = findViewById(R.id.toolbar)
-        mToolbar.inflateMenu(R.menu.main)
+        mToolbar?.inflateMenu(R.menu.main)
 
         mDrawerLayout = findViewById(R.id.drawer_layout)
         mNavigationView = findViewById(R.id.nav_view)
@@ -202,18 +203,14 @@ abstract class ActionBarCastActivity : AppCompatActivity() {
                 return true
             }
 
-            mToolbar.collapseActionView()
+            mToolbar?.collapseActionView()
             supportFragmentManager.popBackStack(null, FragmentManager.POP_BACK_STACK_INCLUSIVE)
 
             when (menuItem.itemId) {
                 R.id.navigation_allmusic -> setFragment(MediaBrowserFragment())
                 R.id.navigation_cue_points -> setFragment(CueListFragment())
                 R.id.navigation_equalizer -> setFragment(EqualizerFragment())
-                R.id.navigation_preferences -> {
-                    val fragment = PreferenceFragment()
-                    fragment.prefs = prefs
-                    setFragment(fragment)
-                }
+                R.id.navigation_preferences -> setFragment(PreferenceFragment())
                 else -> { // handle as addon category
                     val fragment = MediaBrowserFragment()
                     val args = Bundle()
@@ -260,9 +257,6 @@ abstract class ActionBarCastActivity : AppCompatActivity() {
                 paths.add(category.getString(NAME))
                 item.isCheckable = true
                 item.icon = BitmapDrawable(resources, plugin.getParcelable(ICON) as Bitmap)
-            }
-            plugin.getString(MusicProvider.PluginMetadata.PREFERENCES)?.let { json ->
-                prefs.put(plugin.getString(NAME), JSONArray(json))
             }
         }
     }

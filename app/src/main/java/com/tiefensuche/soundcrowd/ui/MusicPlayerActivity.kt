@@ -4,10 +4,8 @@
 package com.tiefensuche.soundcrowd.ui
 
 import android.Manifest
-import android.content.SharedPreferences
 import android.content.pm.PackageManager
 import android.os.Bundle
-import android.preference.PreferenceManager
 import com.google.android.material.appbar.CollapsingToolbarLayout
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
@@ -44,9 +42,8 @@ internal class MusicPlayerActivity : BaseActivity(), MediaBrowserFragment.MediaF
     private var searchView: SearchView? = null
     private var searchItem: MenuItem? = null
     internal lateinit var controls: RelativeLayout
-    internal lateinit var collapsingToolbarLayout: CollapsingToolbarLayout
+    internal var collapsingToolbarLayout: CollapsingToolbarLayout? = null
     private var toolbarHeader: View? = null
-    private lateinit var preferences: SharedPreferences
 
     private val mediaId: String?
         get() {
@@ -58,8 +55,6 @@ internal class MusicPlayerActivity : BaseActivity(), MediaBrowserFragment.MediaF
         super.onCreate(savedInstanceState)
 
         initializeFromParams(savedInstanceState)
-
-        preferences = PreferenceManager.getDefaultSharedPreferences(this)
 
         controls = findViewById(R.id.controls)
         collapsingToolbarLayout = findViewById(R.id.collapsing_toolbar)
@@ -96,7 +91,7 @@ internal class MusicPlayerActivity : BaseActivity(), MediaBrowserFragment.MediaF
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
         super.onCreateOptionsMenu(menu)
 
-        searchItem = mToolbar.menu.findItem(R.id.action_search)
+        searchItem = mToolbar?.menu?.findItem(R.id.action_search)
 
         // Inflate the menu; this adds items to the action bar if it is present.
         MenuItemCompat.setOnActionExpandListener(searchItem, object : MenuItemCompat.OnActionExpandListener {
@@ -163,7 +158,7 @@ internal class MusicPlayerActivity : BaseActivity(), MediaBrowserFragment.MediaF
     }
 
     override fun setToolbarTitle(title: CharSequence?) {
-        collapsingToolbarLayout.title = title
+        collapsingToolbarLayout?.title = title
         setTitle(title)
     }
 
@@ -176,7 +171,7 @@ internal class MusicPlayerActivity : BaseActivity(), MediaBrowserFragment.MediaF
         toolbarHeader?.let {
             if (it.visibility == View.VISIBLE && !enable || it.visibility == View.GONE && enable) {
                 it.visibility = if (enable) View.VISIBLE else View.GONE
-                collapsingToolbarLayout.isTitleEnabled = enable
+                collapsingToolbarLayout?.isTitleEnabled = enable
             }
         }
     }

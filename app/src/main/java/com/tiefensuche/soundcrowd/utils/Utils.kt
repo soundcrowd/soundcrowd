@@ -10,6 +10,7 @@ import android.graphics.Bitmap
 import android.os.Bundle
 import android.support.v4.media.MediaDescriptionCompat
 import android.support.v4.media.MediaMetadataCompat
+import androidx.appcompat.app.AppCompatDelegate
 import com.tiefensuche.soundcrowd.extensions.MediaMetadataCompatExt
 import java.security.MessageDigest
 import java.security.NoSuchAlgorithmException
@@ -92,6 +93,15 @@ internal object Utils {
         }
 
         return themeColor
+    }
+
+    internal fun applyTheme(theme: String) {
+        when (theme) {
+            "System" -> AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM)
+            "Light" -> AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO)
+            "Dark" -> AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES)
+            "Adaptive" -> AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO)
+        }
     }
 
     internal fun isAppInstalled(context: Context, uri: String): Boolean {

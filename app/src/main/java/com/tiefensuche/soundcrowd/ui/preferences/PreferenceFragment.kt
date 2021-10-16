@@ -13,6 +13,29 @@ import com.tiefensuche.soundcrowd.utils.Utils
 
 class PreferenceFragment : PreferenceFragmentCompat() {
 
+    private fun addMainPreferences() {
+        val category = PreferenceCategory(activity)
+        category.key = getString(R.string.app_name)
+        category.title = getString(R.string.app_name)
+        category.isIconSpaceReserved = false
+        preferenceScreen.addPreference(category)
+
+        val theme = ListPreference(activity)
+        theme.key = getString(R.string.preference_theme_key)
+        theme.title = getString(R.string.preference_theme_title)
+        theme.entries = resources.getStringArray(R.array.preference_theme_modes)
+        theme.entryValues = resources.getStringArray(R.array.preference_theme_modes)
+        theme.setValueIndex(0)
+        theme.summary = getString(R.string.preference_theme_summary)
+        theme.onPreferenceChangeListener =
+            Preference.OnPreferenceChangeListener { _, newValue ->
+                Utils.applyTheme(newValue as String)
+                true
+            }
+        theme.isIconSpaceReserved = false
+        category.addPreference(theme)
+    }
+
     private fun addPluginPreferences() {
         for ((name, plugin) in PluginManager.plugins) {
             val category = PreferenceCategory(activity)
@@ -39,6 +62,7 @@ class PreferenceFragment : PreferenceFragmentCompat() {
             it.showSearchButton(false)
         }
         preferenceScreen = preferenceManager.createPreferenceScreen(activity)
+        addMainPreferences()
         addPluginPreferences()
     }
 

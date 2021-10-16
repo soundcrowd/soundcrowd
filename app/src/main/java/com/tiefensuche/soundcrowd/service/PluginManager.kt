@@ -7,7 +7,6 @@ package com.tiefensuche.soundcrowd.service
 import android.content.Context
 import android.content.pm.PackageManager
 import android.net.Uri
-import android.os.AsyncTask
 import android.util.Log
 import com.tiefensuche.soundcrowd.plugins.IPlugin
 import dalvik.system.PathClassLoader

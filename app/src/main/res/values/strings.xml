@@ -55,4 +55,16 @@
     <string name="letter_tile_letter_font_family" translatable="false">roboto</string>
     <string name="loading">Loading...</string>
     <string name="plugins">Plugins</string>
+
+    <!-- Preferences -->
+    <string name="preference_password_title">Password</string>
+    <string name="preference_theme_key">theme</string>
+    <string name="preference_theme_title">Theme</string>
+    <string name="preference_theme_summary">Change app theme</string>
+    <string-array name="preference_theme_modes">
+        <item>System</item>
+        <item>Light</item>
+        <item>Dark</item>
+        <item>Adaptive</item>
+    </string-array>
 </resources>
