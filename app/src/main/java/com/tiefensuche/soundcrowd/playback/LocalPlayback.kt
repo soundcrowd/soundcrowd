@@ -8,6 +8,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.media.AudioManager
+import android.media.MediaDataSource
 import android.media.MediaPlayer
 import android.media.MediaPlayer.*
 import android.net.Uri
@@ -18,12 +19,13 @@ import android.support.v4.media.session.MediaSessionCompat.QueueItem
 import android.support.v4.media.session.PlaybackStateCompat
 import android.text.TextUtils
 import android.util.Log
+import com.tiefensuche.soundcrowd.extensions.MediaMetadataCompatExt
 import com.tiefensuche.soundcrowd.extensions.UrlResolver
 import com.tiefensuche.soundcrowd.plugins.Callback
-import com.tiefensuche.soundcrowd.plugins.PluginLoader
 import com.tiefensuche.soundcrowd.service.MusicService
+import com.tiefensuche.soundcrowd.service.PluginManager
 import com.tiefensuche.soundcrowd.sources.MusicProvider
-import org.json.JSONObject
+
 
 /**
  * A class that implements local media playback using [android.media.MediaPlayer]
@@ -65,8 +67,8 @@ internal class LocalPlayback(private val mContext: Context, private val mMusicPr
     private var mAudioFocus = AUDIO_NO_FOCUS_NO_DUCK
 
     private var urlResolver: UrlResolver = object : UrlResolver {
-        override fun getMediaUrl(metadata: JSONObject, callback: Callback<JSONObject>) {
-            callback.onResult(metadata)
+        override fun getMediaUrl(metadata: MediaMetadataCompat, callback: Callback<Pair<MediaMetadataCompat, MediaDataSource?>>) {
+            callback.onResult(Pair(metadata, null))
         }
     }
 
@@ -132,18 +134,26 @@ internal class LocalPlayback(private val mContext: Context, private val mMusicPr
             state = PlaybackStateCompat.STATE_STOPPED
             relaxResources(false) // release everything except MediaPlayer
 
-            mMusicProvider.resolveMusic(mediaId, object : Callback<JSONObject> {
-                override fun onResult(result: JSONObject) {
-                    urlResolver.getMediaUrl(result, object : Callback<JSONObject> {
-                        override fun onResult(result: JSONObject) {
-
+            mMusicProvider.resolveMusic(mediaId, object : Callback<Pair<MediaMetadataCompat, MediaDataSource?>> {
+                override fun onResult(result: Pair<MediaMetadataCompat, MediaDataSource?>) {
+                    val clb = object : Callback<Pair<MediaMetadataCompat, MediaDataSource?>> {
+                        override fun onResult(result: Pair<MediaMetadataCompat, MediaDataSource?>) {
                             try {
                                 createMediaPlayerIfNeeded()
 
                                 mMediaPlayer?.let {
                                     state = PlaybackStateCompat.STATE_BUFFERING
 
-                                    it.setDataSource(mContext, Uri.parse(result.getString(MediaMetadataCompat.METADATA_KEY_MEDIA_URI)))
+                                    if (result.second == null) {
+                                        val url = if (result.first.containsKey(MediaMetadataCompatExt.METADATA_KEY_DOWNLOAD_URL)) {
+                                            result.first.getString(MediaMetadataCompatExt.METADATA_KEY_DOWNLOAD_URL)
+                                        } else {
+                                            result.first.getString(MediaMetadataCompat.METADATA_KEY_MEDIA_URI)
+                                        }
+                                        it.setDataSource(mContext, Uri.parse(url))
+                                    }
+                                    else
+                                        it.setDataSource(result.second)
 
                                     // Starts preparing the media player in the background. When
                                     // it's done, it will call our OnPreparedListener (that is,
@@ -164,7 +174,11 @@ internal class LocalPlayback(private val mContext: Context, private val mMusicPr
                                 mCallback?.onError(e.message ?: "")
                             }
                         }
-                    })
+                    }
+                    if (result.second == null)
+                        urlResolver.getMediaUrl(result.first, clb)
+                    else
+                        clb.onResult(result)
                 }
             })
         }
