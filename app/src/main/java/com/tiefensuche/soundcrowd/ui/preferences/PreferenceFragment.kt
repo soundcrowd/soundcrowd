@@ -5,16 +5,32 @@
 package com.tiefensuche.soundcrowd.ui.preferences
 
 import android.os.Bundle
-import androidx.preference.EditTextPreference
-import androidx.preference.PreferenceCategory
-import androidx.preference.PreferenceFragmentCompat
+import androidx.preference.*
 import com.tiefensuche.soundcrowd.R
+import com.tiefensuche.soundcrowd.service.PluginManager
 import com.tiefensuche.soundcrowd.ui.MediaBrowserFragment
-import org.json.JSONArray
+import com.tiefensuche.soundcrowd.utils.Utils
 
 class PreferenceFragment : PreferenceFragmentCompat() {
 
-    var prefs = HashMap<String, JSONArray>()
+    private fun addPluginPreferences() {
+        for ((name, plugin) in PluginManager.plugins) {
+            val category = PreferenceCategory(activity)
+            category.key = name
+            category.title = name
+            category.isIconSpaceReserved = false
+            preferenceScreen.addPreference(category)
+            for (preference in plugin.preferences()) {
+                if (preference is EditTextPreference) {
+                    preference.dialogLayoutResource =
+                        if (preference.title == getString(R.string.preference_password_title))
+                            R.layout.preference_dialog_edittext_password
+                        else R.layout.preference_dialog_edittext
+                }
+                category.addPreference(preference)
+            }
+        }
+    }
 
     override fun onCreatePreferences(savedInstanceState: Bundle?, p1: String?) {
         (activity as? MediaBrowserFragment.MediaFragmentListener)?.let {
@@ -22,26 +38,15 @@ class PreferenceFragment : PreferenceFragmentCompat() {
             it.enableCollapse(false)
             it.showSearchButton(false)
         }
-
         preferenceScreen = preferenceManager.createPreferenceScreen(activity)
+        addPluginPreferences()
+    }
 
-        for (plugin in prefs.keys) {
-            val category = PreferenceCategory(activity)
-            category.key = plugin
-            category.title = plugin
-
-            preferenceScreen.addPreference(category)
-
-            for (i in 0 until prefs.getValue(plugin).length()) {
-                val editText = EditTextPreference(activity)
-                val json = prefs.getValue(plugin).getJSONObject(i)
-                editText.key = json.getString("key")
-                editText.title = json.getString("name")
-                editText.summary = json.getString("description")
-                editText.dialogTitle = json.getString("name")
-                editText.dialogMessage = json.getString("description")
-                editText.dialogLayoutResource = if (editText.key == "password") R.layout.preference_dialog_edittext_password else R.layout.preference_dialog_edittext
-                category.addPreference(editText)
+    override fun onDestroyView() {
+        super.onDestroyView()
+        for (plugin in PluginManager.plugins.values) {
+            for (preference in plugin.preferences()) {
+                preference.parent?.removePreference(preference)
             }
         }
     }
