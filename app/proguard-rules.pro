@@ -16,9 +16,12 @@
 #   public *;
 #}
 -keep class android.support.v7.widget.SearchView { *; }
--keep class com.tiefensuche.soundcrowd.plugins.IPlugin { *; }
--keep class com.tiefensuche.soundcrowd.plugins.Callback { *; }
--keep class com.tiefensuche.soundcrowd.extensions.UrlResolver { *; }
+-keep class com.tiefensuche.soundcrowd.plugins.** { *; }
+-keep class com.tiefensuche.soundcrowd.extensions.** { *; }
+-keep class android.support.v4.media.** { *; }
+-keep class androidx.preference.** { *; }
+-keep class androidx.collection.** { *; }
+-keep class kotlin.** { *; }
 -ignorewarnings
 -optimizations !class/unboxing/enum
 -assumenosideeffects class android.util.Log {
