@@ -19,6 +19,18 @@ internal class PluginManager(private val context: Context) {
         private const val PLUGIN_PACKAGE_PREFIX = "com.tiefensuche.soundcrowd.plugins"
         val plugins = HashMap<String, IPlugin>()
 
+        fun handleCallback(url: Uri): Boolean {
+            for (plugin in plugins.values) {
+                for (clb in plugin.callbacks()) {
+                    if (clb.key == url.host) {
+                        clb.value(url.query)
+                        return true
+                    }
+                }
+            }
+            return false
+        }
+
         fun loadPlugin(context: Context, packageName: String): IPlugin? {
             return loadPlugin(context, packageName, "Plugin")
         }

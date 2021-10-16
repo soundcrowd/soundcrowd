@@ -18,7 +18,6 @@ import android.support.v4.media.session.MediaSessionCompat
 import android.support.v4.media.session.PlaybackStateCompat
 import android.util.Log
 import com.tiefensuche.soundcrowd.R
-import com.tiefensuche.soundcrowd.database.Database
 import com.tiefensuche.soundcrowd.playback.LocalPlayback
 import com.tiefensuche.soundcrowd.playback.PlaybackManager
 import com.tiefensuche.soundcrowd.playback.QueueManager
@@ -163,10 +162,12 @@ internal class MusicService : MediaBrowserServiceCompat(), PlaybackManager.Playb
             } else if (CMD_RESOLVE == command) {
                 try {
                     val uri = startIntent.getParcelableExtra<Uri>(ARG_URL)
-                    val mediaId = mMusicProvider.resolve(uri)
-                    if (mediaId != null) {
-                        mPlaybackManager.setCurrentMediaId(mediaId)
-                        mPlaybackManager.handlePlayRequest()
+                    if (!PluginManager.handleCallback(uri)) {
+                        val mediaId = mMusicProvider.resolve(uri)
+                        if (mediaId != null) {
+                            mPlaybackManager.setCurrentMediaId(mediaId)
+                            mPlaybackManager.handlePlayRequest()
+                        }
                     }
                 } catch (e: Exception) {
                     Log.e(TAG, "error while resolving url", e)
