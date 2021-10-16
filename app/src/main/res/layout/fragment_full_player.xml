@@ -194,7 +194,7 @@
 
             <RelativeLayout
                 android:layout_width="match_parent"
-                android:layout_height="48dp">
+                android:layout_height="64dp">
 
                 <TextView
                     android:id="@+id/startText"
@@ -204,7 +204,7 @@
                     android:layout_alignParentLeft="true"
                     android:layout_marginStart="@dimen/text_view_margin"
                     android:layout_marginLeft="@dimen/text_view_margin"
-                    android:gravity="center_vertical"
+                    android:gravity="center"
                     android:maxLines="1"
                     android:textColor="@android:color/white" />
 
@@ -219,7 +219,9 @@
                     android:layout_toStartOf="@+id/endText"
                     android:layout_toLeftOf="@+id/endText"
                     android:layout_toEndOf="@+id/startText"
-                    android:layout_toRightOf="@+id/startText" />
+                    android:layout_toRightOf="@+id/startText"
+                    android:paddingTop="64dp"
+                    android:paddingBottom="64dp" />
 
                 <TextView
                     android:id="@+id/endText"
@@ -230,7 +232,7 @@
                     android:layout_alignParentRight="true"
                     android:layout_marginEnd="@dimen/end_text_margin"
                     android:layout_marginRight="@dimen/end_text_margin"
-                    android:gravity="center_vertical"
+                    android:gravity="center"
                     android:maxLines="1"
                     android:textColor="@android:color/white" />
 
