@@ -82,7 +82,7 @@ internal class LocalPlayback(private val mContext: Context, private val mMusicPr
     init {
         // Create the Wifi lock (this does not acquire the lock, this just creates it)
         this.state = PlaybackStateCompat.STATE_NONE
-        PluginLoader.loadPlugin<UrlResolver>(mContext,
+        PluginManager.loadPlugin<UrlResolver>(mContext,
                 "com.tiefensuche.soundcrowd.plugins.cache",
                 "Extension")?.let { this.urlResolver = it }
     }
@@ -122,7 +122,9 @@ internal class LocalPlayback(private val mContext: Context, private val mMusicPr
         if (mediaHasChanged) {
             currentMediaId = mediaId
         }
-        mCurrentPosition = position
+        if (position >= 0) {
+            mCurrentPosition = position
+        }
 
         if (state == PlaybackStateCompat.STATE_PAUSED && !mediaHasChanged && mMediaPlayer != null) {
             configMediaPlayerState()

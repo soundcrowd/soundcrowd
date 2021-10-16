@@ -214,7 +214,7 @@ internal class PlaybackManager(private val mServiceCallback: PlaybackServiceCall
             if (mQueueManager.currentMusic == null && !mQueueManager.setLastItem()) {
                 return
             }
-            handlePlayRequest()
+            handlePlayRequestAtPosition(-1)
         }
 
         override fun onSkipToQueueItem(queueId: Long) {
