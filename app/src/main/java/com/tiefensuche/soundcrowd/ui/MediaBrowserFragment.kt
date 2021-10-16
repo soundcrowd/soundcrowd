@@ -68,10 +68,11 @@ internal class MediaBrowserFragment : Fragment() {
                 mBrowserAdapter.add(item)
             }
             // For stream update dataset directly, otherwise sort and create index
-            if (isStream) mBrowserAdapter.notifyDataSetChanged() else mBrowserAdapter.notifyDataChanged()
+            if (!isStream)
+                mBrowserAdapter.sort()
 
+            mBrowserAdapter.notifyDataChanged()
             showNoMedia(mBrowserAdapter.isEmpty)
-
             activity?.let {
                 val view = it.findViewById<View>(R.id.toolbar)
                 ShowcaseViewManager.introduce(ShowcaseViewManager.ShowcaseFunction.SEARCH_VIEW, Point(view.width - view.height / 2, view.height / 2), it)
@@ -175,7 +176,8 @@ internal class MediaBrowserFragment : Fragment() {
     }
 
     internal fun setFilter(filter: CharSequence?) {
-        mBrowserAdapter.filter.filter(filter)
+        if (!isStream)
+            mBrowserAdapter.filter.filter(filter)
     }
 
     override fun onAttach(activity: Activity) {

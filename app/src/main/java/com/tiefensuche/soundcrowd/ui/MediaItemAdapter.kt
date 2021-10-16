@@ -103,21 +103,17 @@ internal class MediaItemAdapter(private val requests: GlideRequests, private val
         return mDataset.size
     }
 
-    internal fun notifyDataChanged() {
+    fun notifyDataChanged() {
         mObjects = ArrayList(mDataset)
-        notifyItemsChanged()
-    }
-
-    private fun notifyItemsChanged() {
-        sort()
-        generateSections(mDataset)
         notifyDataSetChanged()
     }
 
-    private fun sort() {
-        mDataset.sortWith(Comparator { o1, o2 ->
-            o1.description.title.toString().compareTo(o2.description.title.toString())
-        })
+    fun sort() {
+        mDataset.sortWith { o1, o2 ->
+            o1.description.title.toString().uppercase(Locale.getDefault()).compareTo(o2.description.title.toString()
+                .uppercase(Locale.getDefault()))
+        }
+        generateSections(mDataset)
     }
 
     @Synchronized
@@ -127,7 +123,7 @@ internal class MediaItemAdapter(private val requests: GlideRequests, private val
 
         var currentIndex = '#'
         for ((currentCount, item) in objects.withIndex()) {
-            val index = item.description.title?.first()?.toUpperCase() ?: '#'
+            val index = item.description.title?.first()?.uppercaseChar() ?: '#'
             if (currentIndex != index) {
                 currentIndex = index
                 sectionList.add(index)
@@ -228,7 +224,7 @@ internal class MediaItemAdapter(private val requests: GlideRequests, private val
 
         override fun publishResults(constraint: CharSequence, results: FilterResults) {
             mDataset = (results.values as List<MediaBrowserCompat.MediaItem>).toMutableList()
-            notifyItemsChanged()
+            notifyDataSetChanged()
         }
     }
 
