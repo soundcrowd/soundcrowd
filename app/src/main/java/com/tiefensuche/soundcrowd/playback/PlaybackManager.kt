@@ -14,8 +14,8 @@ import android.support.v4.media.RatingCompat
 import android.support.v4.media.session.MediaSessionCompat
 import android.support.v4.media.session.PlaybackStateCompat
 import android.util.Log
-import com.tiefensuche.soundcrowd.database.Database.Companion.MEDIA_ID
-import com.tiefensuche.soundcrowd.database.Database.Companion.POSITION
+import com.tiefensuche.soundcrowd.service.Database.Companion.MEDIA_ID
+import com.tiefensuche.soundcrowd.service.Database.Companion.POSITION
 import com.tiefensuche.soundcrowd.extensions.MediaMetadataCompatExt
 import com.tiefensuche.soundcrowd.plugins.Callback
 import com.tiefensuche.soundcrowd.service.MusicService

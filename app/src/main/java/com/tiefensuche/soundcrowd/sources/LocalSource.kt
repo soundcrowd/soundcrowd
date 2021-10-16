@@ -110,7 +110,7 @@ internal class LocalSource(private val context: MusicService) {
     }
 
     companion object {
-        private const val name = "Local"
+        const val name = "Local"
         private val TAG = LocalSource::class.simpleName
     }
 }

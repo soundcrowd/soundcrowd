@@ -15,8 +15,8 @@ import android.view.ViewGroup
 import android.widget.ArrayAdapter
 import android.widget.ListView
 import com.tiefensuche.soundcrowd.R
-import com.tiefensuche.soundcrowd.database.Database.Companion.MEDIA_ID
-import com.tiefensuche.soundcrowd.database.Database.Companion.POSITION
+import com.tiefensuche.soundcrowd.service.Database.Companion.MEDIA_ID
+import com.tiefensuche.soundcrowd.service.Database.Companion.POSITION
 import com.tiefensuche.soundcrowd.playback.PlaybackManager.Companion.CUSTOM_ACTION_PLAY_SEEK
 import com.tiefensuche.soundcrowd.service.MusicService
 import com.tiefensuche.soundcrowd.sources.MusicProvider.Media.CUE_POINTS

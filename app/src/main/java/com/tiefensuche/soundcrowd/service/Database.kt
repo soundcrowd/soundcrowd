@@ -2,7 +2,7 @@
  * SPDX-License-Identifier: GPL-3.0-only
  */
 
-package com.tiefensuche.soundcrowd.database
+package com.tiefensuche.soundcrowd.service
 
 import android.content.ContentValues
 import android.content.Context
@@ -12,6 +12,7 @@ import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteException
 import android.support.v4.media.MediaMetadataCompat
 import android.util.Log
+import com.tiefensuche.soundcrowd.database.MetadataDatabase
 import com.tiefensuche.soundcrowd.extensions.MediaMetadataCompatExt
 import com.tiefensuche.soundcrowd.sources.LocalSource
 import com.tiefensuche.soundcrowd.ui.CueListFragment
@@ -52,7 +53,7 @@ internal class Database(context: Context) : MetadataDatabase(context) {
                 val cursor = readableDatabase.query(true, DATABASE_MEDIA_ITEM_CUE_POINTS_TABLE,
                         null, null, null, null, null, null, null)
                 while (cursor.moveToNext()) {
-                    items.add(buildItem(cursor, LocalSource::class.java.simpleName))
+                    items.add(buildItem(cursor))
                 }
                 cursor.close()
             } catch (e: SQLException) {
@@ -98,20 +99,6 @@ internal class Database(context: Context) : MetadataDatabase(context) {
                 }
             }
         }
-    }
-
-    private fun buildItem(cursor: Cursor, source: String, builder: MediaMetadataCompat.Builder = MediaMetadataCompat.Builder()): MediaMetadataCompat {
-        return builder
-                .putString(MediaMetadataCompat.METADATA_KEY_MEDIA_ID, cursor.getString(cursor.getColumnIndex(ID)))
-                .putString(MediaMetadataCompat.METADATA_KEY_MEDIA_URI, cursor.getString(cursor.getColumnIndex(SOURCE)))
-                .putString(MediaMetadataCompat.METADATA_KEY_ARTIST, cursor.getString(cursor.getColumnIndex(ARTIST)))
-                .putLong(MediaMetadataCompat.METADATA_KEY_DURATION, cursor.getLong(cursor.getColumnIndex(DURATION)))
-                .putString(MediaMetadataCompat.METADATA_KEY_ALBUM_ART_URI, cursor.getString(cursor.getColumnIndex(ALBUM_ART_URL)))
-                .putString(MediaMetadataCompat.METADATA_KEY_TITLE, cursor.getString(cursor.getColumnIndex(TITLE)))
-                .putString(MediaMetadataCompatExt.METADATA_KEY_WAVEFORM_URL, cursor.getString(cursor.getColumnIndex(WAVEFORM_URL)))
-                .putString(MediaMetadataCompatExt.METADATA_KEY_SOURCE, source)
-                .putString(MediaMetadataCompatExt.METADATA_KEY_TYPE, MediaMetadataCompatExt.MediaType.MEDIA.name)
-                .build()
     }
 
     internal fun addCuePoint(metadata: MediaMetadataCompat, position: Int, description: String?) {
@@ -194,8 +181,9 @@ internal class Database(context: Context) : MetadataDatabase(context) {
         sqLiteDatabase.execSQL(DATABASE_MEDIA_ITEMS_METADATA_CREATE)
     }
 
-    override fun onUpgrade(sqLiteDatabase: SQLiteDatabase, i: Int, i1: Int) {
-        when (i) {
+    override fun onUpgrade(sqLiteDatabase: SQLiteDatabase, oldVersion: Int, newVersion: Int) {
+        super.onUpgrade(sqLiteDatabase, oldVersion, newVersion)
+        when (oldVersion) {
             1 -> {
                 sqLiteDatabase.execSQL("ALTER TABLE $DATABASE_MEDIA_ITEMS_METADATA_NAME ADD COLUMN vibrant_color int")
                 sqLiteDatabase.execSQL("ALTER TABLE $DATABASE_MEDIA_ITEMS_METADATA_NAME ADD COLUMN text_color int")

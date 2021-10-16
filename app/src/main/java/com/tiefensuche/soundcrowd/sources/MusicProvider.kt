@@ -5,15 +5,16 @@
 package com.tiefensuche.soundcrowd.sources
 
 import android.graphics.Bitmap
+import android.media.MediaDataSource
 import android.net.Uri
 import android.os.AsyncTask
 import android.os.Bundle
 import android.support.v4.media.MediaBrowserCompat
 import android.support.v4.media.MediaMetadataCompat
 import android.util.Log
-import com.tiefensuche.soundcrowd.database.Database
+import com.tiefensuche.soundcrowd.service.Database
 import com.tiefensuche.soundcrowd.extensions.MediaMetadataCompatExt
-import com.tiefensuche.soundcrowd.plugins.PluginManager
+import com.tiefensuche.soundcrowd.service.PluginManager
 import com.tiefensuche.soundcrowd.service.MusicService
 import com.tiefensuche.soundcrowd.sources.MusicProvider.Media.CUE_POINTS
 import com.tiefensuche.soundcrowd.sources.MusicProvider.Media.LAST_MEDIA
@@ -27,9 +28,7 @@ import com.tiefensuche.soundcrowd.utils.MediaIDHelper.extractMusicIDFromMediaID
 import com.tiefensuche.soundcrowd.utils.MediaIDHelper.extractSourceValueFromMediaID
 import com.tiefensuche.soundcrowd.utils.MediaIDHelper.getHierarchy
 import com.tiefensuche.soundcrowd.utils.Utils
-import org.json.JSONArray
 import org.json.JSONException
-import org.json.JSONObject
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.collections.ArrayList
@@ -160,21 +159,18 @@ internal class MusicProvider(context: MusicService) {
         return library.keys[musicId]?.metadata
     }
 
-    internal fun resolveMusic(mediaId: String, callback: com.tiefensuche.soundcrowd.plugins.Callback<JSONObject>) {
-        getMusic(extractMusicIDFromMediaID(mediaId))?.let {
-            val json = MediaMetadataCompatExt.toJSON(it)
-
-            for (item in listOf(LOCAL, CUE_POINTS, LAST_MEDIA, TEMP)) {
-                if (mediaId.startsWith(item)) {
-                    callback.onResult(json)
-                    return
-                }
+    internal fun resolveMusic(mediaId: String, callback: com.tiefensuche.soundcrowd.plugins.Callback<Pair<MediaMetadataCompat, MediaDataSource?>>) {
+        getMusic(extractMusicIDFromMediaID(mediaId))?.let { metadata ->
+            val source = metadata.getString(MediaMetadataCompatExt.METADATA_KEY_SOURCE)
+            if (source == LocalSource.name) {
+                callback.onResult(Pair(metadata, null))
+                return
             }
 
-            pluginManager.plugins[extractSourceValueFromMediaID(mediaId)]?.let {
+            PluginManager.plugins[source]?.let {
                 AsyncTask.execute {
                     try {
-                        it.getMediaUrl(json, callback)
+                        it.getMediaUrl(metadata, callback)
                     } catch (e: Exception) {
                         Log.w(TAG, "failed to resolve music with plugin ${it.name()}", e)
                     }
@@ -364,8 +360,7 @@ internal class MusicProvider(context: MusicService) {
     }
 
     internal fun loadLastMedia(musicId: String): Boolean {
-        MusicService.database.getMediaItem(musicId)?.let {
-            val track = MediaMetadataCompatExt.fromJson(it)
+        MusicService.database.getMediaItem(musicId)?.let { track ->
             if (!validate(track))
                 return false
             track.description.mediaId?.let {
@@ -406,13 +401,12 @@ internal class MusicProvider(context: MusicService) {
         if (!pluginManager.initialized)
             pluginManager.init()
         val plugins: ArrayList<Bundle> = ArrayList()
-        for (plugin in pluginManager.plugins.values) {
+        for (plugin in PluginManager.plugins.values) {
             library.getPath(Request(plugin.name()), true)
 
             val bundle = Bundle()
             bundle.putString(PluginMetadata.NAME, plugin.name())
             bundle.putParcelable(PluginMetadata.ICON, plugin.getIcon())
-            bundle.putString(PluginMetadata.PREFERENCES, plugin.preferences().toString())
 
             val categories = ArrayList<Bundle>()
             for (category in plugin.mediaCategories()) {
@@ -467,15 +461,20 @@ internal class MusicProvider(context: MusicService) {
                     callback?.onError("unknown source ${request.source}")
                     return
                 }
-                val plugin = pluginManager.plugins[request.source] ?:let {
+                val plugin = PluginManager.plugins[request.source] ?:let {
                     callback?.onError("no plugin for source ${request.source}")
                     return
                 }
                 val refresh = (request.options.getBoolean(OPTION_REFRESH))
-                val res = object : com.tiefensuche.soundcrowd.plugins.Callback<JSONArray> {
-                    override fun onResult(result: JSONArray) {
+                val res = object : com.tiefensuche.soundcrowd.plugins.Callback<List<MediaMetadataCompat>> {
+                    override fun onResult(result: List<MediaMetadataCompat>) {
                         try {
-                            addMediaFromJSON(plugin.name(), dir, request, result)
+                            if (request.options.getBoolean(OPTION_REFRESH)) {
+                                dir.items.clear()
+                            }
+                            for (item in addMusic(result.map { item -> MediaMetadataCompat.Builder(item).putString(MediaMetadataCompatExt.METADATA_KEY_SOURCE, plugin.name()).build()}.iterator())) {
+                                dir.add(item)
+                            }
                             callback?.onSuccess()
                         } catch (e: JSONException) {
                             callback?.onError("Error when parsing json", e)
@@ -495,24 +494,6 @@ internal class MusicProvider(context: MusicService) {
         }
     }
 
-    @Throws(JSONException::class)
-    private fun addMediaFromJSON(source: String, dir: BrowsableItem, request: Request, json: JSONArray) {
-        val result = ArrayList<MediaMetadataCompat>()
-        for (i in 0 until json.length()) {
-            val obj = json.getJSONObject(i)
-            obj.put(MediaMetadataCompatExt.METADATA_KEY_SOURCE, source)
-            val metadata = MediaMetadataCompatExt.fromJson(obj)
-            result.add(metadata)
-        }
-
-        if (request.options.getBoolean(OPTION_REFRESH))
-            dir.items.clear()
-
-        for (item in addMusic(result.iterator())) {
-            dir.add(item)
-        }
-    }
-
     internal fun resolve(uri: Uri): String? {
         val track = localSource.resolve(uri)
         if (!validate(track))
@@ -529,7 +510,7 @@ internal class MusicProvider(context: MusicService) {
 
     fun favorite(metadata: MediaMetadataCompat, callback: com.tiefensuche.soundcrowd.plugins.Callback<Boolean>) {
         try {
-            pluginManager.plugins[metadata.getString(MediaMetadataCompatExt.METADATA_KEY_SOURCE)]?.favorite(
+            PluginManager.plugins[metadata.getString(MediaMetadataCompatExt.METADATA_KEY_SOURCE)]?.favorite(
                 metadata.getString(extractMusicIDFromMediaID(MediaMetadataCompat.METADATA_KEY_MEDIA_ID)), callback)
                 ?: callback.onResult(false)
         } catch (e: Exception) {
