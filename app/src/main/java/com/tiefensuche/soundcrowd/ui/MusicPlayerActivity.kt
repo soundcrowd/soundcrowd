@@ -167,6 +167,11 @@ internal class MusicPlayerActivity : BaseActivity(), MediaBrowserFragment.MediaF
         setTitle(title)
     }
 
+    override fun setPadding(padding: Int) {
+        super.setPadding(padding)
+        findViewById<RelativeLayout>(R.id.controls_layout).setPadding(0, padding, 0, 0)
+    }
+
     override fun enableCollapse(enable: Boolean) {
         toolbarHeader?.let {
             if (it.visibility == View.VISIBLE && !enable || it.visibility == View.GONE && enable) {
