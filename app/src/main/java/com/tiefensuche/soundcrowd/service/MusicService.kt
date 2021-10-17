@@ -115,9 +115,7 @@ internal class MusicService : MediaBrowserServiceCompat(), PlaybackManager.Playb
                                 getString(R.string.error_no_metadata))
                     }
 
-                    override fun onCurrentQueueIndexUpdated(queueIndex: Int) {
-                        mPlaybackManager.handlePlayRequest()
-                    }
+                    override fun onCurrentQueueIndexUpdated(queueIndex: Int) {}
 
                     override fun onQueueUpdated(title: String,
                                                 newQueue: List<MediaSessionCompat.QueueItem>) {

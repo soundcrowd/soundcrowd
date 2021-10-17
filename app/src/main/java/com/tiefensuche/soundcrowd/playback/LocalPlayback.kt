@@ -131,9 +131,9 @@ internal class LocalPlayback(private val mContext: Context, private val mMusicPr
         if (state == PlaybackStateCompat.STATE_PAUSED && !mediaHasChanged && mMediaPlayer != null) {
             configMediaPlayerState()
         } else {
-            state = PlaybackStateCompat.STATE_STOPPED
+            state = PlaybackStateCompat.STATE_BUFFERING
+            mCallback?.onPlaybackStatusChanged(state)
             relaxResources(false) // release everything except MediaPlayer
-
             mMusicProvider.resolveMusic(mediaId, object : Callback<Pair<MediaMetadataCompat, MediaDataSource?>> {
                 override fun onResult(result: Pair<MediaMetadataCompat, MediaDataSource?>) {
                     val clb = object : Callback<Pair<MediaMetadataCompat, MediaDataSource?>> {
@@ -142,8 +142,6 @@ internal class LocalPlayback(private val mContext: Context, private val mMusicPr
                                 createMediaPlayerIfNeeded()
 
                                 mMediaPlayer?.let {
-                                    state = PlaybackStateCompat.STATE_BUFFERING
-
                                     if (result.second == null) {
                                         val url = if (result.first.containsKey(MediaMetadataCompatExt.METADATA_KEY_DOWNLOAD_URL)) {
                                             result.first.getString(MediaMetadataCompatExt.METADATA_KEY_DOWNLOAD_URL)
@@ -166,8 +164,6 @@ internal class LocalPlayback(private val mContext: Context, private val mMusicPr
                                     // Wifi lock, which prevents the Wifi radio from going to
                                     // sleep while the song is playing.
                                     mWifiLock.acquire()
-
-                                    mCallback?.onPlaybackStatusChanged(state)
                                 }
                             } catch (e: Exception) {
                                 Log.e(TAG, "Exception playing song", e)
