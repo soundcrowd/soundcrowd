@@ -45,6 +45,7 @@ internal class LocalSource(private val context: MusicService) {
                 .putLong(MediaMetadataCompat.METADATA_KEY_DURATION, duration)
                 .putString(MediaMetadataCompat.METADATA_KEY_ALBUM_ART_URI, uri.toString())
                 .putString(MediaMetadataCompat.METADATA_KEY_TITLE, title)
+                .putString(MediaMetadataCompatExt.METADATA_KEY_SOURCE, name)
                 .build()
     }
 
