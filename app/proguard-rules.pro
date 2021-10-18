@@ -15,15 +15,11 @@
 #-keepclassmembers class fqcn.of.javascript.interface.for.webview {
 #   public *;
 #}
--keep class android.support.v7.widget.SearchView { *; }
 -keep class com.tiefensuche.soundcrowd.plugins.** { *; }
--keep class com.tiefensuche.soundcrowd.extensions.** { *; }
+-keep class com.tiefensuche.soundcrowd.extensions.UrlResolver { *; }
 -keep class android.support.v4.media.** { *; }
 -keep class androidx.preference.** { *; }
--keep class androidx.collection.** { *; }
 -keep class kotlin.** { *; }
--ignorewarnings
--optimizations !class/unboxing/enum
 -assumenosideeffects class android.util.Log {
     public static boolean isLoggable(java.lang.String, int);
     public static int wtf(...);
