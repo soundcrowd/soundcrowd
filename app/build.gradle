@@ -10,11 +10,11 @@ plugins {
 android {
     defaultConfig {
         applicationId 'com.tiefensuche.soundcrowd'
-        versionName "3.3.0"
+        versionName "3.3.1"
         compileSdkVersion 28
         minSdkVersion 16
         targetSdkVersion 30
-        versionCode 67
+        versionCode 68
         proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
     }
 
