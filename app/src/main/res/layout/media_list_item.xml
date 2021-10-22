@@ -10,10 +10,10 @@
     <ImageView
         android:id="@+id/album_art"
         android:layout_width="match_parent"
-        android:layout_height="144dp"
+        android:layout_height="match_parent"
         android:scaleType="centerCrop"
         android:src="@drawable/ic_default_art"
-        android:layout_weight="0" />
+        android:layout_weight="1" />
 
     <!--<ImageView
         android:id="@+id/play_eq"
@@ -30,9 +30,9 @@
 
     <FrameLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="56dp"
         android:layout_gravity="bottom"
-        android:layout_weight="1">
+        android:layout_weight="0">
 
         <ImageView
             android:id="@+id/background"
@@ -67,8 +67,6 @@
                     android:maxLines="1"
                     android:autoSizeTextType="uniform"
                     android:autoSizeStepGranularity="1sp"
-                    android:autoSizeMinTextSize="12sp"
-                    android:autoSizeMaxTextSize="18dp"
                     android:textAlignment="center"
                     android:textColor="?android:attr/textColorSecondary" />
 
@@ -93,8 +91,6 @@
                 android:maxLines="2"
                 android:autoSizeTextType="uniform"
                 android:autoSizeStepGranularity="1sp"
-                android:autoSizeMinTextSize="12sp"
-                android:autoSizeMaxTextSize="18dp"
                 android:textAlignment="center"
                 android:textStyle="bold"
                 android:textColor="?android:attr/textColorPrimary" />

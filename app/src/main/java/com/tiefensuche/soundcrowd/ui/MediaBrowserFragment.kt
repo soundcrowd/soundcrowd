@@ -36,6 +36,7 @@ import com.tiefensuche.soundcrowd.sources.MusicProvider.Companion.RESULT
 import com.tiefensuche.soundcrowd.sources.MusicProvider.Media.LOCAL
 import com.tiefensuche.soundcrowd.sources.MusicProvider.PluginMetadata.MEDIA_TYPE
 import com.tiefensuche.soundcrowd.ui.intro.ShowcaseViewManager
+import kotlin.math.round
 
 /**
  * A Fragment that lists all the various browsable queues available
@@ -100,13 +101,6 @@ internal class MediaBrowserFragment : Fragment() {
         get() = arguments?.getString(MEDIA_TYPE) == MediaMetadataCompatExt.MediaType.STREAM.name
                 || arguments?.getParcelable<MediaDescriptionCompat>(ARG_MEDIA_DESCRIPTION)?.extras?.getString(MediaMetadataCompatExt.METADATA_KEY_TYPE) == MediaMetadataCompatExt.MediaType.STREAM.name
 
-    private fun calculateNoOfColumns(context: Context): Int {
-        val displayMetrics = context.resources.displayMetrics
-        val dpWidth = displayMetrics.widthPixels / displayMetrics.density
-        val scalingFactor = (resources.getDimensionPixelSize(R.dimen.media_item_height) / displayMetrics.density).toInt()
-        return (dpWidth / scalingFactor).toInt()
-    }
-
     @SuppressLint("ClickableViewAccessibility")
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         val rootView = inflater.inflate(R.layout.fragment_list, container, false)
@@ -124,7 +118,7 @@ internal class MediaBrowserFragment : Fragment() {
         mRecyclerView = rootView.findViewById(R.id.list_view)
         val mLayoutManager = GridLayoutManager(
             rootView.context,
-            calculateNoOfColumns(rootView.context)
+            round(resources.displayMetrics.widthPixels / (resources.getDimensionPixelSize(R.dimen.media_item_height)).toFloat()).toInt()
         )
         mRecyclerView.layoutManager = mLayoutManager
         mRecyclerView.adapter = mBrowserAdapter
