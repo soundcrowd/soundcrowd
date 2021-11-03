@@ -2,9 +2,7 @@
 
 An extensible music player app for android
 
-[![Build Status](https://travis-ci.org/soundcrowd/soundcrowd.svg?branch=master)](https://travis-ci.org/soundcrowd/soundcrowd)
-[![Codacy Badge](https://api.codacy.com/project/badge/Grade/e87ad13f34094b1db82dda015102f5e1)](https://www.codacy.com/app/tiefensuche/soundcrowd?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=soundcrowd/soundcrowd&amp;utm_campaign=Badge_Grade)
-[![Maintainability](https://api.codeclimate.com/v1/badges/901d7c6cf8f1d5b2c780/maintainability)](https://codeclimate.com/github/soundcrowd/soundcrowd/maintainability)
+[![android](https://github.com/soundcrowd/soundcrowd/actions/workflows/android.yml/badge.svg)](https://github.com/soundcrowd/soundcrowd/actions/workflows/android.yml)
 [![GitHub release](https://img.shields.io/github/release/soundcrowd/soundcrowd.svg)](https://github.com/soundcrowd/soundcrowd/releases)
 [![GitHub](https://img.shields.io/github/license/soundcrowd/soundcrowd.svg)](LICENSE)
 
