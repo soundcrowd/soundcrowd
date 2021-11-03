@@ -3,7 +3,7 @@
   -->
 <resources>
     <dimen name="statusbar_padding">24dp</dimen>
-    <!-- padding determined dynamically by window insets -->
-    <dimen name="statusbar_height">56dp</dimen>
+    <!-- 56 dp + 24 dp padding -->
+    <dimen name="statusbar_height">80dp</dimen>
 
 </resources>

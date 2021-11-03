@@ -91,8 +91,7 @@ constructor(private val mService: MusicService) : BroadcastReceiver() {
     init {
         updateSessionToken()
 
-        mNotificationColor = Utils.getThemeColor(mService, R.attr.colorPrimary,
-                Color.DKGRAY)
+        mNotificationColor = mService.resources.getColor(R.color.colorPrimary)
 
         mNotificationManager = mService.getSystemService(Context.NOTIFICATION_SERVICE) as? NotificationManager
                 ?: throw IllegalStateException("can not get notification service")

@@ -15,19 +15,6 @@
         android:src="@drawable/ic_default_art"
         android:layout_weight="1" />
 
-    <!--<ImageView
-        android:id="@+id/play_eq"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignParentStart="true"
-        android:layout_centerVertical="true"
-        android:layout_marginStart="@dimen/media_item_icon_margin_start"
-        android:layout_below="@id/album_art"
-        android:contentDescription="@string/play_item"
-        android:src="@drawable/ic_play_arrow_black_36dp"
-        android:tint="@color/media_item_icon_not_playing"
-        android:tintMode="src_in" />-->
-
     <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="56dp"

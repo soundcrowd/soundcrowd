@@ -88,8 +88,7 @@ abstract class BaseActivity : ActionBarCastActivity(), MediaBrowserProvider {
             val taskDesc = ActivityManager.TaskDescription(
                     title.toString(),
                     BitmapFactory.decodeResource(resources, R.mipmap.ic_launcher),
-                    Utils.getThemeColor(this, R.attr.colorPrimary,
-                            android.R.color.darker_gray))
+                    resources.getColor(R.color.colorPrimary))
             setTaskDescription(taskDesc)
         }
 

@@ -47,7 +47,7 @@
                     android:shadowColor="@android:color/black"
                     android:shadowRadius="8"
                     android:textAppearance="?android:attr/textAppearanceMedium"
-                    android:textColor="@android:color/white" />
+                    android:textColor="?android:attr/textColorPrimary" />
 
             </RelativeLayout>
 
