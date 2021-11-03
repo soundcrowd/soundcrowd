@@ -6,7 +6,6 @@ package com.tiefensuche.soundcrowd.ui
 import `in`.myinnos.alphabetsindexfastscrollrecycler.IndexFastScrollRecyclerView
 import android.annotation.SuppressLint
 import android.app.Activity
-import android.content.Context
 import android.graphics.Point
 import android.os.Bundle
 import androidx.fragment.app.Fragment
@@ -68,9 +67,11 @@ internal class MediaBrowserFragment : Fragment() {
             for (item in resultData.getParcelableArrayList<MediaBrowserCompat.MediaItem>(RESULT)) {
                 mBrowserAdapter.add(item)
             }
-            // For stream update dataset directly, otherwise sort and create index
-            if (!isStream)
-                mBrowserAdapter.sort()
+
+            // Create alphabetical sections for root category
+            if (mediaId == DEFAULT_MEDIA_ID) {
+                initializeRootCategory()
+            }
 
             mBrowserAdapter.notifyDataChanged()
             showNoMedia(mBrowserAdapter.isEmpty)
@@ -97,7 +98,7 @@ internal class MediaBrowserFragment : Fragment() {
                 ?: arguments?.getParcelable<MediaDescriptionCompat>(ARG_MEDIA_DESCRIPTION)?.mediaId
                 ?: DEFAULT_MEDIA_ID
 
-    internal val isStream: Boolean
+    private val isStream: Boolean
         get() = arguments?.getString(MEDIA_TYPE) == MediaMetadataCompatExt.MediaType.STREAM.name
                 || arguments?.getParcelable<MediaDescriptionCompat>(ARG_MEDIA_DESCRIPTION)?.extras?.getString(MediaMetadataCompatExt.METADATA_KEY_TYPE) == MediaMetadataCompatExt.MediaType.STREAM.name
 
@@ -115,58 +116,64 @@ internal class MediaBrowserFragment : Fragment() {
         mProgressBar = rootView.findViewById(R.id.progressBar)
 
         mSwipeRefreshLayout = rootView.findViewById(R.id.swipeContainer)
+        mSwipeRefreshLayout.isEnabled = false
+
         mRecyclerView = rootView.findViewById(R.id.list_view)
-        val mLayoutManager = GridLayoutManager(
+        mRecyclerView.adapter = mBrowserAdapter
+        mRecyclerView.setIndexBarVisibility(false)
+        mRecyclerView.layoutManager = GridLayoutManager(
             rootView.context,
             round(resources.displayMetrics.widthPixels / (resources.getDimensionPixelSize(R.dimen.media_item_height)).toFloat()).toInt()
         )
-        mRecyclerView.layoutManager = mLayoutManager
-        mRecyclerView.adapter = mBrowserAdapter
-
-        // initially hide index bar (not possible in layout)
-        mRecyclerView.setIndexBarVisibility(false)
-
-        // initialize as static media content, alphabetically sorted and indexed
-        if (!isStream) {
-            mSwipeRefreshLayout.isEnabled = false
-            mRecyclerView.setOnTouchListener { _, _ ->
-                if (!mBrowserAdapter.isEmpty) {
-                    mRecyclerView.setIndexBarVisibility(true)
-                }
-                false
-            }
-            mRecyclerView.addOnScrollListener(object : RecyclerView.OnScrollListener() {
-                override fun onScrollStateChanged(recyclerView: RecyclerView, newState: Int) {
-                    when (newState) {
-                        RecyclerView.SCROLL_STATE_IDLE -> mRecyclerView.setIndexBarVisibility(false)
-                        RecyclerView.SCROLL_STATE_DRAGGING, RecyclerView.SCROLL_STATE_SETTLING -> if (!mBrowserAdapter.isEmpty) {
-                            mRecyclerView.setIndexBarVisibility(true)
-                        }
-                    }
-                }
-            })
-        } else {
-            // initialize as stream or dynamic media content, ordered as it was added,
-            // items can be added when reaching the end
-            mRecyclerView.addOnScrollListener(object : EndlessRecyclerViewScrollListener(mLayoutManager) {
-                override fun onLoadMore(page: Int, totalItemsCount: Int, view: RecyclerView) {
-                    mProgressBar.visibility = View.VISIBLE
-                    requestMedia(mBrowserAdapter.count)
-                }
-            })
-            mSwipeRefreshLayout.setOnRefreshListener {
-                mBrowserAdapter.clear()
-                mBrowserAdapter.notifyDataSetChanged()
-                requestMedia(refresh = true)
-            }
-        }
 
         mMediaFragmentListener.showSearchButton(true)
 
         // update toolbar title, collapsing toolbar layout
         updateDescription()
 
+        if (isStream) {
+            initializeStream()
+        }
+
         return rootView
+    }
+
+    private fun initializeRootCategory() {
+        // initialize as static media content, alphabetically sorted and indexed
+        mRecyclerView.setOnTouchListener { _, _ ->
+            if (!mBrowserAdapter.isEmpty) {
+                mRecyclerView.setIndexBarVisibility(true)
+            }
+            false
+        }
+        mRecyclerView.addOnScrollListener(object : RecyclerView.OnScrollListener() {
+            override fun onScrollStateChanged(recyclerView: RecyclerView, newState: Int) {
+                when (newState) {
+                    RecyclerView.SCROLL_STATE_IDLE -> mRecyclerView.setIndexBarVisibility(false)
+                    RecyclerView.SCROLL_STATE_DRAGGING, RecyclerView.SCROLL_STATE_SETTLING -> if (!mBrowserAdapter.isEmpty) {
+                        mRecyclerView.setIndexBarVisibility(true)
+                    }
+                }
+            }
+        })
+        mBrowserAdapter.generateSections()
+    }
+
+    private fun initializeStream() {
+        // initialize as stream or dynamic media content, ordered as it was added,
+        // items can be added when reaching the end
+        mRecyclerView.addOnScrollListener(object : EndlessRecyclerViewScrollListener(mRecyclerView.layoutManager as GridLayoutManager) {
+            override fun onLoadMore(page: Int, totalItemsCount: Int, view: RecyclerView) {
+                mProgressBar.visibility = View.VISIBLE
+                requestMedia(mBrowserAdapter.count)
+            }
+        })
+        mSwipeRefreshLayout.isEnabled = true
+        mSwipeRefreshLayout.setOnRefreshListener {
+            mBrowserAdapter.clear()
+            mBrowserAdapter.notifyDataSetChanged()
+            requestMedia(refresh = true)
+        }
     }
 
     internal fun setFilter(filter: CharSequence?) {

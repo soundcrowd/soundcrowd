@@ -224,6 +224,7 @@ internal class MusicProvider(context: MusicService) {
             value.metadata = metadata
             root.items.add(metadata)
         }
+        root.items.sortBy { metadata -> metadata.getString(MediaMetadataCompat.METADATA_KEY_TITLE).uppercase() }
         library.root.edges[LOCAL] = root
     }
 

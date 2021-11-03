@@ -108,21 +108,12 @@ internal class MediaItemAdapter(private val requests: GlideRequests, private val
         notifyDataSetChanged()
     }
 
-    fun sort() {
-        mDataset.sortWith { o1, o2 ->
-            o1.description.title.toString().uppercase(Locale.getDefault()).compareTo(o2.description.title.toString()
-                .uppercase(Locale.getDefault()))
-        }
-        generateSections(mDataset)
-    }
-
-    @Synchronized
-    private fun generateSections(objects: List<MediaBrowserCompat.MediaItem>) {
+    fun generateSections() {
         val sectionList = ArrayList<Char>()
         val positionForSection = ArrayList<Int>()
 
         var currentIndex = '#'
-        for ((currentCount, item) in objects.withIndex()) {
+        for ((currentCount, item) in mDataset.withIndex()) {
             val index = item.description.title?.first()?.uppercaseChar() ?: '#'
             if (currentIndex != index) {
                 currentIndex = index
