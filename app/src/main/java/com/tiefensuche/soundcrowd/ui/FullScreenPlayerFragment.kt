@@ -413,9 +413,7 @@ internal class FullScreenPlayerFragment : Fragment() {
                     val color = valueAnimator.animatedValue
                     if (color is Int) {
                         mSeekbar.progressDrawable.setColorFilter(color, PorterDuff.Mode.SRC_IN)
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
-                            mSeekbar.thumb.setColorFilter(color, PorterDuff.Mode.SRC_IN)
-                        }
+                        mSeekbar.thumb.setColorFilter(color, PorterDuff.Mode.SRC_IN)
 
                         for (view in listOf(mPlayPause, mSkipNext, mSkipPrev)) {
                             view.setColorFilter(color)
