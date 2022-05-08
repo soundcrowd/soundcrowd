@@ -11,7 +11,6 @@ import android.graphics.Color
 import android.graphics.Point
 import android.graphics.PorterDuff
 import android.graphics.drawable.Drawable
-import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.SystemClock
@@ -33,11 +32,12 @@ import android.widget.*
 import androidx.preference.PreferenceManager.getDefaultSharedPreferences
 import com.sothree.slidinguppanel.SlidingUpPanelLayout
 import com.tiefensuche.soundcrowd.R
-import com.tiefensuche.soundcrowd.service.Database.Companion.POSITION
 import com.tiefensuche.soundcrowd.extensions.MediaMetadataCompatExt
 import com.tiefensuche.soundcrowd.images.ArtworkHelper
 import com.tiefensuche.soundcrowd.images.GlideApp
 import com.tiefensuche.soundcrowd.images.GlideRequests
+import com.tiefensuche.soundcrowd.service.Database.Companion.POSITION
+import com.tiefensuche.soundcrowd.service.Database.Companion.DESCRIPTION
 import com.tiefensuche.soundcrowd.service.MusicService
 import com.tiefensuche.soundcrowd.sources.MusicProvider
 import com.tiefensuche.soundcrowd.ui.BaseActivity.Companion.MIME_TEXT
@@ -530,6 +530,7 @@ internal class FullScreenPlayerFragment : Fragment() {
         mCurrentMetadata?.let {
             val bundle = Bundle()
             bundle.putInt(POSITION, currentPosition)
+            bundle.putString(DESCRIPTION, text)
             mMediaBrowserProvider.mediaBrowser?.sendCustomAction(MusicProvider.ACTION_ADD_CUE_POINT, bundle, null)
             mWaveformHandler.addCuePoint(it, currentPosition, mDuration, text ?: "")
         }
