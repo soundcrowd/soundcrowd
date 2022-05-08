@@ -210,7 +210,7 @@ internal class MusicService : MediaBrowserServiceCompat(), PlaybackManager.Playb
     }
 
     override fun onLoadChildren(parentMediaId: String, result: Result<List<MediaItem>>) {
-        onLoadChildren(parentMediaId, result, Bundle())
+        result.detach()
     }
 
     override fun onCustomAction(action: String, extras: Bundle, result: Result<Bundle>) {
