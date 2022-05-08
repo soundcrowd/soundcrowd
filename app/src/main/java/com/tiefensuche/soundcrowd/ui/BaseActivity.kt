@@ -16,6 +16,7 @@ import android.support.v4.media.session.MediaControllerCompat
 import android.support.v4.media.session.MediaSessionCompat
 import android.support.v4.media.session.PlaybackStateCompat
 import android.util.Log
+import androidx.lifecycle.Lifecycle
 import com.sothree.slidinguppanel.SlidingUpPanelLayout
 import com.tiefensuche.soundcrowd.R
 import com.tiefensuche.soundcrowd.service.MusicService
@@ -23,7 +24,6 @@ import com.tiefensuche.soundcrowd.service.MusicService.Companion.ARG_URL
 import com.tiefensuche.soundcrowd.sources.MusicProvider
 import com.tiefensuche.soundcrowd.sources.MusicProvider.Companion.RESULT
 import com.tiefensuche.soundcrowd.ui.intro.ShowcaseViewManager
-import com.tiefensuche.soundcrowd.utils.Utils
 
 /**
  * Base activity for activities that need to show a playback control fragment when media is playing.
@@ -69,6 +69,7 @@ abstract class BaseActivity : ActionBarCastActivity(), MediaBrowserProvider {
             try {
                 connectToSession(mediaBrowser.sessionToken)
                 onMediaControllerConnected()
+                handleIntent(intent)
             } catch (e: RemoteException) {
                 Log.e(TAG, "could not connect media controller", e)
                 hidePlaybackControls()
@@ -101,13 +102,11 @@ abstract class BaseActivity : ActionBarCastActivity(), MediaBrowserProvider {
         if (savedInstanceState == null) {
             startFullScreenActivityIfNeeded(intent)
         }
-        handleIntent(intent)
     }
 
     override fun onStart() {
         super.onStart()
         Log.d(TAG, "Activity onStart")
-
         mFullScreenPlayerFragment = supportFragmentManager.findFragmentById(R.id.fragment_fullscreen_player) as? FullScreenPlayerFragment
 
         if (!mediaBrowser.isConnected) {
@@ -120,6 +119,7 @@ abstract class BaseActivity : ActionBarCastActivity(), MediaBrowserProvider {
             if (mediaController.metadata != null) {
                 mMediaControllerCallback.onMetadataChanged(mediaController.metadata)
                 mMediaControllerCallback.onPlaybackStateChanged(mediaController.playbackState)
+                handleIntent(intent)
             }
         }
     }
@@ -138,20 +138,20 @@ abstract class BaseActivity : ActionBarCastActivity(), MediaBrowserProvider {
     }
 
     override fun onNewIntent(intent: Intent) {
-        Log.d(TAG, "onNewIntent, intent=$intent")
+        super.onNewIntent(intent)
         startFullScreenActivityIfNeeded(intent)
-        handleIntent(intent)
+        if (lifecycle.currentState.isAtLeast(Lifecycle.State.STARTED)) {
+            handleIntent(intent)
+        } else {
+            setIntent(intent)
+        }
     }
 
     private fun handleIntent(intent: Intent) {
-        val action = intent.action
-        val type = intent.type
-
-        if (Intent.ACTION_SEND == action && MIME_TEXT == type) {
+        if (intent.action != null && intent.action.endsWith("intent.action.SEND") && MIME_TEXT == intent.type) {
             // handle text via share action, that should be a description for a new cue point
-            Log.d(TAG, "add cue point from share action")
             mFullScreenPlayerFragment?.addCuePoint(intent.getStringExtra(Intent.EXTRA_TEXT))
-        } else if (Intent.ACTION_VIEW == action && intent.data != null) {
+        } else if (intent.action != null && intent.action.endsWith("intent.action.VIEW") && intent.data != null) {
             // handle as file path to a music track
             val service = Intent(this, MusicService::class.java)
             service.action = MusicService.ACTION_CMD
@@ -159,6 +159,7 @@ abstract class BaseActivity : ActionBarCastActivity(), MediaBrowserProvider {
             service.putExtra(ARG_URL, intent.data)
             startService(service)
         }
+        intent.action = null
     }
 
     private fun startFullScreenActivityIfNeeded(intent: Intent?) {
