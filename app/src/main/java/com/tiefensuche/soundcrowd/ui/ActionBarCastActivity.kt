@@ -150,16 +150,7 @@ abstract class ActionBarCastActivity : AppCompatActivity() {
             slidingUpPanelLayout.panelState = SlidingUpPanelLayout.PanelState.COLLAPSED
             return
         }
-        // Otherwise, it may return to the previous fragment stack
-        when {
-            supportFragmentManager.backStackEntryCount > 0 -> supportFragmentManager.popBackStack()
-            browseFragment?.mediaId != MediaBrowserFragment.DEFAULT_MEDIA_ID -> {
-                setFragment(MediaBrowserFragment())
-                mNavigationView.setCheckedItem(R.id.navigation_allmusic)
-            }
-            else -> // Lastly, it will rely on the system behavior for back
-                super.onBackPressed()
-        }
+        super.onBackPressed()
     }
 
     override fun setTitle(title: CharSequence?) {
