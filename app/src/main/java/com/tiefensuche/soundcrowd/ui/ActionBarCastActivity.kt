@@ -97,6 +97,15 @@ abstract class ActionBarCastActivity : AppCompatActivity() {
         }
     }
 
+    override fun onStop() {
+        super.onStop()
+        mNavigationView.checkedItem?.itemId?.let {
+            getDefaultSharedPreferences(this).edit()
+                .putInt(getString(R.string.preference_last_fragment), it)
+                .commit()
+        }
+    }
+
     override fun onPostCreate(savedInstanceState: Bundle?) {
         super.onPostCreate(savedInstanceState)
         mDrawerToggle.syncState()
@@ -192,21 +201,7 @@ abstract class ActionBarCastActivity : AppCompatActivity() {
 
             mToolbar?.collapseActionView()
             supportFragmentManager.popBackStack(null, FragmentManager.POP_BACK_STACK_INCLUSIVE)
-
-            when (menuItem.itemId) {
-                R.id.navigation_allmusic -> setFragment(MediaBrowserFragment())
-                R.id.navigation_cue_points -> setFragment(CueListFragment())
-                R.id.navigation_equalizer -> setFragment(EqualizerFragment())
-                R.id.navigation_preferences -> setFragment(PreferenceFragment())
-                else -> { // handle as addon category
-                    val fragment = MediaBrowserFragment()
-                    val args = Bundle()
-                    args.putString(MEDIA_ID, paths[menuItem.itemId])
-                    args.putString(MEDIA_TYPE, MediaMetadataCompatExt.MediaType.STREAM.name)
-                    fragment.arguments = args
-                    setFragment(fragment)
-                }
-            }
+            setFragmentId(menuItem.itemId)
 
             if (slidingUpPanelLayout.panelState == SlidingUpPanelLayout.PanelState.EXPANDED) {
                 slidingUpPanelLayout.panelState = SlidingUpPanelLayout.PanelState.COLLAPSED
@@ -214,6 +209,25 @@ abstract class ActionBarCastActivity : AppCompatActivity() {
             mDrawerLayout.closeDrawers()
             return true
         })
+    }
+
+    private fun setFragmentId(id: Int) {
+        when (id) {
+            R.id.navigation_allmusic -> setFragment(MediaBrowserFragment())
+            R.id.navigation_cue_points -> setFragment(CueListFragment())
+            R.id.navigation_equalizer -> setFragment(EqualizerFragment())
+            R.id.navigation_preferences -> setFragment(PreferenceFragment())
+            else -> {
+                // handle as addon category
+                val fragment = MediaBrowserFragment()
+                val args = Bundle()
+                args.putString(MEDIA_ID, paths[id - 1])
+                args.putString(MEDIA_TYPE, MediaMetadataCompatExt.MediaType.STREAM.name)
+                fragment.arguments = args
+                setFragment(fragment)
+            }
+        }
+        mNavigationView.setCheckedItem(id)
     }
 
     private fun setFragment(fragment: Fragment) {
@@ -240,11 +254,12 @@ abstract class ActionBarCastActivity : AppCompatActivity() {
         // add the categories of all addons
         for (plugin in plugins) {
             for (category in plugin.getParcelableArrayList<Bundle>(CATEGORY)) {
-                val item = addonCategory.add(0, paths.size, 0, category.getString(CATEGORY))
+                val item = addonCategory.add(Menu.NONE, paths.size + 1, paths.size, category.getString(CATEGORY))
                 paths.add(category.getString(NAME))
                 item.isCheckable = true
                 item.icon = BitmapDrawable(resources, plugin.getParcelable(ICON) as Bitmap)
             }
         }
+        setFragmentId(getDefaultSharedPreferences(this).getInt(getString(R.string.preference_last_fragment), R.id.navigation_allmusic))
     }
 }

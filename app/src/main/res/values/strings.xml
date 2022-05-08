@@ -61,6 +61,7 @@
     <string name="preference_theme_key">theme</string>
     <string name="preference_theme_title">Theme</string>
     <string name="preference_theme_summary">Change app theme</string>
+    <string name="preference_last_fragment">last_fragment</string>
     <string-array name="preference_theme_modes">
         <item>System</item>
         <item>Light</item>
