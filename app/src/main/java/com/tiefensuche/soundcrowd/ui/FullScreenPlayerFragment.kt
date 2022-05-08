@@ -97,7 +97,6 @@ internal class FullScreenPlayerFragment : Fragment() {
     private var mTextColor: Int = 0
 
     private var mScheduleFuture: ScheduledFuture<*>? = null
-    private var mScheduleFutureWaveform: ScheduledFuture<*>? = null
 
     private val mButtonListener = OnClickListener(function = fun(view: View) {
         val activity = activity ?: return
@@ -158,9 +157,7 @@ internal class FullScreenPlayerFragment : Fragment() {
                 seek(position)
             }
 
-            override fun onSeeking() {
-                stopWaveformUpdate()
-            }
+            override fun onSeeking() {}
 
             override fun onCuePointSetText(mediaId: String, position: Int, text: String) {
                 MusicService.database.setDescription(mediaId, position, text)
@@ -402,11 +399,6 @@ internal class FullScreenPlayerFragment : Fragment() {
 
     private fun stopSeekbarUpdate() {
         mScheduleFuture?.cancel(false)
-        stopWaveformUpdate()
-    }
-
-    private fun stopWaveformUpdate() {
-        mScheduleFutureWaveform?.cancel(false)
     }
 
     private fun fetchImageAsync(description: MediaDescriptionCompat) {
