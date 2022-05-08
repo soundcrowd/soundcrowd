@@ -289,6 +289,11 @@ internal class FullScreenPlayerFragment : Fragment() {
             mMediaBrowserProvider = activity
     }
 
+    override fun onStop() {
+        super.onStop()
+        stopSeekbarUpdate()
+    }
+
     internal fun onMediaControllerConnected() {
         activity?.let {
             val controller = MediaControllerCompat.getMediaController(it) ?: return
