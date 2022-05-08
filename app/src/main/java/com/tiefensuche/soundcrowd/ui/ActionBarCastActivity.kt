@@ -84,14 +84,10 @@ abstract class ActionBarCastActivity : AppCompatActivity() {
         slidingUpPanelLayout = findViewById(R.id.sliding_layout)
         initializeToolbar()
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.collapsing_toolbar)) { view, insets ->
-            setPadding(insets.systemWindowInsetTop)
+            mToolbar?.layoutParams?.height = resources.getDimensionPixelSize(R.dimen.statusbar_height) + insets.systemWindowInsetTop
+            mToolbar?.setPadding(0, insets.systemWindowInsetTop, 0, 0)
             insets
         }
-    }
-
-    open fun setPadding(padding: Int) {
-        mToolbar?.layoutParams?.height = resources.getDimensionPixelSize(R.dimen.statusbar_height) + padding
-        mToolbar?.setPadding(0, padding, 0, 0)
     }
 
     override fun onStart() {
