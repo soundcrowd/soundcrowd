@@ -46,11 +46,14 @@ internal object ArtworkHelper {
                             result[1] = Color.WHITE
                         }
                         listener.onColorsReady(result)
-                    } else {
-                        // in case the image can not be loaded, set the colors of the placeholder.
-                        // the placeholder will remain as the image, so no need to set it again.
-                        listener.onColorsReady(intArrayOf(placeholder.color, Color.WHITE))
                     }
+                }
+
+                override fun onLoadFailed(errorDrawable: Drawable?) {
+                    super.onLoadFailed(errorDrawable)
+                    // in case the image can not be loaded, set the colors of the placeholder.
+                    // the placeholder will remain as the image, so no need to set it again.
+                    listener.onColorsReady(intArrayOf(placeholder.color, Color.WHITE))
                 }
             })
         } else {
