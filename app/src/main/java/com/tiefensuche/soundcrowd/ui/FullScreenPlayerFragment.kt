@@ -408,45 +408,49 @@ internal class FullScreenPlayerFragment : Fragment() {
             if (getDefaultSharedPreferences(context).getString(getString(R.string.preference_theme_key), "System").equals("Adaptive")) object : ArtworkHelper.ColorsListener {
             override fun onColorsReady(colors: IntArray) {
                 val vibrantColor = colors[0]
-                val colorAnimator = ValueAnimator.ofObject(ArgbEvaluator(), mVibrantColor, vibrantColor)
-                colorAnimator.addUpdateListener { valueAnimator ->
-                    val color = valueAnimator.animatedValue
-                    if (color is Int) {
-                        mSeekbar.progressDrawable.setColorFilter(color, PorterDuff.Mode.SRC_IN)
-                        mSeekbar.thumb.setColorFilter(color, PorterDuff.Mode.SRC_IN)
+                if (mVibrantColor != vibrantColor) {
+                    val colorAnimator = ValueAnimator.ofObject(ArgbEvaluator(), mVibrantColor, vibrantColor)
+                    colorAnimator.addUpdateListener { valueAnimator ->
+                        val color = valueAnimator.animatedValue
+                        if (color is Int) {
+                            mSeekbar.progressDrawable.setColorFilter(color, PorterDuff.Mode.SRC_IN)
+                            mSeekbar.thumb.setColorFilter(color, PorterDuff.Mode.SRC_IN)
 
-                        for (view in listOf(mPlayPause, mSkipNext, mSkipPrev)) {
-                            view.setColorFilter(color)
-                        }
+                            for (view in listOf(mPlayPause, mSkipNext, mSkipPrev)) {
+                                view.setColorFilter(color)
+                            }
 
-                        waveformView.colorizeWaveform(color)
+                            waveformView.colorizeWaveform(color)
 
-                        val activity = activity
-                        if (activity is MusicPlayerActivity) {
-                            for (view in listOf(activity.collapsingToolbarLayout, activity.mNavigationView, activity.controls, activity.slidingUpPanelLayout)) {
-                                view?.setBackgroundColor(color)
+                            val activity = activity
+                            if (activity is MusicPlayerActivity) {
+                                for (view in listOf(activity.collapsingToolbarLayout, activity.mNavigationView, activity.controls, activity.slidingUpPanelLayout)) {
+                                    view?.setBackgroundColor(color)
+                                }
                             }
                         }
                     }
+                    colorAnimator.start()
+                    mVibrantColor = vibrantColor
                 }
-                colorAnimator.start()
-                mVibrantColor = vibrantColor
 
                 val textColor = colors[1]
-                val textAnimator = ValueAnimator.ofObject(ArgbEvaluator(), mTextColor, textColor)
-                textAnimator.addUpdateListener { valueAnimator ->
-                    val color = valueAnimator.animatedValue
-                    if (color is Int) {
-                        mTitle.setTextColor(color)
-                        mSubtitle.setTextColor(color)
-                        val activity = activity
-                        if (activity is MusicPlayerActivity) {
-                            activity.mToolbar?.setTitleTextColor(color)
+                if (mTextColor != textColor) {
+                    val textAnimator = ValueAnimator.ofObject(ArgbEvaluator(), mTextColor, textColor)
+                    textAnimator.addUpdateListener { valueAnimator ->
+                        val color = valueAnimator.animatedValue
+                        if (color is Int) {
+                            mTitle.setTextColor(color)
+                            mSubtitle.setTextColor(color)
+                            val activity = activity
+                            if (activity is MusicPlayerActivity) {
+                                activity.mToolbar?.setTitleTextColor(color)
+                            }
                         }
                     }
+                    textAnimator.start()
+                    mTextColor = textColor
                 }
-                textAnimator.start()
-                mTextColor = textColor
             }
 
             override fun onError() {
