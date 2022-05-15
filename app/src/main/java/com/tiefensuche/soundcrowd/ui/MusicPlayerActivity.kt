@@ -54,8 +54,6 @@ internal class MusicPlayerActivity : BaseActivity(), MediaBrowserFragment.MediaF
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        initializeFromParams(savedInstanceState)
-
         controls = findViewById(R.id.controls)
         collapsingToolbarLayout = findViewById(R.id.collapsing_toolbar)
         toolbarHeader = findViewById(R.id.toolbar_header)
@@ -137,13 +135,6 @@ internal class MusicPlayerActivity : BaseActivity(), MediaBrowserFragment.MediaF
         return true
     }
 
-    override fun onSaveInstanceState(outState: Bundle) {
-        if (mediaId != null) {
-            outState.putString(SAVED_MEDIA_ID, mediaId)
-        }
-        super.onSaveInstanceState(outState)
-    }
-
     override fun onMediaItemSelected(item: MediaBrowserCompat.MediaItem) {
         when {
             item.isPlayable -> {
@@ -193,12 +184,6 @@ internal class MusicPlayerActivity : BaseActivity(), MediaBrowserFragment.MediaF
                     }
                 }
             }
-        }
-    }
-
-    private fun initializeFromParams(savedInstanceState: Bundle?) {
-        if (supportFragmentManager.findFragmentById(R.id.container) == null) {
-            navigateToBrowser(savedInstanceState?.getString(SAVED_MEDIA_ID), null)
         }
     }
 
@@ -256,7 +241,6 @@ internal class MusicPlayerActivity : BaseActivity(), MediaBrowserFragment.MediaF
          */
         const val EXTRA_CURRENT_MEDIA_DESCRIPTION = "com.tiefensuche.soundcrowd.CURRENT_MEDIA_DESCRIPTION"
         private val TAG = MusicPlayerActivity::class.simpleName
-        private const val SAVED_MEDIA_ID = "com.tiefensuche.soundcrowd.MEDIA_ID"
         private const val PERMISSIONS_REQUEST_WRITE_EXTERNAL_STORAGE = 0
         private var mPanelState: SlidingUpPanelLayout.PanelState = SlidingUpPanelLayout.PanelState.COLLAPSED
     }
