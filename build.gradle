@@ -19,7 +19,7 @@
 // all sub-projects/modules.
 
 buildscript {
-    ext.kotlin_version = '1.6.21'
+    ext.kotlin_version = '1.7.0'
     repositories {
         google()
         mavenCentral()
