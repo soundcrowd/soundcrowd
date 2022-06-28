@@ -51,7 +51,7 @@ dependencies {
 
     // other third party
     implementation 'com.github.bumptech.glide:glide:4.13.2'
-    kapt 'com.github.bumptech.glide:compiler:4.13.1'
+    kapt 'com.github.bumptech.glide:compiler:4.13.2'
     implementation 'com.sothree.slidinguppanel:library:3.4.0'
     implementation 'com.github.apl-devs:appintro:6.1.0'
     implementation 'com.github.amlcurran.showcaseview:library:5.4.3'
