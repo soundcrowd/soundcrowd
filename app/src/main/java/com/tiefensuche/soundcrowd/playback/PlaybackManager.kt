@@ -41,7 +41,8 @@ internal class PlaybackManager(private val mServiceCallback: PlaybackServiceCall
                     PlaybackStateCompat.ACTION_PLAY_FROM_MEDIA_ID or
                     PlaybackStateCompat.ACTION_PLAY_FROM_SEARCH or
                     PlaybackStateCompat.ACTION_SKIP_TO_PREVIOUS or
-                    PlaybackStateCompat.ACTION_SKIP_TO_NEXT
+                    PlaybackStateCompat.ACTION_SKIP_TO_NEXT or
+                    PlaybackStateCompat.ACTION_SEEK_TO
             actions = if (playback.isPlaying) {
                 actions or PlaybackStateCompat.ACTION_PAUSE
             } else {
