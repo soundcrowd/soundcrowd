@@ -46,19 +46,22 @@ dependencies {
     implementation 'com.tiefensuche.soundcrowd:waveform:1.0'
 
     // android support
-    implementation 'com.google.android.material:material:1.4.0'
+    implementation 'com.google.android.material:material:1.8.0'
     implementation 'androidx.palette:palette-ktx:1.0.0'
+    implementation "androidx.swiperefreshlayout:swiperefreshlayout:1.1.0"
 
     // other third party
+    implementation 'org.slf4j:slf4j-android:1.7.30'
     implementation 'com.github.bumptech.glide:glide:4.14.2'
     kapt 'com.github.bumptech.glide:compiler:4.14.2'
     implementation 'com.sothree.slidinguppanel:library:3.4.0'
-    implementation 'com.github.apl-devs:appintro:6.1.0'
+    implementation 'com.github.AppIntro:AppIntro:6.2.0'
     implementation 'com.github.amlcurran.showcaseview:library:5.4.3'
     implementation 'com.github.myinnos:AlphabetIndex-Fast-Scroll-RecyclerView:1.0.95'
 }
 
 repositories {
+    google()
     mavenCentral()
     maven { url 'https://jitpack.io' }
     maven {
