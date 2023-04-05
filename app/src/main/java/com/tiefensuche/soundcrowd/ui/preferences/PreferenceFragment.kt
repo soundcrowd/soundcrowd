@@ -14,13 +14,13 @@ import com.tiefensuche.soundcrowd.utils.Utils
 class PreferenceFragment : PreferenceFragmentCompat() {
 
     private fun addMainPreferences() {
-        val category = PreferenceCategory(activity)
+        val category = PreferenceCategory(requireActivity())
         category.key = getString(R.string.app_name)
         category.title = getString(R.string.app_name)
         category.isIconSpaceReserved = false
         preferenceScreen.addPreference(category)
 
-        val theme = ListPreference(activity)
+        val theme = ListPreference(requireActivity())
         theme.key = getString(R.string.preference_theme_key)
         theme.title = getString(R.string.preference_theme_title)
         theme.entries = resources.getStringArray(R.array.preference_theme_modes)
@@ -38,12 +38,13 @@ class PreferenceFragment : PreferenceFragmentCompat() {
 
     private fun addPluginPreferences() {
         for ((name, plugin) in PluginManager.plugins) {
-            val category = PreferenceCategory(activity)
+            val category = PreferenceCategory(requireActivity())
             category.key = name
             category.title = name
             category.isIconSpaceReserved = false
             preferenceScreen.addPreference(category)
             for (preference in plugin.preferences()) {
+                preference.parent?.removePreference(preference)
                 if (preference is EditTextPreference) {
                     preference.dialogLayoutResource =
                         if (preference.title == getString(R.string.preference_password_title))
@@ -61,17 +62,8 @@ class PreferenceFragment : PreferenceFragmentCompat() {
             it.enableCollapse(false)
             it.showSearchButton(false)
         }
-        preferenceScreen = preferenceManager.createPreferenceScreen(activity)
+        preferenceScreen = preferenceManager.createPreferenceScreen(requireActivity())
         addMainPreferences()
         addPluginPreferences()
-    }
-
-    override fun onDestroyView() {
-        super.onDestroyView()
-        for (plugin in PluginManager.plugins.values) {
-            for (preference in plugin.preferences()) {
-                preference.parent?.removePreference(preference)
-            }
-        }
     }
 }
