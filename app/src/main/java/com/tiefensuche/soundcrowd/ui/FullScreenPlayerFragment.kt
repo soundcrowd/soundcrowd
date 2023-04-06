@@ -313,8 +313,10 @@ internal class FullScreenPlayerFragment : Fragment() {
             mDescription.text = metadata.getString(MediaMetadataCompat.METADATA_KEY_DISPLAY_DESCRIPTION)
             mDuration = metadata.getLong(MediaMetadataCompat.METADATA_KEY_DURATION).toInt()
             mSeekbar.max = mDuration
+            mSeekbar.progress = 0
             mEnd.text = DateUtils.formatElapsedTime((mDuration / 1000).toLong())
             mWaveformHandler.loadWaveform(requests, metadata, mDuration)
+            waveformView.setProgress(0)
 
             mShare.visibility = if (metadata.containsKey(MediaMetadataCompatExt.METADATA_KEY_URL)) VISIBLE else GONE
 
