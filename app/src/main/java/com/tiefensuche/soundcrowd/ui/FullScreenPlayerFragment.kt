@@ -158,9 +158,12 @@ internal class FullScreenPlayerFragment : Fragment() {
         waveformView.setCallback(object : WaveformView.Callback {
             override fun onSeek(position: Long) {
                 seek(position)
+                activity().slidingUpPanelLayout.isTouchEnabled = true
             }
 
-            override fun onSeeking() {}
+            override fun onSeeking() {
+                activity().slidingUpPanelLayout.isTouchEnabled = false
+            }
 
             override fun onCuePointSetText(mediaId: String, position: Int, text: String) {
                 MusicService.database.setDescription(mediaId, position, text)
