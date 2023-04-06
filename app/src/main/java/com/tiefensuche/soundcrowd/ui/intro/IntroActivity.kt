@@ -26,21 +26,18 @@ internal class IntroActivity : AppIntro() {
         sliderPage.title = getString(R.string.intro_welcome_title)
         sliderPage.description = getString(R.string.intro_welcome_text)
         sliderPage.imageDrawable = R.drawable.intro_waveform
-        sliderPage.backgroundColor = ContextCompat.getColor(this, R.color.colorPrimary)
         addSlide(AppIntroFragment.newInstance(sliderPage))
 
         sliderPage = SliderPage()
         sliderPage.title = getString(R.string.intro_welcome_cue_points_title)
         sliderPage.description = getString(R.string.intro_welcome_cue_points_text)
         sliderPage.imageDrawable = R.drawable.intro_cuepoint
-        sliderPage.backgroundColor = ContextCompat.getColor(this, R.color.colorPrimary)
         addSlide(AppIntroFragment.newInstance(sliderPage))
 
         sliderPage = SliderPage()
         sliderPage.title = getString(R.string.intro_welcome_local_music_title)
         sliderPage.description = getString(R.string.intro_welcome_local_music_text)
         sliderPage.imageDrawable = R.drawable.files_icon
-        sliderPage.backgroundColor = ContextCompat.getColor(this, R.color.intro_files)
         addSlide(AppIntroFragment.newInstance(sliderPage))
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {

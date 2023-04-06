@@ -6,7 +6,6 @@
     <!-- SoundCrowd -->
     <!-- Dark Theme -->
     <color name="colorPrimary">#25383C</color>
-    <color name="colorAccent">#3949ab</color>
 
     <!-- BASE -->
     <color name="fullscreen_secondary_line_color">#E5CCCCCC</color>
