@@ -490,6 +490,8 @@ internal class MusicProvider(context: MusicService) {
                     } ?: plugin.getMediaItems(request.category, res, refresh)
                 } catch (e: Exception) {
                     callback?.onError("Error when requesting plugin: ${e.message}", e)
+                } catch (e: java.lang.Error) {
+                    callback?.onError("Error when requesting plugin: ${e.message}")
                 }
             }
         }
