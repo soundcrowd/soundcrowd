@@ -56,6 +56,10 @@ import kotlin.math.roundToInt
  */
 internal class FullScreenPlayerFragment : Fragment() {
 
+    private fun activity() : MusicPlayerActivity {
+        return super.getActivity() as MusicPlayerActivity
+    }
+
     private val mHandler = Handler()
     private val mExecutorService = Executors.newSingleThreadScheduledExecutor()
 
@@ -168,41 +172,34 @@ internal class FullScreenPlayerFragment : Fragment() {
             }
 
             override fun onWaveformLoaded() {
-                val activity = activity
-                if (activity is MusicPlayerActivity && activity.slidingUpPanelLayout.panelState == SlidingUpPanelLayout.PanelState.EXPANDED) {
-                    ShowcaseViewManager.introduce(ShowcaseViewManager.ShowcaseFunction.WAVEFORM_SEEKING, activity)
-                    ShowcaseViewManager.introduce(ShowcaseViewManager.ShowcaseFunction.CUE_POINT, activity)
+                if (activity().slidingUpPanelLayout.panelState == SlidingUpPanelLayout.PanelState.EXPANDED) {
+                    ShowcaseViewManager.introduce(ShowcaseViewManager.ShowcaseFunction.WAVEFORM_SEEKING, activity())
+                    ShowcaseViewManager.introduce(ShowcaseViewManager.ShowcaseFunction.CUE_POINT, activity())
                 }
             }
         })
 
         mSkipNext.setOnClickListener {
-            activity?.let {
-                MediaControllerCompat.getMediaController(it).transportControls.skipToNext()
-            }
+            MediaControllerCompat.getMediaController(activity()).transportControls.skipToNext()
         }
 
         mSkipPrev.setOnClickListener {
-            activity?.let {
-                MediaControllerCompat.getMediaController(it).transportControls.skipToPrevious()
-            }
+            MediaControllerCompat.getMediaController(activity()).transportControls.skipToPrevious()
         }
 
         mPlayPause.setOnClickListener {
-            activity?.let {
-                val state = MediaControllerCompat.getMediaController(it).playbackState
-                val controls = MediaControllerCompat.getMediaController(it).transportControls
-                when (state.state) {
-                    STATE_PLAYING, STATE_BUFFERING -> {
-                        controls.pause()
-                        stopSeekbarUpdate()
-                    }
-                    STATE_NONE, STATE_PAUSED, STATE_STOPPED -> {
-                        controls.play()
-                        scheduleSeekbarUpdate()
-                    }
-                    else -> Log.d(TAG, "onClick with state ${state.state}")
+            val state = MediaControllerCompat.getMediaController(activity()).playbackState
+            val controls = MediaControllerCompat.getMediaController(activity()).transportControls
+            when (state.state) {
+                STATE_PLAYING, STATE_BUFFERING -> {
+                    controls.pause()
+                    stopSeekbarUpdate()
                 }
+                STATE_NONE, STATE_PAUSED, STATE_STOPPED -> {
+                    controls.play()
+                    scheduleSeekbarUpdate()
+                }
+                else -> Log.d(TAG, "onClick with state ${state.state}")
             }
         }
 
@@ -292,17 +289,15 @@ internal class FullScreenPlayerFragment : Fragment() {
     }
 
     internal fun onMediaControllerConnected() {
-        activity?.let {
-            val controller = MediaControllerCompat.getMediaController(it) ?: return
-            val state = controller.playbackState
-            onPlaybackStateChanged(state)
-            onMetadataChanged(controller.metadata)
-            updateRepeatMode(controller.repeatMode)
-            updateShuffleMode(controller.shuffleMode)
-            updateProgress()
-            if (state != null && (state.state == STATE_PLAYING || state.state == STATE_BUFFERING)) {
-                scheduleSeekbarUpdate()
-            }
+        val controller = MediaControllerCompat.getMediaController(activity()) ?: return
+        val state = controller.playbackState
+        onPlaybackStateChanged(state)
+        onMetadataChanged(controller.metadata)
+        updateRepeatMode(controller.repeatMode)
+        updateShuffleMode(controller.shuffleMode)
+        updateProgress()
+        if (state != null && (state.state == STATE_PLAYING || state.state == STATE_BUFFERING)) {
+            scheduleSeekbarUpdate()
         }
     }
 
