@@ -60,4 +60,19 @@ dependencies {
 
 repositories {
     mavenCentral()
+    maven { url 'https://jitpack.io' }
+    maven {
+        url = uri("https://maven.pkg.github.com/soundcrowd/soundcrowd-plugin")
+        credentials {
+            username = System.getenv("GITHUB_ACTOR")
+            password = System.getenv("GITHUB_TOKEN")
+        }
+    }
+    maven {
+        url = uri("https://maven.pkg.github.com/soundcrowd/soundcrowd-waveform")
+        credentials {
+            username = System.getenv("GITHUB_ACTOR")
+            password = System.getenv("GITHUB_TOKEN")
+        }
+    }
 }
