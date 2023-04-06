@@ -134,7 +134,9 @@ internal class MusicProvider(context: MusicService) {
                             throw Exception("Extra arguments after path!")
                         path = hierarchy[i]
                     }
-                    else -> throw Exception("Extra arguments")
+                    else -> {
+                        path += "/${hierarchy[i]}"
+                    }
                 }
             }
         }
