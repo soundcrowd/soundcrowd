@@ -193,11 +193,12 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_alignParentBottom="true"
-            android:orientation="vertical">
+            android:orientation="vertical"
+            android:paddingBottom="32dp">
 
             <RelativeLayout
                 android:layout_width="match_parent"
-                android:layout_height="48dp">
+                android:layout_height="96dp">
 
                 <TextView
                     android:id="@+id/startText"
@@ -222,7 +223,10 @@
                     android:layout_toStartOf="@+id/endText"
                     android:layout_toLeftOf="@+id/endText"
                     android:layout_toEndOf="@+id/startText"
-                    android:layout_toRightOf="@+id/startText" />
+                    android:layout_toRightOf="@+id/startText"
+                    android:paddingTop="128dp"
+                    android:paddingBottom="128dp"
+                    android:thumb="@drawable/thumb" />
 
                 <TextView
                     android:id="@+id/endText"
