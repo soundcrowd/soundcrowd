@@ -64,7 +64,7 @@ internal class MediaBrowserFragment : Fragment() {
             mSwipeRefreshLayout.isRefreshing = false
             mProgressBar.visibility = View.GONE
 
-            for (item in resultData.getParcelableArrayList<MediaBrowserCompat.MediaItem>(RESULT)) {
+            for (item in resultData.getParcelableArrayList<MediaBrowserCompat.MediaItem>(RESULT)!!) {
                 mBrowserAdapter.add(item)
             }
 

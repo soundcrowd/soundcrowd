@@ -98,15 +98,15 @@ constructor(private val mService: MusicService) : BroadcastReceiver() {
 
         val pkg = mService.packageName
         mPauseIntent = PendingIntent.getBroadcast(mService, REQUEST_CODE,
-                Intent(ACTION_PAUSE).setPackage(pkg), PendingIntent.FLAG_CANCEL_CURRENT)
+                Intent(ACTION_PAUSE).setPackage(pkg), PendingIntent.FLAG_CANCEL_CURRENT or PendingIntent.FLAG_IMMUTABLE)
         mPlayIntent = PendingIntent.getBroadcast(mService, REQUEST_CODE,
-                Intent(ACTION_PLAY).setPackage(pkg), PendingIntent.FLAG_CANCEL_CURRENT)
+                Intent(ACTION_PLAY).setPackage(pkg), PendingIntent.FLAG_CANCEL_CURRENT or PendingIntent.FLAG_IMMUTABLE)
         mPreviousIntent = PendingIntent.getBroadcast(mService, REQUEST_CODE,
-                Intent(ACTION_PREV).setPackage(pkg), PendingIntent.FLAG_CANCEL_CURRENT)
+                Intent(ACTION_PREV).setPackage(pkg), PendingIntent.FLAG_CANCEL_CURRENT or PendingIntent.FLAG_IMMUTABLE)
         mNextIntent = PendingIntent.getBroadcast(mService, REQUEST_CODE,
-                Intent(ACTION_NEXT).setPackage(pkg), PendingIntent.FLAG_CANCEL_CURRENT)
+                Intent(ACTION_NEXT).setPackage(pkg), PendingIntent.FLAG_CANCEL_CURRENT or PendingIntent.FLAG_IMMUTABLE)
         mStopIntent = PendingIntent.getBroadcast(mService, REQUEST_CODE,
-                Intent(ACTION_STOP).setPackage(pkg), PendingIntent.FLAG_CANCEL_CURRENT)
+                Intent(ACTION_STOP).setPackage(pkg), PendingIntent.FLAG_CANCEL_CURRENT or PendingIntent.FLAG_IMMUTABLE)
 
         // Cancel all notifications to handle the case where the Service was killed and
         // restarted by the system.
@@ -198,7 +198,7 @@ constructor(private val mService: MusicService) : BroadcastReceiver() {
             openUI.putExtra(MusicPlayerActivity.EXTRA_CURRENT_MEDIA_DESCRIPTION, description)
         }
         return PendingIntent.getActivity(mService, REQUEST_CODE, openUI,
-                PendingIntent.FLAG_CANCEL_CURRENT)
+                PendingIntent.FLAG_CANCEL_CURRENT or PendingIntent.FLAG_IMMUTABLE)
     }
 
     private fun createNotification(): Notification? {

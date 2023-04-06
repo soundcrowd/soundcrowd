@@ -79,7 +79,7 @@ abstract class ActionBarCastActivity : AppCompatActivity() {
 
     public override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        Utils.applyTheme(getDefaultSharedPreferences(this).getString(getString(R.string.preference_theme_key), "System"))
+        Utils.applyTheme(getDefaultSharedPreferences(this).getString(getString(R.string.preference_theme_key), "System")!!)
         setContentView(R.layout.activity_player)
         slidingUpPanelLayout = findViewById(R.id.sliding_layout)
         initializeToolbar()
@@ -136,12 +136,12 @@ abstract class ActionBarCastActivity : AppCompatActivity() {
         return true
     }
 
-    override fun onOptionsItemSelected(item: MenuItem?): Boolean {
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
         if (mDrawerToggle.onOptionsItemSelected(item)) {
             return true
         }
         // If not handled by drawerToggle, home needs to be handled by returning to previous
-        if (item != null && item.itemId == android.R.id.home) {
+        if (item.itemId == android.R.id.home) {
             onBackPressed()
             return true
         }
@@ -253,11 +253,11 @@ abstract class ActionBarCastActivity : AppCompatActivity() {
 
         // add the categories of all addons
         for (plugin in plugins) {
-            for (category in plugin.getParcelableArrayList<Bundle>(CATEGORY)) {
+            for (category in plugin.getParcelableArrayList<Bundle>(CATEGORY)!!) {
                 val item = addonCategory.add(Menu.NONE, paths.size + 1, paths.size, category.getString(CATEGORY))
-                paths.add(category.getString(NAME))
+                paths.add(category.getString(NAME)!!)
                 item.isCheckable = true
-                item.icon = BitmapDrawable(resources, plugin.getParcelable(ICON) as Bitmap)
+                item.icon = BitmapDrawable(resources, plugin.getParcelable<Bitmap>(ICON)!!)
             }
         }
         setFragmentId(getDefaultSharedPreferences(this).getInt(getString(R.string.preference_last_fragment), R.id.navigation_allmusic))

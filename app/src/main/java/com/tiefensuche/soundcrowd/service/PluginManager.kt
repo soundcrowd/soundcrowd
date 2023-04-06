@@ -22,7 +22,7 @@ internal class PluginManager(private val context: Context) {
             for (plugin in plugins.values) {
                 for (clb in plugin.callbacks()) {
                     if (clb.key == url.host) {
-                        clb.value(url.query)
+                        clb.value(url.query!!)
                         return true
                     }
                 }

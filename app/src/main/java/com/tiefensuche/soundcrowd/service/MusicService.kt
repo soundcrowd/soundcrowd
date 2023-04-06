@@ -4,6 +4,7 @@
 
 package com.tiefensuche.soundcrowd.service
 
+import android.app.PendingIntent
 import android.app.Service
 import android.content.Intent
 import android.content.SharedPreferences
@@ -127,8 +128,15 @@ internal class MusicService : MediaBrowserServiceCompat(), PlaybackManager.Playb
         mPlaybackManager = PlaybackManager(this, mMusicProvider, mQueueManager,
                 LocalPlayback(this, mMusicProvider), preferences)
 
+        val mediaButtonIntent = Intent(Intent.ACTION_MEDIA_BUTTON)
+        val pendingIntent = PendingIntent.getBroadcast(
+            baseContext,
+            0, mediaButtonIntent,
+            PendingIntent.FLAG_IMMUTABLE
+        )
+
         // Start a new MediaSession
-        mSession = MediaSessionCompat(this, "MusicService")
+        mSession = MediaSessionCompat(this, "MusicService", null, pendingIntent)
         sessionToken = mSession.sessionToken
         mSession.setCallback(mPlaybackManager.mediaSessionCallback)
         mSession.setFlags(MediaSessionCompat.FLAG_HANDLES_MEDIA_BUTTONS or MediaSessionCompat.FLAG_HANDLES_TRANSPORT_CONTROLS)
@@ -160,7 +168,7 @@ internal class MusicService : MediaBrowserServiceCompat(), PlaybackManager.Playb
             } else if (CMD_RESOLVE == command) {
                 try {
                     val uri = startIntent.getParcelableExtra<Uri>(ARG_URL)
-                    if (!PluginManager.handleCallback(uri)) {
+                    if (!PluginManager.handleCallback(uri!!)) {
                         val mediaId = mMusicProvider.resolve(uri)
                         if (mediaId != null) {
                             mPlaybackManager.setCurrentMediaId(mediaId)
