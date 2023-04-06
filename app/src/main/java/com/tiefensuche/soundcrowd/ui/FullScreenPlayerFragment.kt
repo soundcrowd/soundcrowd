@@ -521,7 +521,7 @@ internal class FullScreenPlayerFragment : Fragment() {
                 currentPosition += (timeDelta * it.playbackSpeed).roundToInt()
             }
             mSeekbar.progress = currentPosition
-            waveformView.setProgress(currentPosition, mDuration)
+            waveformView.setProgress(currentPosition)
         }
     }
 
