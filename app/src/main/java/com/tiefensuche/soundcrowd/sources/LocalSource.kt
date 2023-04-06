@@ -9,6 +9,7 @@ import android.content.ContentUris
 import android.content.pm.PackageManager
 import android.media.MediaMetadataRetriever
 import android.net.Uri
+import android.os.Build
 import android.provider.MediaStore
 import androidx.core.content.ContextCompat
 import android.support.v4.media.MediaMetadataCompat
@@ -53,9 +54,11 @@ internal class LocalSource(private val context: MusicService) {
     private fun loadMusic() {
 
         // check for read storage permission
-        if (ContextCompat.checkSelfPermission(context,
-                        Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
-            Log.d(TAG, "Need permission WRITE_EXTERNAL_STORAGE")
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && ContextCompat.checkSelfPermission(context,
+                Manifest.permission.READ_MEDIA_AUDIO) != PackageManager.PERMISSION_GRANTED ||
+            Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU && ContextCompat.checkSelfPermission(context,
+                Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+            Log.d(TAG, "Need permission to read audio files")
             return
         }
 

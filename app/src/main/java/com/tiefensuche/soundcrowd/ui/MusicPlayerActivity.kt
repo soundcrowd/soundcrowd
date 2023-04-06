@@ -3,12 +3,8 @@
  */
 package com.tiefensuche.soundcrowd.ui
 
-import android.Manifest
-import android.content.pm.PackageManager
 import android.os.Bundle
 import com.google.android.material.appbar.CollapsingToolbarLayout
-import androidx.core.app.ActivityCompat
-import androidx.core.content.ContextCompat
 import android.support.v4.media.MediaBrowserCompat
 import android.support.v4.media.MediaDescriptionCompat
 import android.support.v4.media.session.MediaControllerCompat
@@ -78,8 +74,6 @@ internal class MusicPlayerActivity : BaseActivity(), MediaBrowserFragment.MediaF
                 }
             }
         })
-
-        checkPermissions()
 
         if (mPanelState == SlidingUpPanelLayout.PanelState.EXPANDED) {
             controls.alpha = 0f
@@ -158,31 +152,6 @@ internal class MusicPlayerActivity : BaseActivity(), MediaBrowserFragment.MediaF
             if (it.visibility == View.VISIBLE && !enable || it.visibility == View.GONE && enable) {
                 it.visibility = if (enable) View.VISIBLE else View.GONE
                 collapsingToolbarLayout?.isTitleEnabled = enable
-            }
-        }
-    }
-
-    private fun checkPermissions() {
-        if (ContextCompat.checkSelfPermission(this,
-                        Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(this,
-                    arrayOf(Manifest.permission.WRITE_EXTERNAL_STORAGE),
-                    PERMISSIONS_REQUEST_WRITE_EXTERNAL_STORAGE)
-        }
-    }
-
-    override fun onRequestPermissionsResult(requestCode: Int,
-                                            permissions: Array<String>, grantResults: IntArray) {
-        when (requestCode) {
-            PERMISSIONS_REQUEST_WRITE_EXTERNAL_STORAGE -> {
-                for (i in permissions.indices) {
-                    if (Manifest.permission.WRITE_EXTERNAL_STORAGE == permissions[i] && grantResults[i] == PackageManager.PERMISSION_DENIED) {
-                        Log.d(TAG, "Permission denied!")
-                        browseFragment?.showMessage(resources.getString(R.string.permission))
-                    } else if (mediaBrowser.isConnected) {
-                        onMediaControllerConnected()
-                    }
-                }
             }
         }
     }

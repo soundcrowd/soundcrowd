@@ -5,17 +5,13 @@
 package com.tiefensuche.soundcrowd.ui.intro
 
 import android.Manifest
-import android.content.Intent
+import android.os.Build
 import android.os.Bundle
-import android.preference.PreferenceManager
-import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import com.github.appintro.AppIntro
 import com.github.appintro.AppIntroFragment
 import com.github.appintro.model.SliderPage
 import com.tiefensuche.soundcrowd.R
-import com.tiefensuche.soundcrowd.ui.MusicPlayerActivity
-import com.tiefensuche.soundcrowd.ui.SplashActivity.Companion.FIRST_START
 
 /**
  * Intro that will be shown on first start to introduce into the activity
@@ -47,15 +43,17 @@ internal class IntroActivity : AppIntro() {
         sliderPage.backgroundColor = ContextCompat.getColor(this, R.color.intro_files)
         addSlide(AppIntroFragment.newInstance(sliderPage))
 
-        askForPermissions(arrayOf(Manifest.permission.WRITE_EXTERNAL_STORAGE), 3)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            askForPermissions(arrayOf(Manifest.permission.READ_MEDIA_AUDIO), 3)
+        } else {
+            askForPermissions(arrayOf(Manifest.permission.WRITE_EXTERNAL_STORAGE), 3)
+        }
 
         isSkipButtonEnabled = false
     }
 
     override fun onDonePressed(currentFragment: Fragment?) {
         super.onDonePressed(currentFragment)
-        PreferenceManager.getDefaultSharedPreferences(this).edit().putBoolean(FIRST_START, false).apply()
-        startActivity(Intent(this, MusicPlayerActivity::class.java))
         finish()
     }
 }

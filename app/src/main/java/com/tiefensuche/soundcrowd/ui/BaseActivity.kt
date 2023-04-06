@@ -3,9 +3,11 @@
  */
 package com.tiefensuche.soundcrowd.ui
 
+import android.Manifest
 import android.app.ActivityManager
 import android.content.ComponentName
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.graphics.BitmapFactory
 import android.os.Build
 import android.os.Bundle
@@ -16,6 +18,7 @@ import android.support.v4.media.session.MediaControllerCompat
 import android.support.v4.media.session.MediaSessionCompat
 import android.support.v4.media.session.PlaybackStateCompat
 import android.util.Log
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.Lifecycle
 import com.sothree.slidinguppanel.SlidingUpPanelLayout
 import com.tiefensuche.soundcrowd.R
@@ -23,6 +26,7 @@ import com.tiefensuche.soundcrowd.service.MusicService
 import com.tiefensuche.soundcrowd.service.MusicService.Companion.ARG_URL
 import com.tiefensuche.soundcrowd.sources.MusicProvider
 import com.tiefensuche.soundcrowd.sources.MusicProvider.Companion.RESULT
+import com.tiefensuche.soundcrowd.ui.intro.IntroActivity
 import com.tiefensuche.soundcrowd.ui.intro.ShowcaseViewManager
 
 /**
@@ -107,21 +111,9 @@ abstract class BaseActivity : ActionBarCastActivity(), MediaBrowserProvider {
     override fun onStart() {
         super.onStart()
         Log.d(TAG, "Activity onStart")
-        mFullScreenPlayerFragment = supportFragmentManager.findFragmentById(R.id.fragment_fullscreen_player) as? FullScreenPlayerFragment
 
-        if (!mediaBrowser.isConnected) {
-            mediaBrowser.connect()
-        } else {
-            connectToSession(mediaBrowser.sessionToken)
-            // update metadata and playback state in case of reconnecting to a running session
-            // when returning to the activity
-            val mediaController = MediaControllerCompat.getMediaController(this)
-            if (mediaController.metadata != null) {
-                mMediaControllerCallback.onMetadataChanged(mediaController.metadata)
-                mMediaControllerCallback.onPlaybackStateChanged(mediaController.playbackState)
-                handleIntent(intent)
-            }
-        }
+        mFullScreenPlayerFragment = supportFragmentManager.findFragmentById(R.id.fragment_fullscreen_player) as? FullScreenPlayerFragment
+        checkPermissions()
     }
 
     override fun onStop() {
@@ -212,6 +204,33 @@ abstract class BaseActivity : ActionBarCastActivity(), MediaBrowserProvider {
                 updatePlugins(resultData.getParcelableArrayList(RESULT)!!)
             }
         })
+    }
+
+    private fun connectMediaBrowser() {
+        if (!mediaBrowser.isConnected) {
+            mediaBrowser.connect()
+        } else {
+            connectToSession(mediaBrowser.sessionToken)
+            // update metadata and playback state in case of reconnecting to a running session
+            // when returning to the activity
+            val mediaController = MediaControllerCompat.getMediaController(this)
+            if (mediaController.metadata != null) {
+                mMediaControllerCallback.onMetadataChanged(mediaController.metadata)
+                mMediaControllerCallback.onPlaybackStateChanged(mediaController.playbackState)
+                handleIntent(intent)
+            }
+        }
+    }
+
+    private fun checkPermissions() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && ContextCompat.checkSelfPermission(this,
+                Manifest.permission.READ_MEDIA_AUDIO) != PackageManager.PERMISSION_GRANTED ||
+            Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU && ContextCompat.checkSelfPermission(this,
+                Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+            startActivity(Intent(this, IntroActivity::class.java))
+        } else {
+            connectMediaBrowser()
+        }
     }
 
     companion object {
