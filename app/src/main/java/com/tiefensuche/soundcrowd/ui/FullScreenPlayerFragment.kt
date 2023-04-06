@@ -29,7 +29,6 @@ import android.view.View
 import android.view.View.*
 import android.view.ViewGroup
 import android.widget.*
-import androidx.preference.PreferenceManager.getDefaultSharedPreferences
 import com.sothree.slidinguppanel.SlidingUpPanelLayout
 import com.tiefensuche.soundcrowd.R
 import com.tiefensuche.soundcrowd.extensions.MediaMetadataCompatExt
@@ -399,8 +398,7 @@ internal class FullScreenPlayerFragment : Fragment() {
     private fun fetchImageAsync(description: MediaDescriptionCompat) {
         Log.d(TAG, "fetchImageAsync, ${description.mediaId}")
         // get artwork from uri online or from cache
-        ArtworkHelper.loadArtwork(requests, description, mBackgroundImage,
-            if (getDefaultSharedPreferences(context).getString(getString(R.string.preference_theme_key), "System").equals("Adaptive")) object : ArtworkHelper.ColorsListener {
+        ArtworkHelper.loadArtwork(requests, description, mBackgroundImage, object : ArtworkHelper.ColorsListener {
             override fun onColorsReady(colors: IntArray) {
                 val vibrantColor = colors[0]
                 if (mVibrantColor != vibrantColor) {
@@ -410,41 +408,14 @@ internal class FullScreenPlayerFragment : Fragment() {
                         if (color is Int) {
                             mSeekbar.progressDrawable.setColorFilter(color, PorterDuff.Mode.SRC_IN)
                             mSeekbar.thumb.setColorFilter(color, PorterDuff.Mode.SRC_IN)
-
                             for (view in listOf(mPlayPause, mSkipNext, mSkipPrev)) {
                                 view.setColorFilter(color)
                             }
-
                             waveformView.colorizeWaveform(color)
-
-                            val activity = activity
-                            if (activity is MusicPlayerActivity) {
-                                for (view in listOf(activity.collapsingToolbarLayout, activity.mNavigationView, activity.controls, activity.slidingUpPanelLayout)) {
-                                    view?.setBackgroundColor(color)
-                                }
-                            }
                         }
                     }
                     colorAnimator.start()
                     mVibrantColor = vibrantColor
-                }
-
-                val textColor = colors[1]
-                if (mTextColor != textColor) {
-                    val textAnimator = ValueAnimator.ofObject(ArgbEvaluator(), mTextColor, textColor)
-                    textAnimator.addUpdateListener { valueAnimator ->
-                        val color = valueAnimator.animatedValue
-                        if (color is Int) {
-                            mTitle.setTextColor(color)
-                            mSubtitle.setTextColor(color)
-                            val activity = activity
-                            if (activity is MusicPlayerActivity) {
-                                activity.mToolbar?.setTitleTextColor(color)
-                            }
-                        }
-                    }
-                    textAnimator.start()
-                    mTextColor = textColor
                 }
             }
 
@@ -456,7 +427,7 @@ internal class FullScreenPlayerFragment : Fragment() {
                     waveformView.colorizeWaveform(ContextCompat.getColor(it, R.color.colorPrimary))
                 }
             }
-        } else null)
+        })
 
         // Playback Controls
         ArtworkHelper.loadArtwork(requests, description, mAlbumArt)
