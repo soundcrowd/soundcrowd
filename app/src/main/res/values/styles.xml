@@ -13,6 +13,10 @@
         <item name="android:windowLightStatusBar">?attr/isLightTheme</item>
     </style>
 
+    <style name="ShapeAppearanceOverlay.App.circleImageView" parent="">
+        <item name="cornerSize">10%</item>
+    </style>
+
     <!-- Showcase Theme -->
     <style name="CustomShowcaseTheme" parent="ShowcaseView">
         <item name="sv_backgroundColor">#A0000000</item>
