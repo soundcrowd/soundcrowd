@@ -20,6 +20,7 @@ import android.view.MenuItem
 import android.view.View
 import androidx.core.view.ViewCompat
 import androidx.preference.PreferenceManager.getDefaultSharedPreferences
+import com.google.android.material.color.DynamicColors
 import com.sothree.slidinguppanel.SlidingUpPanelLayout
 import com.tiefensuche.soundcrowd.R
 import com.tiefensuche.soundcrowd.extensions.MediaMetadataCompatExt
@@ -80,6 +81,7 @@ abstract class ActionBarCastActivity : AppCompatActivity() {
     public override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         Utils.applyTheme(getDefaultSharedPreferences(this).getString(getString(R.string.preference_theme_key), "System")!!)
+        DynamicColors.applyToActivitiesIfAvailable(application)
         setContentView(R.layout.activity_player)
         slidingUpPanelLayout = findViewById(R.id.sliding_layout)
         initializeToolbar()
