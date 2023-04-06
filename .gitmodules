@@ -1,6 +1,0 @@
-[submodule "waveform"]
-	path = waveform
-	url = https://github.com/soundcrowd/soundcrowd-waveform
-[submodule "plugin"]
-	path = plugin
-	url = https://github.com/soundcrowd/soundcrowd-plugin
