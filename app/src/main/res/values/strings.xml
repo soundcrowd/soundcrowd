@@ -66,6 +66,5 @@
         <item>System</item>
         <item>Light</item>
         <item>Dark</item>
-        <item>Adaptive</item>
     </string-array>
 </resources>
