@@ -42,8 +42,8 @@ android {
 
 dependencies {
     // own modules
-    implementation project(path: ':waveform')
-    implementation project(path: ':plugin')
+    implementation 'com.tiefensuche.soundcrowd:plugin:0.1'
+    implementation 'com.tiefensuche.soundcrowd:waveform:1.0'
 
     // android support
     implementation 'com.google.android.material:material:1.4.0'
