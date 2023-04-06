@@ -446,6 +446,7 @@ internal class FullScreenPlayerFragment : Fragment() {
                 mPlayPause.visibility = VISIBLE
                 mPlayPause.setImageDrawable(mPauseDrawable)
                 mControllers.visibility = VISIBLE
+                mSeekbar.isEnabled = true
                 scheduleSeekbarUpdate()
             }
             STATE_PAUSED -> {
@@ -465,6 +466,7 @@ internal class FullScreenPlayerFragment : Fragment() {
                 mPlayPause.visibility = INVISIBLE
                 mLoading.visibility = VISIBLE
                 mLine3.text = getString(R.string.loading)
+                mSeekbar.isEnabled = false
                 stopSeekbarUpdate()
             }
             else -> Log.d(TAG, "Unhandled state ${state.state}")
