@@ -16,7 +16,7 @@
 #   public *;
 #}
 -keep class com.tiefensuche.soundcrowd.plugins.** { *; }
--keep class com.tiefensuche.soundcrowd.extensions.UrlResolver { *; }
+-keep class com.tiefensuche.soundcrowd.extensions.** { *; }
 -keep class android.support.v4.media.** { *; }
 -keep class androidx.preference.** { *; }
 -keep class kotlin.** { *; }
