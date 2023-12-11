@@ -3,7 +3,6 @@
   ~ SPDX-License-Identifier: GPL-3.0-only
   -->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
     package="com.tiefensuche.soundcrowd">
 
     <uses-permission android:name="android.permission.WAKE_LOCK" />
@@ -14,6 +13,7 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
     <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES" />
 
     <application
@@ -35,7 +35,6 @@
         <activity
             android:name=".ui.MusicPlayerActivity"
             android:exported="true"
-            android:label="@string/app_name"
             android:launchMode="singleTop"
             android:theme="@style/Theme.Material3">
 
@@ -84,8 +83,8 @@
          MediaBrowser (for browsing) and MediaController (for play session control) -->
         <service
             android:name=".service.MusicService"
-            android:exported="true"
-            tools:ignore="ExportedService">
+            android:exported="false"
+            android:foregroundServiceType="mediaPlayback">
             <intent-filter>
                 <action android:name="android.media.browse.MediaBrowserService" />
             </intent-filter>

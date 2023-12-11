@@ -10,6 +10,7 @@ import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.BroadcastReceiver
 import android.content.Context
+import android.content.Context.RECEIVER_NOT_EXPORTED
 import android.content.Intent
 import android.content.IntentFilter
 import android.graphics.Color
@@ -131,7 +132,11 @@ constructor(private val mService: MusicService) : BroadcastReceiver() {
                 for (action in listOf(ACTION_NEXT, ACTION_PAUSE, ACTION_PLAY, ACTION_PREV)) {
                     filter.addAction(action)
                 }
-                mService.registerReceiver(this, filter)
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                    mService.registerReceiver(this, filter, RECEIVER_NOT_EXPORTED)
+                } else {
+                    mService.registerReceiver(this, filter)
+                }
                 mService.startForeground(NOTIFICATION_ID, notification)
                 mStarted = true
             }
