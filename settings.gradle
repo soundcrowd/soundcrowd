@@ -15,6 +15,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-include ':app', ':plugin', ':waveform'
-project(':plugin').projectDir = new File('plugin/plugin')
-project(':waveform').projectDir = new File('waveform/waveform')
+pluginManagement {
+    repositories {
+        google()
+        mavenCentral()
+        gradlePluginPortal()
+    }
+}
+
+include ':app'
