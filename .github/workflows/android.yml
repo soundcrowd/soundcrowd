@@ -4,9 +4,11 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
         with:
-          submodules: recursive
+          distribution: 'temurin'
+          java-version: '17'
       - run: ./gradlew assembleDebug
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
