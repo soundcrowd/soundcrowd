@@ -33,6 +33,7 @@ The following plugins for online streaming services are currently available:
 | YouTube    | [![GitHub release](https://img.shields.io/github/release/soundcrowd/soundcrowd-plugin-youtube.svg)](https://github.com/soundcrowd/soundcrowd-plugin-youtube/releases)       |
 | Spotify    | [![GitHub release](https://img.shields.io/github/release/soundcrowd/soundcrowd-plugin-spotify.svg)](https://github.com/soundcrowd/soundcrowd-plugin-spotify/releases)       |
 | Beatport   | [![GitHub release](https://img.shields.io/github/release/soundcrowd/soundcrowd-plugin-beatport.svg)](https://github.com/soundcrowd/soundcrowd-plugin-beatport/releases)     |
+| Tidal      | [![GitHub release](https://img.shields.io/github/release/soundcrowd/soundcrowd-plugin-tidal.svg)](https://github.com/soundcrowd/soundcrowd-plugin-tidal/releases)           |
 | Cache      | [![GitHub release](https://img.shields.io/github/release/soundcrowd/soundcrowd-plugin-cache.svg)](https://github.com/soundcrowd/soundcrowd-plugin-cache/releases)           |
 
 You can install them from the F-Droid repository or download the apks directly from the GitHub releases pages.
