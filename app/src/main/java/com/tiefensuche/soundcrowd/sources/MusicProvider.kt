@@ -25,9 +25,12 @@ import com.tiefensuche.soundcrowd.utils.MediaIDHelper.CATEGORY_SEPARATOR
 import com.tiefensuche.soundcrowd.utils.MediaIDHelper.LEAF_SEPARATOR
 import com.tiefensuche.soundcrowd.utils.MediaIDHelper.createMediaID
 import com.tiefensuche.soundcrowd.utils.MediaIDHelper.extractMusicIDFromMediaID
-import com.tiefensuche.soundcrowd.utils.MediaIDHelper.extractSourceValueFromMediaID
 import com.tiefensuche.soundcrowd.utils.MediaIDHelper.getHierarchy
 import com.tiefensuche.soundcrowd.utils.Utils
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import org.json.JSONException
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
@@ -170,11 +173,18 @@ internal class MusicProvider(context: MusicService) {
             }
 
             PluginManager.plugins[source]?.let {
-                AsyncTask.execute {
-                    try {
-                        it.getMediaUrl(metadata, callback)
-                    } catch (e: Exception) {
-                        Log.w(TAG, "failed to resolve music with plugin ${it.name()}", e)
+                runBlocking {
+                    launch {
+                        var res : Pair<MediaMetadataCompat, MediaDataSource?>? = null
+                        withContext(Dispatchers.IO) {
+                            it.getMediaUrl(metadata, object :
+                                com.tiefensuche.soundcrowd.plugins.Callback<Pair<MediaMetadataCompat, MediaDataSource?>> {
+                                override fun onResult(result: Pair<MediaMetadataCompat, MediaDataSource?>) {
+                                    res = result
+                                }
+                            })
+                        }
+                        callback.onResult(res!!)
                     }
                 }
             } ?: Log.d(TAG, "no plugin found to resolve $mediaId")

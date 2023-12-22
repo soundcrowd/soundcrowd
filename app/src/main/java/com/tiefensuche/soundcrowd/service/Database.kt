@@ -81,7 +81,7 @@ internal class Database(context: Context) : MetadataDatabase(context) {
         return result
     }
 
-    internal fun updatePosition(metadata: MediaMetadataCompat, position: Int) {
+    internal fun updatePosition(metadata: MediaMetadataCompat, position: Long) {
         addMediaItem(metadata)
         metadata.description.mediaId?.let {
             val musicId = MediaIDHelper.extractMusicIDFromMediaID(it)

@@ -13,14 +13,6 @@ import android.support.v4.media.session.MediaSessionCompat.QueueItem
 interface Playback {
 
     /**
-     * Get the current [android.media.session.PlaybackState.getState]
-     */
-    /**
-     * Set the latest playback state as determined by the caller.
-     */
-    var state: Int
-
-    /**
      * @return boolean that indicates that this is ready to be used.
      */
     val isConnected: Boolean
@@ -34,7 +26,7 @@ interface Playback {
     /**
      * @return pos if currently playing an item
      */
-    val currentStreamPosition: Int
+    val currentStreamPosition: Long
 
     var currentMediaId: String
 
@@ -54,17 +46,22 @@ interface Playback {
     fun stop(notifyListeners: Boolean)
 
     /**
+     * Get the current {@link android.media.session.PlaybackState#getState()}
+     */
+    fun getState(): Int
+
+    /**
      * Queries the underlying stream and update the internal last known stream position.
      */
     fun updateLastKnownStreamPosition()
 
     fun play(item: QueueItem)
 
-    fun play(item: QueueItem, position: Int)
+    fun play(item: QueueItem, position: Long)
 
     fun pause()
 
-    fun seekTo(position: Int)
+    fun seekTo(position: Long)
 
     fun setCallback(callback: Callback)
 

@@ -65,7 +65,7 @@ internal class CueListFragment : Fragment() {
                 if (item is CueItem && MediaControllerCompat.getMediaController(it) != null) {
                     val bundle = Bundle()
                     bundle.putString(MEDIA_ID, CUE_POINTS + LEAF_SEPARATOR + item.cuePoint.mediaId)
-                    bundle.putInt(POSITION, item.cuePoint.position)
+                    bundle.putLong(POSITION, item.cuePoint.position.toLong())
                     MediaControllerCompat.getMediaController(it).transportControls.sendCustomAction(CUSTOM_ACTION_PLAY_SEEK, bundle)
                 }
             }

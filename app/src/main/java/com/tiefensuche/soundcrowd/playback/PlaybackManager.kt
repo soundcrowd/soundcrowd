@@ -72,7 +72,7 @@ internal class PlaybackManager(private val mServiceCallback: PlaybackServiceCall
     /**
      * Handle a request to play music
      */
-    private fun handlePlayRequestAtPosition(position: Int) {
+    private fun handlePlayRequestAtPosition(position: Long) {
         val currentMusic = mQueueManager.currentMusic
         if (currentMusic != null) {
             mServiceCallback.onPlaybackStart()
@@ -109,8 +109,8 @@ internal class PlaybackManager(private val mServiceCallback: PlaybackServiceCall
      * @param error if not null, error message to present to the user.
      */
     internal fun updatePlaybackState(error: String?) {
-        Log.d(TAG, "updatePlaybackState, playback state=${playback.state}")
-        var position = -1
+        Log.d(TAG, "updatePlaybackState, playback state=${playback.getState()}")
+        var position = -1L
         if (playback.isConnected) {
             position = playback.currentStreamPosition
         }
@@ -118,7 +118,7 @@ internal class PlaybackManager(private val mServiceCallback: PlaybackServiceCall
         val stateBuilder = PlaybackStateCompat.Builder()
                 .setActions(availableActions)
 
-        var state = playback.state
+        var state = playback.getState()
 
         // If there is an error message, send it to the playback state:
         if (error != null) {
@@ -194,7 +194,7 @@ internal class PlaybackManager(private val mServiceCallback: PlaybackServiceCall
         }
     }
 
-    private fun playAtPosition(mediaId: String, position: Int) {
+    private fun playAtPosition(mediaId: String, position: Long) {
         if (mMusicProvider.getMusic(extractMusicIDFromMediaID(mediaId)) != null) {
             setCurrentMediaId(mediaId)
             handlePlayRequestAtPosition(position)
@@ -224,7 +224,7 @@ internal class PlaybackManager(private val mServiceCallback: PlaybackServiceCall
         }
 
         override fun onSeekTo(position: Long) {
-            playback.seekTo(position.toInt())
+            playback.seekTo(position)
         }
 
         override fun onPlayFromMediaId(mediaId: String, extras: Bundle?) {
@@ -279,7 +279,7 @@ internal class PlaybackManager(private val mServiceCallback: PlaybackServiceCall
         override fun onCustomAction(action: String?, extras: Bundle?) {
             when (action) {
                 CUSTOM_ACTION_PLAY_SEEK -> extras?.getString(MEDIA_ID)?.let {
-                    playAtPosition(it, extras.getInt(POSITION)) }
+                    playAtPosition(it, extras.getLong(POSITION)) }
                 else -> Log.e(TAG, "Unsupported action: $action")
             }
         }
