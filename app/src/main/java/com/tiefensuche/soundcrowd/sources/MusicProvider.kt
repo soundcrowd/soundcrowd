@@ -14,6 +14,7 @@ import android.support.v4.media.MediaMetadataCompat
 import android.util.Log
 import com.tiefensuche.soundcrowd.service.Database
 import com.tiefensuche.soundcrowd.extensions.MediaMetadataCompatExt
+import com.tiefensuche.soundcrowd.plugins.IPlugin
 import com.tiefensuche.soundcrowd.service.PluginManager
 import com.tiefensuche.soundcrowd.service.MusicService
 import com.tiefensuche.soundcrowd.sources.MusicProvider.Media.CUE_POINTS
@@ -27,10 +28,6 @@ import com.tiefensuche.soundcrowd.utils.MediaIDHelper.createMediaID
 import com.tiefensuche.soundcrowd.utils.MediaIDHelper.extractMusicIDFromMediaID
 import com.tiefensuche.soundcrowd.utils.MediaIDHelper.getHierarchy
 import com.tiefensuche.soundcrowd.utils.Utils
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withContext
 import org.json.JSONException
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
@@ -164,7 +161,10 @@ internal class MusicProvider(context: MusicService) {
         return library.keys[musicId]?.metadata
     }
 
-    internal fun resolveMusic(mediaId: String, callback: com.tiefensuche.soundcrowd.plugins.Callback<Pair<MediaMetadataCompat, MediaDataSource?>>) {
+    internal fun resolveMusic(
+        mediaId: String,
+        callback: com.tiefensuche.soundcrowd.plugins.Callback<Pair<MediaMetadataCompat, MediaDataSource?>>
+    ) {
         getMusic(extractMusicIDFromMediaID(mediaId))?.let { metadata ->
             val source = metadata.getString(MediaMetadataCompatExt.METADATA_KEY_SOURCE)
             if (source == LocalSource.name) {
@@ -173,21 +173,35 @@ internal class MusicProvider(context: MusicService) {
             }
 
             PluginManager.plugins[source]?.let {
-                runBlocking {
-                    launch {
-                        var res : Pair<MediaMetadataCompat, MediaDataSource?>? = null
-                        withContext(Dispatchers.IO) {
-                            it.getMediaUrl(metadata, object :
-                                com.tiefensuche.soundcrowd.plugins.Callback<Pair<MediaMetadataCompat, MediaDataSource?>> {
-                                override fun onResult(result: Pair<MediaMetadataCompat, MediaDataSource?>) {
-                                    res = result
-                                }
-                            })
-                        }
-                        callback.onResult(res!!)
-                    }
-                }
+                ResolveTask(it, metadata, callback).execute()
             } ?: Log.d(TAG, "no plugin found to resolve $mediaId")
+        }
+    }
+
+    class ResolveTask(
+        val plugin: IPlugin,
+        val metadata: MediaMetadataCompat,
+        val callback: com.tiefensuche.soundcrowd.plugins.Callback<Pair<MediaMetadataCompat, MediaDataSource?>>
+    ) : AsyncTask<MediaMetadataCompat, Void, Pair<MediaMetadataCompat, MediaDataSource?>>() {
+        override fun doInBackground(vararg params: MediaMetadataCompat?): Pair<MediaMetadataCompat, MediaDataSource?>? {
+            var res: Pair<MediaMetadataCompat, MediaDataSource?>? = null
+            try {
+                plugin.getMediaUrl(metadata, object :
+                    com.tiefensuche.soundcrowd.plugins.Callback<Pair<MediaMetadataCompat, MediaDataSource?>> {
+                    override fun onResult(result: Pair<MediaMetadataCompat, MediaDataSource?>) {
+                        res = result
+                    }
+                })
+            } catch (e: Exception) {
+                Log.w(TAG, "failed to resolve music with plugin ${plugin.name()}", e)
+            }
+            return res
+        }
+
+        override fun onPostExecute(result: Pair<MediaMetadataCompat, MediaDataSource?>?) {
+            result?.let {
+                callback.onResult(it)
+            }
         }
     }
 
