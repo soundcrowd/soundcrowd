@@ -64,7 +64,9 @@ constructor(private val mService: MusicService) : BroadcastReceiver() {
                     if (state.state >= PlaybackStateCompat.STATE_PLAYING) {
                         mService.startForeground(NOTIFICATION_ID, notification)
                     } else {
-                        mService.stopForeground(false)
+                        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+                            mService.stopForeground(false)
+                        }
                         mNotificationManager.notify(NOTIFICATION_ID, notification)
                     }
                 }
