@@ -9,6 +9,7 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.media.AudioManager
 import android.media.MediaDataSource
+import android.net.Uri
 import android.net.wifi.WifiManager
 import android.os.PowerManager
 import android.support.v4.media.MediaMetadataCompat
@@ -19,7 +20,10 @@ import android.util.Log
 import androidx.media3.common.MediaItem
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player.Listener
+import androidx.media3.datasource.DataSource
+import androidx.media3.datasource.DataSpec
 import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.exoplayer.source.ProgressiveMediaSource
 import com.tiefensuche.soundcrowd.extensions.MediaMetadataCompatExt
 import com.tiefensuche.soundcrowd.extensions.UrlResolver
 import com.tiefensuche.soundcrowd.plugins.Callback
@@ -146,18 +150,28 @@ internal class LocalPlayback(private val mContext: Context, private val mMusicPr
                                 createMediaPlayerIfNeeded()
 
                                 mMediaPlayer?.let {
-                                    if (result.second == null) {
-                                        val url = if (result.first.containsKey(MediaMetadataCompatExt.METADATA_KEY_DOWNLOAD_URL)) {
-                                            result.first.getString(MediaMetadataCompatExt.METADATA_KEY_DOWNLOAD_URL)
-                                        } else {
-                                            result.first.getString(MediaMetadataCompat.METADATA_KEY_MEDIA_URI)
+                                    result.second?.let { mediaDataSource ->
+                                        val uri =
+                                            Uri.parse(result.first.getString(MediaMetadataCompat.METADATA_KEY_MEDIA_URI))
+                                        val dataSource = MediaDataSourceWrapper(mediaDataSource)
+                                        dataSource.open(DataSpec(uri))
+                                        val factory = DataSource.Factory {
+                                            dataSource
                                         }
-                                        it.setMediaItem(MediaItem.fromUri(url))
+                                        val mediaSource = ProgressiveMediaSource.Factory(factory)
+                                            .createMediaSource(MediaItem.fromUri(uri))
+                                        it.setMediaSource(mediaSource)
+                                    } ?: run {
+                                        it.setMediaItem(
+                                            MediaItem.fromUri(
+                                                if (result.first.containsKey(MediaMetadataCompatExt.METADATA_KEY_DOWNLOAD_URL)) {
+                                                    result.first.getString(MediaMetadataCompatExt.METADATA_KEY_DOWNLOAD_URL)
+                                                } else {
+                                                    result.first.getString(MediaMetadataCompat.METADATA_KEY_MEDIA_URI)
+                                                }
+                                            )
+                                        )
                                     }
-                                    else {
-                                        // TODO support playing from MediaDataSource
-                                    }
-
 
                                     // Starts preparing the media player in the background. When
                                     // it's done, it will call our OnPreparedListener (that is,
