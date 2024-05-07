@@ -346,7 +346,7 @@ internal class LocalPlayback(private val mContext: Context, private val mMusicPr
     }
 
     private fun updatePlaybackState() {
-        when (mMediaPlayer!!.playbackState) {
+        when (mMediaPlayer?.playbackState) {
             ExoPlayer.STATE_IDLE,
             ExoPlayer.STATE_BUFFERING,
             ExoPlayer.STATE_READY -> mCallback?.onPlaybackStatusChanged(getState())
