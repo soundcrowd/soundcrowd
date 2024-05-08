@@ -15,14 +15,8 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.ProgressBar
 import android.widget.TextView
-import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
-import androidx.recyclerview.widget.GridLayoutManager
-import androidx.recyclerview.widget.RecyclerView
-import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import com.tiefensuche.soundcrowd.R
-import com.tiefensuche.soundcrowd.extensions.MediaMetadataCompatExt
-import com.tiefensuche.soundcrowd.images.ArtworkHelper
 import com.tiefensuche.soundcrowd.images.GlideApp
 import com.tiefensuche.soundcrowd.images.GlideRequests
 import com.tiefensuche.soundcrowd.service.MusicService
@@ -32,10 +26,9 @@ import com.tiefensuche.soundcrowd.sources.MusicProvider.Companion.ACTION_GET_MED
 import com.tiefensuche.soundcrowd.sources.MusicProvider.Companion.MEDIA_ID
 import com.tiefensuche.soundcrowd.sources.MusicProvider.Companion.RESULT
 import com.tiefensuche.soundcrowd.sources.MusicProvider.Media.LOCAL
-import com.tiefensuche.soundcrowd.sources.MusicProvider.PluginMetadata.MEDIA_TYPE
+import com.tiefensuche.soundcrowd.sources.MusicProvider.PluginMetadata.NAME
 import com.tiefensuche.soundcrowd.ui.intro.ShowcaseViewManager
 import `in`.myinnos.alphabetsindexfastscrollrecycler.IndexFastScrollRecyclerView
-import kotlin.math.round
 
 /**
  * A Fragment that lists all the various browsable queues available
@@ -46,139 +39,67 @@ import kotlin.math.round
  * Once connected, the fragment subscribes to get all the children.
  * All [MediaBrowserCompat.MediaItem]'s that can be browsed are shown in a ListView.
  */
-internal class MediaBrowserFragment : Fragment() {
+internal abstract class MediaBrowserFragment : Fragment() {
 
-    private lateinit var mBrowserAdapter: MediaItemAdapter
-    private lateinit var mMediaFragmentListener: MediaFragmentListener
+    lateinit var mBrowserAdapter: MediaItemAdapter<*>
+    lateinit var mMediaFragmentListener: MediaFragmentListener
     private lateinit var mNoMediaView: TextView
-    private lateinit var mProgressBar: ProgressBar
-    private lateinit var mSwipeRefreshLayout: SwipeRefreshLayout
-    private lateinit var mRecyclerView: IndexFastScrollRecyclerView
-    private lateinit var requests: GlideRequests
+    lateinit var mProgressBar: ProgressBar
+    lateinit var mRecyclerView: IndexFastScrollRecyclerView
+    lateinit var requests: GlideRequests
 
-    private val mCallback = object : MediaBrowserCompat.CustomActionCallback() {
-        override fun onResult(action: String, extras: Bundle, resultData: Bundle) {
-            Log.d(TAG, "fragment onResult, action=$action, count=${resultData.size()}")
+    open fun onResult(action: String, extras: Bundle, resultData: Bundle) {
+        Log.d(TAG, "fragment onResult, action=$action, count=${resultData.size()}")
 
-            // hide loading indicators
-            mSwipeRefreshLayout.isRefreshing = false
-            mProgressBar.visibility = View.GONE
+        // hide loading indicators
+        mProgressBar.visibility = View.GONE
 
-            for (item in resultData.getParcelableArrayList<MediaBrowserCompat.MediaItem>(RESULT)!!) {
-                mBrowserAdapter.add(item)
-            }
+        resultData.getParcelableArrayList<MediaBrowserCompat.MediaItem>(RESULT)
+            ?.forEach { mBrowserAdapter.add(it) }
 
-            // Create alphabetical sections for root category
-            if (mediaId == DEFAULT_MEDIA_ID) {
-                initializeRootCategory()
-            }
-
-            mBrowserAdapter.notifyDataChanged()
-            showNoMedia(mBrowserAdapter.isEmpty)
-            activity?.let {
-                val view = it.findViewById<View>(R.id.toolbar)
-                ShowcaseViewManager.introduce(ShowcaseViewManager.ShowcaseFunction.SEARCH_VIEW, Point(view.width - view.height / 2, view.height / 2), it)
-            }
-        }
-
-        override fun onError(action: String, extras: Bundle, data: Bundle) {
-            Log.e(TAG, "browse fragment onError, id=$id")
-
-            // hide loading indicators
-            mSwipeRefreshLayout.isRefreshing = false
-            mProgressBar.visibility = View.GONE
-            data.getString(ARG_ERROR)?.let {
-                showMessage(it)
-            }
+        showNoMedia(mBrowserAdapter.isEmpty)
+        activity?.let {
+            val view = it.findViewById<View>(R.id.toolbar)
+            ShowcaseViewManager.introduce(ShowcaseViewManager.ShowcaseFunction.SEARCH_VIEW, Point(view.width - view.height / 2, view.height / 2), it)
         }
     }
 
-    internal val mediaId: String
+    open fun onError(action: String, extras: Bundle, data: Bundle) {
+        Log.e(TAG, "browse fragment onError, id=$id")
+
+        // hide loading indicators
+        mProgressBar.visibility = View.GONE
+        data.getString(ARG_ERROR)?.let {
+            showMessage(it)
+        }
+    }
+
+    internal open val mediaId: String
         get() = arguments?.getString(MEDIA_ID)
                 ?: arguments?.getParcelable<MediaDescriptionCompat>(ARG_MEDIA_DESCRIPTION)?.mediaId
                 ?: DEFAULT_MEDIA_ID
 
-    private val isStream: Boolean
-        get() = arguments?.getString(MEDIA_TYPE) == MediaMetadataCompatExt.MediaType.STREAM.name
-                || arguments?.getParcelable<MediaDescriptionCompat>(ARG_MEDIA_DESCRIPTION)?.extras?.getString(MediaMetadataCompatExt.METADATA_KEY_TYPE) == MediaMetadataCompatExt.MediaType.STREAM.name
-
     @SuppressLint("ClickableViewAccessibility")
-    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
+    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         val rootView = inflater.inflate(R.layout.fragment_list, container, false)
 
         requests = GlideApp.with(this)
-        mBrowserAdapter = MediaItemAdapter(requests, object : MediaItemAdapter.OnItemClickListener {
-            override fun onItemClick(item: MediaBrowserCompat.MediaItem) {
-                mMediaFragmentListener.onMediaItemSelected(item)
-            }
-        }, ContextCompat.getColor(rootView.context, R.color.colorPrimary))
         mNoMediaView = rootView.findViewById(R.id.error_no_media)
         mProgressBar = rootView.findViewById(R.id.progressBar)
 
-        mSwipeRefreshLayout = rootView.findViewById(R.id.swipeContainer)
-        mSwipeRefreshLayout.isEnabled = false
-
         mRecyclerView = rootView.findViewById(R.id.list_view)
-        mRecyclerView.adapter = mBrowserAdapter
         mRecyclerView.setIndexBarVisibility(false)
-        mRecyclerView.layoutManager = GridLayoutManager(
-            rootView.context,
-            round(resources.displayMetrics.widthPixels / (resources.getDimensionPixelSize(R.dimen.media_item_height)).toFloat()).toInt()
-        )
 
         mMediaFragmentListener.showSearchButton(true)
 
         // update toolbar title, collapsing toolbar layout
         updateDescription()
 
-        if (isStream) {
-            initializeStream()
-        }
-
         return rootView
     }
 
-    private fun initializeRootCategory() {
-        // initialize as static media content, alphabetically sorted and indexed
-        mRecyclerView.setOnTouchListener { _, _ ->
-            if (!mBrowserAdapter.isEmpty) {
-                mRecyclerView.setIndexBarVisibility(true)
-            }
-            false
-        }
-        mRecyclerView.addOnScrollListener(object : RecyclerView.OnScrollListener() {
-            override fun onScrollStateChanged(recyclerView: RecyclerView, newState: Int) {
-                when (newState) {
-                    RecyclerView.SCROLL_STATE_IDLE -> mRecyclerView.setIndexBarVisibility(false)
-                    RecyclerView.SCROLL_STATE_DRAGGING, RecyclerView.SCROLL_STATE_SETTLING -> if (!mBrowserAdapter.isEmpty) {
-                        mRecyclerView.setIndexBarVisibility(true)
-                    }
-                }
-            }
-        })
-        mBrowserAdapter.generateSections()
-    }
-
-    private fun initializeStream() {
-        // initialize as stream or dynamic media content, ordered as it was added,
-        // items can be added when reaching the end
-        mRecyclerView.addOnScrollListener(object : EndlessRecyclerViewScrollListener(mRecyclerView.layoutManager as GridLayoutManager) {
-            override fun onLoadMore(page: Int, totalItemsCount: Int, view: RecyclerView) {
-                mProgressBar.visibility = View.VISIBLE
-                requestMedia(mBrowserAdapter.count)
-            }
-        })
-        mSwipeRefreshLayout.isEnabled = true
-        mSwipeRefreshLayout.setOnRefreshListener {
-            mBrowserAdapter.clear()
-            mBrowserAdapter.notifyDataSetChanged()
-            requestMedia(refresh = true)
-        }
-    }
-
-    internal fun setFilter(filter: CharSequence?) {
-        if (!isStream)
-            mBrowserAdapter.filter.filter(filter)
+    internal open fun setFilter(filter: CharSequence?) {
+        mBrowserAdapter.filter.filter(filter)
     }
 
     override fun onAttach(activity: Activity) {
@@ -197,8 +118,16 @@ internal class MediaBrowserFragment : Fragment() {
         if (refresh)
             bundle.putBoolean(MusicProvider.OPTION_REFRESH, true)
 
-        bundle.putString(MEDIA_ID, arguments?.getString(MEDIA_ID) ?: LOCAL)
-        mMediaFragmentListener.mediaBrowser?.sendCustomAction(ACTION_GET_MEDIA, bundle, mCallback)
+        bundle.putString(MEDIA_ID, mediaId)
+        mMediaFragmentListener.mediaBrowser?.sendCustomAction(ACTION_GET_MEDIA, bundle, object : MediaBrowserCompat.CustomActionCallback() {
+            override fun onResult(action: String, extras: Bundle, resultData: Bundle) {
+                this@MediaBrowserFragment.onResult(action, extras, resultData)
+            }
+
+            override fun onError(action: String, extras: Bundle, data: Bundle) {
+                this@MediaBrowserFragment.onError(action, extras, data)
+            }
+        })
     }
 
     override fun onStart() {
@@ -229,21 +158,24 @@ internal class MediaBrowserFragment : Fragment() {
         mNoMediaView.visibility = if (show) View.VISIBLE else View.GONE
     }
 
-    private fun updateDescription() {
-        mMediaFragmentListener.setToolbarTitle(if (mediaId == LOCAL) getString(R.string.drawer_allmusic_title) else mediaId)
-        activity?.let { activity ->
-            arguments?.getParcelable<MediaDescriptionCompat>(ARG_MEDIA_DESCRIPTION)?.let {
-                ArtworkHelper.loadArtwork(requests, it, activity.findViewById(R.id.container_image))
-                (activity.findViewById<View>(R.id.header_line2) as? TextView)?.text = it.subtitle
+    open fun updateDescription() {
+        arguments?.let {
+            it.getParcelable<MediaDescriptionCompat>(ARG_MEDIA_DESCRIPTION)?.let {
                 mMediaFragmentListener.enableCollapse(true)
                 mMediaFragmentListener.setToolbarTitle(it.title)
-            } ?: mMediaFragmentListener.enableCollapse(false)
+                mMediaFragmentListener.setSubtitle(it.subtitle)
+                mMediaFragmentListener.setBackground(it)
+                return
+            } ?: mMediaFragmentListener.setToolbarTitle(it.getString(NAME))
         }
+        mMediaFragmentListener.enableCollapse(false)
     }
 
     internal interface MediaFragmentListener : MediaBrowserProvider {
         fun onMediaItemSelected(item: MediaBrowserCompat.MediaItem)
         fun setToolbarTitle(title: CharSequence?)
+        fun setSubtitle(title: CharSequence?)
+        fun setBackground(description: MediaDescriptionCompat)
         fun enableCollapse(enable: Boolean)
         fun showSearchButton(show: Boolean)
     }
