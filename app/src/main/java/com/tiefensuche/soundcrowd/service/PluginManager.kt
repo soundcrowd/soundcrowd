@@ -10,7 +10,6 @@ import android.net.Uri
 import android.util.Log
 import com.tiefensuche.soundcrowd.plugins.IPlugin
 import dalvik.system.PathClassLoader
-import java.util.*
 
 internal class PluginManager(private val context: Context) {
 

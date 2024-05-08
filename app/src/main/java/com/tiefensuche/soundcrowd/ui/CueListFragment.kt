@@ -6,7 +6,6 @@ package com.tiefensuche.soundcrowd.ui
 
 import android.app.Activity
 import android.os.Bundle
-import androidx.fragment.app.Fragment
 import android.support.v4.media.session.MediaControllerCompat
 import android.text.format.DateUtils
 import android.view.LayoutInflater
@@ -14,15 +13,15 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.ArrayAdapter
 import android.widget.ListView
+import androidx.fragment.app.Fragment
 import com.tiefensuche.soundcrowd.R
+import com.tiefensuche.soundcrowd.playback.PlaybackManager.Companion.CUSTOM_ACTION_PLAY_SEEK
 import com.tiefensuche.soundcrowd.service.Database.Companion.MEDIA_ID
 import com.tiefensuche.soundcrowd.service.Database.Companion.POSITION
-import com.tiefensuche.soundcrowd.playback.PlaybackManager.Companion.CUSTOM_ACTION_PLAY_SEEK
 import com.tiefensuche.soundcrowd.service.MusicService
 import com.tiefensuche.soundcrowd.sources.MusicProvider.Media.CUE_POINTS
 import com.tiefensuche.soundcrowd.utils.MediaIDHelper.LEAF_SEPARATOR
 import com.tiefensuche.soundcrowd.waveform.CuePoint
-import java.util.*
 
 /**
  * Fragment that lists all the [CuePoint] items that were created by the user

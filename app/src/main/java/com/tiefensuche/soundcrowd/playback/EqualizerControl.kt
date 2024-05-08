@@ -1,11 +1,15 @@
 package com.tiefensuche.soundcrowd.playback
 
 import android.content.Context
-import android.media.audiofx.*
+import android.media.audiofx.AudioEffect
+import android.media.audiofx.BassBoost
+import android.media.audiofx.Equalizer
+import android.media.audiofx.LoudnessEnhancer
+import android.media.audiofx.PresetReverb
 import android.os.Build
 import android.preference.PreferenceManager
-import androidx.annotation.RequiresApi
 import android.util.Log
+import androidx.annotation.RequiresApi
 import com.tiefensuche.soundcrowd.ui.preferences.EqualizerFragment
 
 internal class EqualizerControl {

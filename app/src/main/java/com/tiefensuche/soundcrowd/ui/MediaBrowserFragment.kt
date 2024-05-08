@@ -3,24 +3,23 @@
  */
 package com.tiefensuche.soundcrowd.ui
 
-import `in`.myinnos.alphabetsindexfastscrollrecycler.IndexFastScrollRecyclerView
 import android.annotation.SuppressLint
 import android.app.Activity
 import android.graphics.Point
 import android.os.Bundle
-import androidx.fragment.app.Fragment
-import androidx.core.content.ContextCompat
 import android.support.v4.media.MediaBrowserCompat
 import android.support.v4.media.MediaDescriptionCompat
-import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
-import androidx.recyclerview.widget.GridLayoutManager
-import androidx.recyclerview.widget.RecyclerView
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ProgressBar
 import android.widget.TextView
+import androidx.core.content.ContextCompat
+import androidx.fragment.app.Fragment
+import androidx.recyclerview.widget.GridLayoutManager
+import androidx.recyclerview.widget.RecyclerView
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import com.tiefensuche.soundcrowd.R
 import com.tiefensuche.soundcrowd.extensions.MediaMetadataCompatExt
 import com.tiefensuche.soundcrowd.images.ArtworkHelper
@@ -35,6 +34,7 @@ import com.tiefensuche.soundcrowd.sources.MusicProvider.Companion.RESULT
 import com.tiefensuche.soundcrowd.sources.MusicProvider.Media.LOCAL
 import com.tiefensuche.soundcrowd.sources.MusicProvider.PluginMetadata.MEDIA_TYPE
 import com.tiefensuche.soundcrowd.ui.intro.ShowcaseViewManager
+import `in`.myinnos.alphabetsindexfastscrollrecycler.IndexFastScrollRecyclerView
 import kotlin.math.round
 
 /**

@@ -4,7 +4,7 @@
 
 package com.tiefensuche.soundcrowd.utils
 
-import java.util.*
+import java.util.Locale
 
 /**
  * Utility class to help on queue related tasks.

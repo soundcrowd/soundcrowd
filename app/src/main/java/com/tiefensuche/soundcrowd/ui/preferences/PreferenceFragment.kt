@@ -5,7 +5,11 @@
 package com.tiefensuche.soundcrowd.ui.preferences
 
 import android.os.Bundle
-import androidx.preference.*
+import androidx.preference.EditTextPreference
+import androidx.preference.ListPreference
+import androidx.preference.Preference
+import androidx.preference.PreferenceCategory
+import androidx.preference.PreferenceFragmentCompat
 import com.tiefensuche.soundcrowd.R
 import com.tiefensuche.soundcrowd.service.PluginManager
 import com.tiefensuche.soundcrowd.ui.MediaBrowserFragment

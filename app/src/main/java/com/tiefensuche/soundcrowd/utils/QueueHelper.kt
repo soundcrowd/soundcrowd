@@ -9,7 +9,6 @@ import android.support.v4.media.session.MediaSessionCompat
 import android.text.TextUtils
 import android.util.Log
 import com.tiefensuche.soundcrowd.sources.MusicProvider
-import java.util.*
 
 /**
  * Utility class to help on queue related tasks.

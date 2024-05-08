@@ -11,9 +11,9 @@ import android.media.MediaMetadataRetriever
 import android.net.Uri
 import android.os.Build
 import android.provider.MediaStore
-import androidx.core.content.ContextCompat
 import android.support.v4.media.MediaMetadataCompat
 import android.util.Log
+import androidx.core.content.ContextCompat
 import com.tiefensuche.soundcrowd.extensions.MediaMetadataCompatExt
 import com.tiefensuche.soundcrowd.service.MusicService
 import java.util.*

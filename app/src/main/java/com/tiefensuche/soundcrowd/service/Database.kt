@@ -6,19 +6,15 @@ package com.tiefensuche.soundcrowd.service
 
 import android.content.ContentValues
 import android.content.Context
-import android.database.Cursor
 import android.database.SQLException
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteException
 import android.support.v4.media.MediaMetadataCompat
 import android.util.Log
 import com.tiefensuche.soundcrowd.database.MetadataDatabase
-import com.tiefensuche.soundcrowd.extensions.MediaMetadataCompatExt
-import com.tiefensuche.soundcrowd.sources.LocalSource
 import com.tiefensuche.soundcrowd.ui.CueListFragment
 import com.tiefensuche.soundcrowd.utils.MediaIDHelper
 import com.tiefensuche.soundcrowd.waveform.CuePoint
-import java.util.*
 
 /**
  * Database that stores media items, metadata, and [CuePoint] items
