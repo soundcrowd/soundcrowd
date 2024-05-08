@@ -213,7 +213,7 @@ abstract class ActionBarCastActivity : AppCompatActivity() {
     private fun setFragmentId(id: Int) {
         when (id) {
             R.id.navigation_allmusic -> setFragment(LocalTabFragment())
-            R.id.navigation_cue_points -> setFragment(CueListFragment())
+            R.id.navigation_cue_points -> setFragment(CueMediaBrowserFragment())
             R.id.navigation_equalizer -> setFragment(EqualizerFragment())
             R.id.navigation_preferences -> setFragment(PreferenceFragment())
             else -> {

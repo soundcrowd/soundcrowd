@@ -16,7 +16,8 @@ import com.bumptech.glide.request.target.Target
 import com.tiefensuche.soundcrowd.R
 import com.tiefensuche.soundcrowd.extensions.MediaMetadataCompatExt
 import com.tiefensuche.soundcrowd.images.GlideRequests
-import com.tiefensuche.soundcrowd.service.MusicService
+import com.tiefensuche.soundcrowd.sources.MusicProvider
+import org.json.JSONArray
 
 internal class WaveformHandler(private val waveformView: WaveformView) {
 
@@ -50,12 +51,18 @@ internal class WaveformHandler(private val waveformView: WaveformView) {
     private fun loadCuePoints(metadata: MediaMetadataCompat) {
         metadata.description.mediaId?.let {
             val duration = metadata.getLong(MediaMetadataCompat.METADATA_KEY_DURATION).toInt()
-            val lastPosition = MusicService.database.getLastPosition(metadata.description.mediaId)
+            val lastPosition = metadata.getLong(MusicProvider.Cues.LAST_POSITION)
             if (lastPosition > 0) {
                 waveformView.drawCuePoint(CuePoint(it, lastPosition.toInt(), waveformView.context.getString(R.string.last_position)), duration, play!!)
             }
-            for (cuePoint in MusicService.database.getCuePoints(it)) {
-                waveformView.drawCuePoint(cuePoint, duration, this.cuePoint!!)
+
+            metadata.getString(MusicProvider.Cues.CUES)?.let { cues ->
+                val json = JSONArray(cues)
+                for (i in 0 until json.length()) {
+                    val pos = json.getJSONObject(i).getLong(MusicProvider.Cues.POSITION)
+                    val desc = json.getJSONObject(i).getString(MusicProvider.Cues.DESCRIPTION)
+                    waveformView.drawCuePoint(CuePoint(it, pos.toInt(), desc), duration, cuePoint!!)
+                }
             }
         }
     }

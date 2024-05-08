@@ -12,6 +12,7 @@ import android.support.v4.media.MediaDescriptionCompat
 import android.support.v4.media.MediaMetadataCompat
 import androidx.appcompat.app.AppCompatDelegate
 import com.tiefensuche.soundcrowd.extensions.MediaMetadataCompatExt
+import com.tiefensuche.soundcrowd.sources.MusicProvider
 import java.security.MessageDigest
 import java.security.NoSuchAlgorithmException
 
@@ -53,7 +54,7 @@ internal object Utils {
             bundle = Bundle()
         }
         bundle.putLong(MediaMetadataCompat.METADATA_KEY_DURATION, metadata.getLong(MediaMetadataCompat.METADATA_KEY_DURATION))
-        bundle.putString(MediaMetadataCompatExt.METADATA_KEY_SOURCE, metadata.getString(MediaMetadataCompatExt.METADATA_KEY_SOURCE))
+        bundle.putString(MusicProvider.Cues.CUES, metadata.getString(MusicProvider.Cues.CUES))
 
         if (metadata.getString(MediaMetadataCompatExt.METADATA_KEY_TYPE) != null) {
             bundle.putString(MediaMetadataCompatExt.METADATA_KEY_TYPE, metadata.getString(MediaMetadataCompatExt.METADATA_KEY_TYPE))
