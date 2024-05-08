@@ -18,7 +18,6 @@ import com.tiefensuche.soundcrowd.extensions.MediaMetadataCompatExt
 import com.tiefensuche.soundcrowd.plugins.Callback
 import com.tiefensuche.soundcrowd.service.Database.Companion.MEDIA_ID
 import com.tiefensuche.soundcrowd.service.Database.Companion.POSITION
-import com.tiefensuche.soundcrowd.service.MusicService
 import com.tiefensuche.soundcrowd.sources.MusicProvider
 import com.tiefensuche.soundcrowd.sources.MusicProvider.Media.LAST_MEDIA
 import com.tiefensuche.soundcrowd.utils.MediaIDHelper.extractMusicIDFromMediaID
@@ -179,7 +178,7 @@ internal class PlaybackManager(private val mServiceCallback: PlaybackServiceCall
         mQueueManager.currentMusic?.description?.mediaId?.let {
             val musicId = extractMusicIDFromMediaID(it)
             mMusicProvider.getMusic(musicId)?.let {
-                MusicService.database.updatePosition(it, playback.currentStreamPosition)
+                mMusicProvider.updateLastPosition(it, playback.currentStreamPosition)
                 mPreferences.edit().putString(LAST_MEDIA, musicId).apply()
             }
         }
