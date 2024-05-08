@@ -23,11 +23,8 @@ import com.google.android.material.color.DynamicColors
 import com.google.android.material.navigation.NavigationView
 import com.sothree.slidinguppanel.SlidingUpPanelLayout
 import com.tiefensuche.soundcrowd.R
-import com.tiefensuche.soundcrowd.extensions.MediaMetadataCompatExt
-import com.tiefensuche.soundcrowd.sources.MusicProvider.Companion.MEDIA_ID
 import com.tiefensuche.soundcrowd.sources.MusicProvider.PluginMetadata.CATEGORY
 import com.tiefensuche.soundcrowd.sources.MusicProvider.PluginMetadata.ICON
-import com.tiefensuche.soundcrowd.sources.MusicProvider.PluginMetadata.MEDIA_TYPE
 import com.tiefensuche.soundcrowd.sources.MusicProvider.PluginMetadata.NAME
 import com.tiefensuche.soundcrowd.ui.preferences.EqualizerFragment
 import com.tiefensuche.soundcrowd.ui.preferences.PreferenceFragment
@@ -52,7 +49,7 @@ abstract class ActionBarCastActivity : AppCompatActivity() {
     internal lateinit var slidingUpPanelLayout: SlidingUpPanelLayout
     private lateinit var mDrawerToggle: ActionBarDrawerToggle
 
-    private val paths = ArrayList<String>()
+    private val paths = ArrayList<Pair<String, ArrayList<Bundle>>>()
 
     private val mBackStackChangedListener = FragmentManager.OnBackStackChangedListener { this.updateDrawerToggle() }
 
@@ -215,17 +212,19 @@ abstract class ActionBarCastActivity : AppCompatActivity() {
 
     private fun setFragmentId(id: Int) {
         when (id) {
-            R.id.navigation_allmusic -> setFragment(GridMediaBrowserFragment())
+            R.id.navigation_allmusic -> setFragment(LocalTabFragment())
             R.id.navigation_cue_points -> setFragment(CueListFragment())
             R.id.navigation_equalizer -> setFragment(EqualizerFragment())
             R.id.navigation_preferences -> setFragment(PreferenceFragment())
             else -> {
+                if (id > paths.size)
+                    return
                 // handle as addon category
-                val fragment = StreamMediaBrowserFragment()
-                val args = Bundle()
-                args.putString(MEDIA_ID, paths[id - 1])
-                args.putString(MEDIA_TYPE, MediaMetadataCompatExt.MediaType.STREAM.name)
-                fragment.arguments = args
+                val fragment = TabFragment()
+                fragment.arguments = Bundle().apply {
+                    putString(NAME, paths[id - 1].first)
+                    putParcelableArrayList(CATEGORY, paths[id - 1].second)
+                }
                 setFragment(fragment)
             }
         }
@@ -233,7 +232,7 @@ abstract class ActionBarCastActivity : AppCompatActivity() {
     }
 
     private fun setFragment(fragment: Fragment) {
-        supportFragmentManager.beginTransaction().replace(R.id.container, fragment, fragment::class.java.name).commit()
+        supportFragmentManager.beginTransaction().replace(R.id.container, fragment, MediaBrowserFragment::class.java.name).commit()
     }
 
     private fun updateDrawerToggle() {
@@ -255,12 +254,10 @@ abstract class ActionBarCastActivity : AppCompatActivity() {
 
         // add the categories of all addons
         for (plugin in plugins) {
-            for (category in plugin.getParcelableArrayList<Bundle>(CATEGORY)!!) {
-                val item = addonCategory.add(Menu.NONE, paths.size + 1, paths.size, category.getString(CATEGORY))
-                paths.add(category.getString(NAME)!!)
-                item.isCheckable = true
-                item.icon = BitmapDrawable(resources, plugin.getParcelable<Bitmap>(ICON)!!)
-            }
+            val item = addonCategory.add(Menu.NONE, paths.size + 1, paths.size, plugin.getString(NAME))
+            item.isCheckable = true
+            item.icon = BitmapDrawable(resources, plugin.getParcelable<Bitmap>(ICON)!!)
+            paths.add(Pair(plugin.getString(NAME)!!, plugin.getParcelableArrayList(CATEGORY)!!))
         }
         setFragmentId(getDefaultSharedPreferences(this).getInt(getString(R.string.preference_last_fragment), R.id.navigation_allmusic))
     }
