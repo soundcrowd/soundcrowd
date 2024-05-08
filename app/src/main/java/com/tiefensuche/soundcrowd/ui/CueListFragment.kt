@@ -18,7 +18,6 @@ import com.tiefensuche.soundcrowd.R
 import com.tiefensuche.soundcrowd.playback.PlaybackManager.Companion.CUSTOM_ACTION_PLAY_SEEK
 import com.tiefensuche.soundcrowd.service.Database.Companion.MEDIA_ID
 import com.tiefensuche.soundcrowd.service.Database.Companion.POSITION
-import com.tiefensuche.soundcrowd.service.MusicService
 import com.tiefensuche.soundcrowd.sources.MusicProvider.Media.CUE_POINTS
 import com.tiefensuche.soundcrowd.utils.MediaIDHelper.LEAF_SEPARATOR
 import com.tiefensuche.soundcrowd.waveform.CuePoint
@@ -92,10 +91,7 @@ internal class CueListFragment : Fragment() {
     }
 
     internal fun loadItems() {
-        cuePoints.addAll(MusicService.database.getCueItems())
-        if (cuePoints.isEmpty())
-            mNoMediaView.visibility = View.VISIBLE
-        adapter.notifyDataSetChanged()
+        // TODO
     }
 
     internal fun setFilter(filter: CharSequence?) {

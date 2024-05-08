@@ -12,7 +12,6 @@ import android.database.sqlite.SQLiteException
 import android.support.v4.media.MediaMetadataCompat
 import android.util.Log
 import com.tiefensuche.soundcrowd.database.MetadataDatabase
-import com.tiefensuche.soundcrowd.ui.CueListFragment
 import com.tiefensuche.soundcrowd.utils.MediaIDHelper
 import com.tiefensuche.soundcrowd.waveform.CuePoint
 
@@ -31,7 +30,6 @@ internal class Database(context: Context) : MetadataDatabase(context) {
         const val DESCRIPTION = "description"
 
         private const val DATABASE_MEDIA_ITEM_CUE_POINTS_NAME = "MediaItemStars"
-        private const val DATABASE_MEDIA_ITEM_CUE_POINTS_TABLE = "$DATABASE_MEDIA_ITEM_CUE_POINTS_NAME stars inner join $DATABASE_MEDIA_ITEMS_NAME metadata on stars.$MEDIA_ID = metadata.$ID"
         private const val DATABASE_MEDIA_ITEMS_CUE_POINTS_CREATE = "create table if not exists $DATABASE_MEDIA_ITEM_CUE_POINTS_NAME ($MEDIA_ID text not null, $POSITION int not null, $DESCRIPTION text, CONSTRAINT pk_media_item_star PRIMARY KEY ($MEDIA_ID,$POSITION))"
 
         private const val DATABASE_MEDIA_ITEMS_METADATA_NAME = "MediaItemsMetadata"
@@ -46,8 +44,8 @@ internal class Database(context: Context) : MetadataDatabase(context) {
         get() {
             val items = ArrayList<MediaMetadataCompat>()
             try {
-                val cursor = readableDatabase.query(true, DATABASE_MEDIA_ITEM_CUE_POINTS_TABLE,
-                        null, null, null, null, null, null, null)
+                val cursor = readableDatabase.query(DATABASE_MEDIA_ITEMS_NAME,
+                        null, "EXISTS (SELECT $MEDIA_ID FROM $DATABASE_MEDIA_ITEM_CUE_POINTS_NAME WHERE ${DATABASE_MEDIA_ITEM_CUE_POINTS_NAME}.$MEDIA_ID = ${DATABASE_MEDIA_ITEMS_NAME}.$ID)", null, null, null, null, null)
                 while (cursor.moveToNext()) {
                     items.add(buildItem(cursor))
                 }
@@ -147,28 +145,6 @@ internal class Database(context: Context) : MetadataDatabase(context) {
         } catch (e: SQLException) {
             Log.e(TAG, "error while setting description", e)
         }
-    }
-
-    internal fun getCueItems(): Collection<CueListFragment.CueItem> {
-        val result = ArrayList<CueListFragment.CueItem>()
-        try {
-            val cursor = readableDatabase.query(DATABASE_MEDIA_ITEM_CUE_POINTS_TABLE,
-                    arrayOf(MEDIA_ID, ARTIST, TITLE, POSITION, DESCRIPTION),
-                    null, null, null, null, null)
-            while (cursor.moveToNext()) {
-                result.add(CueListFragment.CueItem(
-                        CuePoint(cursor.getString(cursor.getColumnIndex(MEDIA_ID)),
-                            cursor.getInt(cursor.getColumnIndex(POSITION)),
-                            cursor.getString(cursor.getColumnIndex(DESCRIPTION))),
-                        cursor.getString(cursor.getColumnIndex(ARTIST)),
-                        cursor.getString(cursor.getColumnIndex(TITLE))))
-            }
-            cursor.close()
-        } catch (e: Exception) {
-            Log.e(TAG, "error while querying cue points", e)
-        }
-
-        return result
     }
 
     override fun onCreate(sqLiteDatabase: SQLiteDatabase) {
