@@ -17,7 +17,7 @@ import com.tiefensuche.soundcrowd.utils.MediaIDHelper
 import com.tiefensuche.soundcrowd.utils.MediaIDHelper.LEAF_SEPARATOR
 import com.tiefensuche.soundcrowd.utils.QueueHelper
 import com.tiefensuche.soundcrowd.utils.Utils
-import java.util.*
+import java.util.Collections
 
 /**
  * Simple data provider for queues. Keeps track of a current queue and a current index in the

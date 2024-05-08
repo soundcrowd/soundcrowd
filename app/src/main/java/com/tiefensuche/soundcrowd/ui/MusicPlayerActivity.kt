@@ -4,12 +4,9 @@
 package com.tiefensuche.soundcrowd.ui
 
 import android.os.Bundle
-import com.google.android.material.appbar.CollapsingToolbarLayout
 import android.support.v4.media.MediaBrowserCompat
 import android.support.v4.media.MediaDescriptionCompat
 import android.support.v4.media.session.MediaControllerCompat
-import androidx.core.view.MenuItemCompat
-import androidx.appcompat.widget.SearchView
 import android.text.TextUtils
 import android.util.Log
 import android.view.Menu
@@ -17,6 +14,9 @@ import android.view.MenuItem
 import android.view.View
 import android.widget.ImageView
 import android.widget.RelativeLayout
+import androidx.appcompat.widget.SearchView
+import androidx.core.view.MenuItemCompat
+import com.google.android.material.appbar.CollapsingToolbarLayout
 import com.sothree.slidinguppanel.SlidingUpPanelLayout
 import com.tiefensuche.soundcrowd.R
 import com.tiefensuche.soundcrowd.extensions.MediaMetadataCompatExt

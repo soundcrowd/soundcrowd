@@ -9,14 +9,20 @@ import android.content.SharedPreferences
 import android.os.Build
 import android.os.Bundle
 import android.preference.PreferenceManager
-import androidx.annotation.RequiresApi
-import androidx.fragment.app.Fragment
 import android.util.Log
 import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.*
+import android.widget.AdapterView
+import android.widget.ArrayAdapter
+import android.widget.CheckBox
+import android.widget.LinearLayout
+import android.widget.SeekBar
+import android.widget.Spinner
+import android.widget.TextView
+import androidx.annotation.RequiresApi
+import androidx.fragment.app.Fragment
 import com.tiefensuche.soundcrowd.R
 import com.tiefensuche.soundcrowd.playback.EqualizerControl
 import com.tiefensuche.soundcrowd.playback.EqualizerControl.Companion.CONFIG_BASSBOOST_ENABLED
@@ -35,7 +41,6 @@ import com.tiefensuche.soundcrowd.playback.EqualizerControl.Companion.releaseAud
 import com.tiefensuche.soundcrowd.playback.EqualizerControl.Companion.setBassBoost
 import com.tiefensuche.soundcrowd.playback.EqualizerControl.Companion.setLoudness
 import com.tiefensuche.soundcrowd.ui.MediaBrowserFragment
-import java.util.*
 
 /**
  * Equalizer with some effects of the android system

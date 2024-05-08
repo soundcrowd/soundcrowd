@@ -12,12 +12,12 @@ import android.net.Uri
 import android.os.*
 import android.preference.PreferenceManager
 import android.support.v4.media.MediaBrowserCompat.MediaItem
-import androidx.media.MediaBrowserServiceCompat
 import android.support.v4.media.MediaMetadataCompat
-import androidx.media.session.MediaButtonReceiver
 import android.support.v4.media.session.MediaSessionCompat
 import android.support.v4.media.session.PlaybackStateCompat
 import android.util.Log
+import androidx.media.MediaBrowserServiceCompat
+import androidx.media.session.MediaButtonReceiver
 import com.tiefensuche.soundcrowd.R
 import com.tiefensuche.soundcrowd.playback.LocalPlayback
 import com.tiefensuche.soundcrowd.playback.PlaybackManager

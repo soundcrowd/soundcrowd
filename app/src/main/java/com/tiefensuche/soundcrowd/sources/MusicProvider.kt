@@ -12,11 +12,11 @@ import android.os.Bundle
 import android.support.v4.media.MediaBrowserCompat
 import android.support.v4.media.MediaMetadataCompat
 import android.util.Log
-import com.tiefensuche.soundcrowd.service.Database
 import com.tiefensuche.soundcrowd.extensions.MediaMetadataCompatExt
 import com.tiefensuche.soundcrowd.plugins.IPlugin
-import com.tiefensuche.soundcrowd.service.PluginManager
+import com.tiefensuche.soundcrowd.service.Database
 import com.tiefensuche.soundcrowd.service.MusicService
+import com.tiefensuche.soundcrowd.service.PluginManager
 import com.tiefensuche.soundcrowd.sources.MusicProvider.Media.CUE_POINTS
 import com.tiefensuche.soundcrowd.sources.MusicProvider.Media.LAST_MEDIA
 import com.tiefensuche.soundcrowd.sources.MusicProvider.Media.LOCAL
@@ -31,8 +31,6 @@ import com.tiefensuche.soundcrowd.utils.Utils
 import org.json.JSONException
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
-import kotlin.collections.ArrayList
-import kotlin.collections.HashMap
 
 /**
  * Simple data provider for music tracks. The actual metadata source is delegated to a

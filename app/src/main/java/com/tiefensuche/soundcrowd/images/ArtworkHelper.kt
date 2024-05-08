@@ -8,10 +8,10 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.Color
 import android.graphics.drawable.Drawable
-import androidx.core.content.res.ResourcesCompat
 import android.support.v4.media.MediaDescriptionCompat
-import androidx.palette.graphics.Palette
 import android.widget.ImageView
+import androidx.core.content.res.ResourcesCompat
+import androidx.palette.graphics.Palette
 import com.bumptech.glide.request.RequestOptions
 import com.bumptech.glide.request.target.BitmapImageViewTarget
 import com.bumptech.glide.request.target.SimpleTarget

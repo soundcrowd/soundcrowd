@@ -13,21 +13,19 @@ import android.content.Context
 import android.content.Context.RECEIVER_NOT_EXPORTED
 import android.content.Intent
 import android.content.IntentFilter
-import android.graphics.Color
 import android.os.Build
 import android.os.Looper
 import android.os.RemoteException
-import androidx.annotation.RequiresApi
-import androidx.core.app.NotificationCompat
 import android.support.v4.media.MediaDescriptionCompat
 import android.support.v4.media.MediaMetadataCompat
 import android.support.v4.media.session.MediaControllerCompat
 import android.support.v4.media.session.MediaSessionCompat
 import android.support.v4.media.session.PlaybackStateCompat
 import android.util.Log
+import androidx.annotation.RequiresApi
+import androidx.core.app.NotificationCompat
 import com.tiefensuche.soundcrowd.R
 import com.tiefensuche.soundcrowd.ui.MusicPlayerActivity
-import com.tiefensuche.soundcrowd.utils.Utils
 
 /**
  * Keeps track of a notification and updates it automatically for a given
