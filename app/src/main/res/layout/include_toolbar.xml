@@ -16,8 +16,8 @@
             android:id="@+id/collapsing_toolbar"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            app:expandedTitleTextAppearance="@style/TextAppearance.Design.CollapsingToolbar.Expanded.Shadow"
-            app:layout_scrollFlags="scroll|exitUntilCollapsed">
+            app:layout_scrollFlags="scroll|exitUntilCollapsed"
+            app:expandedTitleTextColor="@android:color/transparent">
 
             <RelativeLayout
                 android:id="@+id/toolbar_header"
@@ -25,28 +25,46 @@
                 android:layout_height="fill_parent"
                 android:layout_alignParentEnd="true"
                 android:layout_alignParentBottom="true"
-                android:layout_alignParentRight="true">
+                android:layout_alignParentRight="true"
+                app:layout_collapseMode="parallax">
 
                 <ImageView
                     android:id="@+id/container_image"
                     android:layout_width="match_parent"
-                    android:layout_height="208dp"
-                    android:scaleType="centerCrop"
-                    app:layout_collapseMode="parallax" />
+                    android:layout_height="264dp"
+                    android:scaleType="centerCrop" />
 
-                <TextView
-                    android:id="@+id/header_line2"
-                    android:layout_width="fill_parent"
+                <LinearLayout
+                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginStart="16dp"
-                    android:layout_marginLeft="16dp"
-                    android:layout_marginTop="64dp"
-                    android:ellipsize="end"
-                    android:maxLines="5"
-                    android:shadowColor="@android:color/black"
-                    android:shadowRadius="8"
-                    android:textAppearance="?android:attr/textAppearanceMedium"
-                    android:textColor="?android:attr/textColorPrimary" />
+                    android:orientation="vertical"
+                    android:layout_alignParentBottom="true">
+
+                    <TextView
+                        android:id="@+id/header_line2"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:padding="4dp"
+                        android:layout_margin="2dp"
+                        android:ellipsize="end"
+                        android:maxLines="1"
+                        android:textAppearance="?android:attr/textAppearanceMedium"
+                        android:background="@android:color/black"
+                        android:textColor="@android:color/white" />
+
+                    <TextView
+                        android:id="@+id/header_line1"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:padding="4dp"
+                        android:layout_margin="2dp"
+                        android:ellipsize="end"
+                        android:maxLines="1"
+                        android:textSize="24sp"
+                        android:background="@android:color/black"
+                        android:textColor="@android:color/white" />
+
+                </LinearLayout>
 
             </RelativeLayout>
 

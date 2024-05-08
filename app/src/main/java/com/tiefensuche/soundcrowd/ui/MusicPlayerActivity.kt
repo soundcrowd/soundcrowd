@@ -14,14 +14,18 @@ import android.view.MenuItem
 import android.view.View
 import android.widget.ImageView
 import android.widget.RelativeLayout
+import android.widget.TextView
 import androidx.appcompat.widget.SearchView
 import androidx.core.view.MenuItemCompat
 import com.google.android.material.appbar.CollapsingToolbarLayout
 import com.sothree.slidinguppanel.SlidingUpPanelLayout
 import com.tiefensuche.soundcrowd.R
 import com.tiefensuche.soundcrowd.extensions.MediaMetadataCompatExt
+import com.tiefensuche.soundcrowd.images.ArtworkHelper
+import com.tiefensuche.soundcrowd.images.GlideApp
 import com.tiefensuche.soundcrowd.sources.MusicProvider.Companion.MEDIA_ID
 import com.tiefensuche.soundcrowd.sources.MusicProvider.Companion.QUERY
+import com.tiefensuche.soundcrowd.sources.MusicProvider.Media.CUE_POINTS
 import com.tiefensuche.soundcrowd.sources.MusicProvider.Media.LOCAL
 import com.tiefensuche.soundcrowd.ui.intro.ShowcaseViewManager
 import com.tiefensuche.soundcrowd.utils.MediaIDHelper
@@ -40,12 +44,8 @@ internal class MusicPlayerActivity : BaseActivity(), MediaBrowserFragment.MediaF
     internal lateinit var controls: RelativeLayout
     internal var collapsingToolbarLayout: CollapsingToolbarLayout? = null
     private var toolbarHeader: View? = null
-
-    private val mediaId: String?
-        get() {
-            val fragment = browseFragment ?: return null
-            return fragment.mediaId
-        }
+    private var headerLineTitle: TextView? = null
+    private var headerLineSubtitle: TextView? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -53,6 +53,8 @@ internal class MusicPlayerActivity : BaseActivity(), MediaBrowserFragment.MediaF
         controls = findViewById(R.id.controls)
         collapsingToolbarLayout = findViewById(R.id.collapsing_toolbar)
         toolbarHeader = findViewById(R.id.toolbar_header)
+        headerLineTitle = findViewById(R.id.header_line1)
+        headerLineSubtitle = findViewById(R.id.header_line2)
 
         val playPauseButton = findViewById<ImageView>(R.id.play_pause)
         val controlsContainer = findViewById<RelativeLayout>(R.id.controls_layout)
@@ -102,8 +104,10 @@ internal class MusicPlayerActivity : BaseActivity(), MediaBrowserFragment.MediaF
         searchView?.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
             override fun onQueryTextSubmit(query: String): Boolean {
                 browseFragment?.let {
+                    if (it.mediaId == CUE_POINTS)
+                        return false
                     val bundle = Bundle()
-                    if (mediaId?.startsWith(LOCAL) != true)
+                    if (!it.mediaId.startsWith(LOCAL))
                         bundle.putString(MediaMetadataCompatExt.METADATA_KEY_TYPE, MediaMetadataCompatExt.MediaType.STREAM.name)
                     navigateToBrowser(QUERY + CATEGORY_SEPARATOR + MediaIDHelper.toBrowsableName(query),
                             MediaDescriptionCompat.Builder()
@@ -116,12 +120,7 @@ internal class MusicPlayerActivity : BaseActivity(), MediaBrowserFragment.MediaF
             }
 
             override fun onQueryTextChange(newText: String): Boolean {
-                val fragment = supportFragmentManager.findFragmentById(R.id.container)
-                if (fragment is MediaBrowserFragment) {
-                    fragment.setFilter(newText)
-                } else if (fragment is CueListFragment) {
-                    fragment.setFilter(newText)
-                }
+                browseFragment?.setFilter(newText)
                 return true
             }
         })
@@ -144,7 +143,16 @@ internal class MusicPlayerActivity : BaseActivity(), MediaBrowserFragment.MediaF
 
     override fun setToolbarTitle(title: CharSequence?) {
         collapsingToolbarLayout?.title = title
+        headerLineTitle?.text = title
         setTitle(title)
+    }
+
+    override fun setSubtitle(title: CharSequence?) {
+        headerLineSubtitle?.text = title
+    }
+
+    override fun setBackground(description: MediaDescriptionCompat) {
+        ArtworkHelper.loadArtwork(GlideApp.with(this), description, findViewById(R.id.container_image))
     }
 
     override fun enableCollapse(enable: Boolean) {
@@ -158,10 +166,10 @@ internal class MusicPlayerActivity : BaseActivity(), MediaBrowserFragment.MediaF
 
     private fun navigateToBrowser(mediaId: String?, description: MediaDescriptionCompat?) {
         Log.d(TAG, "navigateToBrowser, mediaId=$mediaId")
-        var fragment: MediaBrowserFragment? = browseFragment
+        val currentMediaId = browseFragment?.mediaId ?: return
 
-        if (fragment == null || !TextUtils.equals(fragment.mediaId, mediaId)) {
-            fragment = MediaBrowserFragment()
+        if (!TextUtils.equals(currentMediaId, mediaId)) {
+            val fragment = if (currentMediaId.startsWith(LOCAL)) GridMediaBrowserFragment() else StreamMediaBrowserFragment()
             val bundle = Bundle()
             if (mediaId != null) {
                 browseFragment?.mediaId?.let {
@@ -191,12 +199,7 @@ internal class MusicPlayerActivity : BaseActivity(), MediaBrowserFragment.MediaF
     override fun onMediaControllerConnected() {
         super.onMediaControllerConnected()
         Log.d(TAG, "onMediaControllerConnected")
-        val fragment = supportFragmentManager.findFragmentById(R.id.container)
-        if (fragment is MediaBrowserFragment) {
-            fragment.requestMedia()
-        } else if (fragment is CueListFragment) {
-            fragment.loadItems()
-        }
+        browseFragment?.requestMedia()
     }
 
     companion object {
@@ -210,7 +213,6 @@ internal class MusicPlayerActivity : BaseActivity(), MediaBrowserFragment.MediaF
          */
         const val EXTRA_CURRENT_MEDIA_DESCRIPTION = "com.tiefensuche.soundcrowd.CURRENT_MEDIA_DESCRIPTION"
         private val TAG = MusicPlayerActivity::class.simpleName
-        private const val PERMISSIONS_REQUEST_WRITE_EXTERNAL_STORAGE = 0
         private var mPanelState: SlidingUpPanelLayout.PanelState = SlidingUpPanelLayout.PanelState.COLLAPSED
     }
 }

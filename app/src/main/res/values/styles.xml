@@ -13,8 +13,12 @@
         <item name="android:windowLightStatusBar">?attr/isLightTheme</item>
     </style>
 
-    <style name="ShapeAppearanceOverlay.App.circleImageView" parent="">
+    <style name="ShapeAppearanceOverlay.App.roundedImageView" parent="">
         <item name="cornerSize">10%</item>
+    </style>
+
+    <style name="ShapeAppearanceOverlay.App.circleImageView" parent="">
+        <item name="cornerSize">50%</item>
     </style>
 
     <!-- Showcase Theme -->
@@ -32,13 +36,6 @@
 
     <style name="CustomText" parent="TextAppearance.ShowcaseView.Detail.Light">
         <item name="android:textColor">?android:attr/textColorPrimary</item>
-    </style>
-
-    <style name="TextAppearance.Design.CollapsingToolbar.Expanded.Shadow">
-        <item name="android:shadowDy">0</item>
-        <item name="android:shadowDx">0</item>
-        <item name="android:shadowRadius">8</item>
-        <item name="android:shadowColor">?android:attr/textColorPrimaryInverse</item>
     </style>
 
 </resources>

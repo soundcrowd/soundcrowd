@@ -215,13 +215,13 @@ abstract class ActionBarCastActivity : AppCompatActivity() {
 
     private fun setFragmentId(id: Int) {
         when (id) {
-            R.id.navigation_allmusic -> setFragment(MediaBrowserFragment())
+            R.id.navigation_allmusic -> setFragment(GridMediaBrowserFragment())
             R.id.navigation_cue_points -> setFragment(CueListFragment())
             R.id.navigation_equalizer -> setFragment(EqualizerFragment())
             R.id.navigation_preferences -> setFragment(PreferenceFragment())
             else -> {
                 // handle as addon category
-                val fragment = MediaBrowserFragment()
+                val fragment = StreamMediaBrowserFragment()
                 val args = Bundle()
                 args.putString(MEDIA_ID, paths[id - 1])
                 args.putString(MEDIA_TYPE, MediaMetadataCompatExt.MediaType.STREAM.name)
