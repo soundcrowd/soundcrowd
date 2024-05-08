@@ -89,7 +89,7 @@ internal class LocalSource(private val context: MusicService) {
                             .putString(MediaMetadataCompat.METADATA_KEY_MEDIA_URI, trackUri.toString())
                             .putString(MediaMetadataCompatExt.METADATA_KEY_TYPE, MediaMetadataCompatExt.MediaType.MEDIA.name)
                             .putString(MediaMetadataCompatExt.METADATA_KEY_WAVEFORM_URL, trackUri.toString())
-                            .putString(MediaMetadataCompat.METADATA_KEY_ARTIST, if (artist == null || "<unknown>" == artist) title else artist)
+                            .putString(MediaMetadataCompat.METADATA_KEY_ARTIST, artist)
                             .putString(MediaMetadataCompat.METADATA_KEY_ALBUM, album)
                             .putLong(MediaMetadataCompat.METADATA_KEY_DURATION, duration)
                             .putString(MediaMetadataCompat.METADATA_KEY_ALBUM_ART_URI, trackUri.toString())
@@ -106,11 +106,11 @@ internal class LocalSource(private val context: MusicService) {
     }
 
     @Throws(Exception::class)
-    internal operator fun iterator(): Iterator<MediaMetadataCompat> {
+    internal fun tracks(): ArrayList<MediaMetadataCompat> {
         if (tracks.isEmpty()) {
             loadMusic()
         }
-        return tracks.iterator()
+        return tracks
     }
 
     companion object {
