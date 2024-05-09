@@ -8,6 +8,7 @@ import android.widget.Filter
 import android.widget.Filterable
 import android.widget.SectionIndexer
 import androidx.recyclerview.widget.RecyclerView
+import java.util.Locale
 
 internal abstract class MediaItemAdapter<T : RecyclerView.ViewHolder?> : RecyclerView.Adapter<T>(), Filterable, SectionIndexer {
 
@@ -114,7 +115,7 @@ internal abstract class MediaItemAdapter<T : RecyclerView.ViewHolder?> : Recycle
                 results.values = list
                 results.count = list.size
             } else {
-                val prefixString = prefix.toString().toLowerCase()
+                val prefixString = prefix.toString().lowercase(Locale.getDefault())
 
                 val values: ArrayList<MediaBrowserCompat.MediaItem>
                 synchronized(mLock) {
@@ -126,9 +127,11 @@ internal abstract class MediaItemAdapter<T : RecyclerView.ViewHolder?> : Recycle
 
                 for (i in 0 until count) {
                     val value = values[i]
-                    var valueText = value.description.title?.toString()?.toLowerCase()
+                    var valueText = value.description.title?.toString()
+                        ?.lowercase(Locale.getDefault())
                     if (value.description.subtitle != null) {
-                        valueText = value.description.subtitle?.toString()?.toLowerCase() + " " + valueText
+                        valueText = value.description.subtitle?.toString()
+                            ?.lowercase(Locale.getDefault()) + " " + valueText
                     }
                     val keywords = prefixString.split(" ".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
                     var add = true

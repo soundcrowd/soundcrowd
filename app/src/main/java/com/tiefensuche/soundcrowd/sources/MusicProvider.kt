@@ -449,8 +449,8 @@ internal class MusicProvider(context: MusicService) {
         for (item in dir.items()) {
             for (metadataField in metadataFields) {
                 val value = item.getString(metadataField)
-                if (value != null && value.toLowerCase(Locale.US)
-                        .contains(query.toLowerCase(Locale.US))
+                if (value != null && value.lowercase(Locale.US)
+                        .contains(query.lowercase(Locale.US))
                 ) {
                     result.add(item)
                     break
@@ -613,7 +613,7 @@ internal class MusicProvider(context: MusicService) {
         }
     }
 
-    internal fun resolve(uri: Uri): String? {
+    internal fun resolve(uri: Uri): String {
         val track = localSource.resolve(uri)
         val request = Request(TEMP + LEAF_SEPARATOR + track.description.mediaId)
         val dir = library.getPath(request, true)

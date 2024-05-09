@@ -213,7 +213,7 @@ internal class MusicService : MediaBrowserServiceCompat(), PlaybackManager.Playb
         mSession.release()
     }
 
-    override fun onGetRoot(clientPackageName: String, clientUid: Int, rootHints: Bundle?): BrowserRoot? {
+    override fun onGetRoot(clientPackageName: String, clientUid: Int, rootHints: Bundle?): BrowserRoot {
         return BrowserRoot(LOCAL, null)
     }
 
@@ -316,7 +316,7 @@ internal class MusicService : MediaBrowserServiceCompat(), PlaybackManager.Playb
     /**
      * A simple handler that stops the service if playback is not active (playing)
      */
-    private class DelayedStopHandler internal constructor(service: MusicService) : Handler() {
+    private class DelayedStopHandler(service: MusicService) : Handler() {
 
         private val mWeakReference: WeakReference<MusicService> = WeakReference(service)
 

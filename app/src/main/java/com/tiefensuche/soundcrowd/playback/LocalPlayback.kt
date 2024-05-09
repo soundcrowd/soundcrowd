@@ -208,7 +208,7 @@ internal class LocalPlayback(private val mContext: Context, private val mMusicPr
             mCurrentPosition = it.currentPosition
         }
         // While paused, retain the player instance, but give up audio focus.
-        relaxResources(false);
+        relaxResources(false)
         unregisterAudioNoisyReceiver()
     }
 

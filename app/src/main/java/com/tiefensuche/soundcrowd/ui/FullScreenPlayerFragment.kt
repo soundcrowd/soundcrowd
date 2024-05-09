@@ -509,7 +509,7 @@ internal class FullScreenPlayerFragment : Fragment() {
     private fun updateProgress() {
         mLastPlaybackState?.let {
             currentPosition = it.position.toInt()
-            if (it.state != PlaybackStateCompat.STATE_PAUSED) {
+            if (it.state != STATE_PAUSED) {
                 // Calculate the elapsed time between the last position update and now and unless
                 // paused, we can assume (delta * speed) + current position is approximately the
                 // latest position. This ensure that we do not repeatedly call the getPlaybackState()

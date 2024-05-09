@@ -18,6 +18,7 @@ import android.graphics.Typeface
 import android.graphics.drawable.Drawable
 import android.text.TextUtils
 import com.tiefensuche.soundcrowd.R
+import java.util.Locale
 import kotlin.math.abs
 import kotlin.math.min
 
@@ -236,7 +237,7 @@ internal class LetterTileDrawable(context: Context) : Drawable() {
                 return name
             }
 
-            name = name.trim { it <= ' ' }.toLowerCase()
+            name = name.trim { it <= ' ' }.lowercase(Locale.getDefault())
             if (name.startsWith("the ")) {
                 name = name.substring(4)
             }

@@ -93,6 +93,6 @@ internal object MediaIDHelper {
     }
 
     internal fun toBrowsableName(text: String): String {
-        return text.trim().toLowerCase(Locale.ROOT).replace(CATEGORY_SEPARATOR, '-')
+        return text.trim().lowercase(Locale.ROOT).replace(CATEGORY_SEPARATOR, '-')
     }
 }

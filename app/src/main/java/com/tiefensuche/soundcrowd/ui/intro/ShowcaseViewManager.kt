@@ -64,7 +64,7 @@ internal object ShowcaseViewManager {
         }
     }
 
-    enum class ShowcaseFunction constructor(internal val function: String, internal val id: Int, internal val title: Int, internal val text: Int) {
+    enum class ShowcaseFunction(internal val function: String, internal val id: Int, internal val title: Int, internal val text: Int) {
         SLIDING_UP("SLIDING_UP", R.id.controls, R.string.showcase_sliding_up_title, R.string.showcase_sliding_up_text),
         WAVEFORM_SEEKING("WAVEFORM_SEEKING", R.id.waveformView, R.string.showcase_waveform_seek_title, R.string.showcase_waveform_seek_text),
         CUE_POINT("CUE_POINT", R.id.star, R.string.showcase_cue_points_title, R.string.showcase_cue_points_text),
