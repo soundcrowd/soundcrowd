@@ -148,7 +148,7 @@ internal class QueueManager(private val mMusicProvider: MusicProvider,
     }
 
     internal fun update(musicId: String) {
-        mMusicProvider.fetchExtendedMetadataIfNeeded(musicId)
+        mMusicProvider.updateExtendedMetadata(musicId)
         val metadata = mMusicProvider.getMusic(musicId)
                 ?: throw IllegalArgumentException("Invalid musicId $musicId")
 

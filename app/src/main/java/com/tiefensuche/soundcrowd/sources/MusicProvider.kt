@@ -79,9 +79,7 @@ internal class MusicProvider(context: MusicService) {
             if (musicId == null || musicIds.contains(musicId))
                 return
 
-            library.keys[musicId]?.let {
-                it.metadata = newItem
-            } ?: run {
+            if (!library.keys.containsKey(musicId)) {
                 library.keys[musicId] = MutableMediaMetadata(musicId, newItem)
             }
             items.add(musicId)
@@ -227,11 +225,8 @@ internal class MusicProvider(context: MusicService) {
         return library.keys[musicId]?.metadata
     }
 
-    internal fun fetchExtendedMetadataIfNeeded(musicId: String) {
+    internal fun updateExtendedMetadata(musicId: String) {
         getMusic(musicId)?.let {
-            if (it.containsKey(Cues.LAST_POSITION) && it.containsKey(Cues.CUES)) {
-                return
-            }
             val jsonList = JSONArray()
             val cuePoints = MusicService.database.getCuePoints(musicId)
             for (cuePoint in cuePoints) {
@@ -560,7 +555,7 @@ internal class MusicProvider(context: MusicService) {
                 MusicService.database.cuePointItems.forEach { item ->
                     run {
                         dir.add(item)
-                        fetchExtendedMetadataIfNeeded(item.getString(MediaMetadataCompat.METADATA_KEY_MEDIA_ID))
+                        updateExtendedMetadata(item.getString(MediaMetadataCompat.METADATA_KEY_MEDIA_ID))
                     }
                 }
                 dir.sort()
