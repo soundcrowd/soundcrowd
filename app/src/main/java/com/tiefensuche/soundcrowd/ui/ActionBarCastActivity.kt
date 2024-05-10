@@ -199,7 +199,7 @@ abstract class ActionBarCastActivity : AppCompatActivity() {
             }
 
             mToolbar?.collapseActionView()
-            supportFragmentManager.popBackStack(null, FragmentManager.POP_BACK_STACK_INCLUSIVE)
+            supportFragmentManager.popBackStackImmediate(null, FragmentManager.POP_BACK_STACK_INCLUSIVE)
             setFragmentId(menuItem.itemId)
 
             if (slidingUpPanelLayout.panelState == SlidingUpPanelLayout.PanelState.EXPANDED) {
