@@ -44,5 +44,6 @@ internal class CueMediaBrowserFragment : CollectionMediaBrowserFragment() {
 
     override fun updateDescription() {
         mMediaFragmentListener.setToolbarTitle(getString(R.string.drawer_cue_points_title))
+        mMediaFragmentListener.enableCollapse(false)
     }
 }
