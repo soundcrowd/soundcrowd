@@ -65,6 +65,8 @@ interface Playback {
 
     fun setCallback(callback: Callback)
 
+    fun setRecord(value: Boolean)
+
     interface Callback {
         /**
          * On current music completed.
