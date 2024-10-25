@@ -48,6 +48,7 @@ dependencies {
     // own modules
     implementation 'com.tiefensuche.soundcrowd:plugin:0.1'
     implementation 'com.tiefensuche.soundcrowd:waveform:1.0'
+    implementation 'io.github.tiefensuche:songrec-android:0.1'
 
     // android support
     // material 1.12.0 requires minSdk 19
@@ -79,6 +80,13 @@ repositories {
     }
     maven {
         url = uri("https://maven.pkg.github.com/soundcrowd/soundcrowd-waveform")
+        credentials {
+            username = System.getenv("GITHUB_ACTOR")
+            password = System.getenv("GITHUB_TOKEN")
+        }
+    }
+    maven {
+        url = uri("https://maven.pkg.github.com/0xf4b1/songrec-android")
         credentials {
             username = System.getenv("GITHUB_ACTOR")
             password = System.getenv("GITHUB_TOKEN")
