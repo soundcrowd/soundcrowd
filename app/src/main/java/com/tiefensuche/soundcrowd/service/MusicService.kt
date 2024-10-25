@@ -26,7 +26,9 @@ import com.tiefensuche.soundcrowd.sources.MusicProvider
 import com.tiefensuche.soundcrowd.sources.MusicProvider.Companion.ACTION_ADD_CUE_POINT
 import com.tiefensuche.soundcrowd.sources.MusicProvider.Companion.ACTION_GET_MEDIA
 import com.tiefensuche.soundcrowd.sources.MusicProvider.Companion.ACTION_GET_PLUGINS
+import com.tiefensuche.soundcrowd.sources.MusicProvider.Companion.ACTION_START_TAGGING
 import com.tiefensuche.soundcrowd.sources.MusicProvider.Companion.RESULT
+import com.tiefensuche.soundcrowd.sources.MusicProvider.Cues.DESCRIPTION
 import com.tiefensuche.soundcrowd.sources.MusicProvider.Media.LOCAL
 import java.lang.ref.WeakReference
 
@@ -254,8 +256,13 @@ internal class MusicService : MediaBrowserServiceCompat(), PlaybackManager.Playb
                 }
             }
             ACTION_ADD_CUE_POINT -> {
-                mMusicProvider.addCuePoint(mSession.controller.metadata, extras)
+                mMusicProvider.addCuePoint(mSession.controller.metadata,
+                    mPlaybackManager.playback.currentStreamPosition.toInt(),
+                    extras.getString(DESCRIPTION, ""))
                 result.sendResult(data)
+            }
+            ACTION_START_TAGGING -> {
+                mPlaybackManager.tag(mSession.controller.metadata, this.filesDir.path + "/rec.wav", result)
             }
             else -> {
                 data.putString(ARG_ERROR, "Unknown command")

@@ -14,7 +14,6 @@ import android.support.v4.media.MediaMetadataCompat
 import android.util.Log
 import com.tiefensuche.soundcrowd.extensions.MediaMetadataCompatExt
 import com.tiefensuche.soundcrowd.plugins.IPlugin
-import com.tiefensuche.soundcrowd.service.Database
 import com.tiefensuche.soundcrowd.service.MusicService
 import com.tiefensuche.soundcrowd.service.PluginManager
 import com.tiefensuche.soundcrowd.sources.MusicProvider.Media.CUE_POINTS
@@ -631,12 +630,8 @@ internal class MusicProvider(context: MusicService) {
         }
     }
 
-    fun addCuePoint(metadata: MediaMetadataCompat, extras: Bundle) {
-        MusicService.database.addCuePoint(
-            metadata,
-            extras.getInt(Database.POSITION),
-            extras.getString(Database.DESCRIPTION, "")
-        )
+    fun addCuePoint(metadata: MediaMetadataCompat, position: Int, description: String = "") {
+        MusicService.database.addCuePoint(metadata, position, description)
         val request = Request(CUE_POINTS)
         val dir = library.getPath(request, true)
         dir.add(metadata)
@@ -644,8 +639,8 @@ internal class MusicProvider(context: MusicService) {
         val cues = JSONArray(metadata.getString(Cues.CUES))
             .put(
                 JSONObject()
-                    .put(Cues.POSITION, extras.getInt(Database.POSITION))
-                    .put(Cues.DESCRIPTION, extras.getString(Database.DESCRIPTION, ""))
+                    .put(Cues.POSITION, position)
+                    .put(Cues.DESCRIPTION, description)
             )
         library.keys[musicId]?.metadata = MediaMetadataCompat.Builder(getMusic(musicId))
             .putString(Cues.CUES, cues.toString()).build()
@@ -689,6 +684,7 @@ internal class MusicProvider(context: MusicService) {
         const val ACTION_GET_MEDIA = "GET_MEDIA"
         const val ACTION_GET_PLUGINS = "GET_PLUGINS"
         const val ACTION_ADD_CUE_POINT = "ACTION_ADD_CUE_POINT"
+        const val ACTION_START_TAGGING = "ACTION_START_TAGGING"
         const val MEDIA_ID = "MEDIA_ID"
         const val OFFSET = "OFFSET"
         const val QUERY = "QUERY"
