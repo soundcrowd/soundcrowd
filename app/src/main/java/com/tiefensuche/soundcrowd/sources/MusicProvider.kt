@@ -739,6 +739,7 @@ internal class MusicProvider(context: MusicService) {
     companion object {
         const val ACTION_GET_MEDIA = "GET_MEDIA"
         const val ACTION_GET_PLUGINS = "GET_PLUGINS"
+        const val ACTION_START_TAGGING = "ACTION_START_TAGGING"
         const val MEDIA_ID = "MEDIA_ID"
         const val OFFSET = "OFFSET"
         const val QUERY = "QUERY"
