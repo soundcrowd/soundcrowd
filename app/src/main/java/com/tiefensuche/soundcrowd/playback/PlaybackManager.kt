@@ -14,13 +14,18 @@ import android.support.v4.media.RatingCompat
 import android.support.v4.media.session.MediaSessionCompat
 import android.support.v4.media.session.PlaybackStateCompat
 import android.util.Log
+import androidx.media.MediaBrowserServiceCompat.Result
 import com.tiefensuche.soundcrowd.extensions.MediaMetadataCompatExt
 import com.tiefensuche.soundcrowd.plugins.Callback
 import com.tiefensuche.soundcrowd.service.Database.Companion.MEDIA_ID
 import com.tiefensuche.soundcrowd.service.Database.Companion.POSITION
 import com.tiefensuche.soundcrowd.sources.MusicProvider
+import com.tiefensuche.soundcrowd.sources.MusicProvider.Companion.RESULT
+import com.tiefensuche.soundcrowd.sources.MusicProvider.Cues
 import com.tiefensuche.soundcrowd.sources.MusicProvider.Media.LAST_MEDIA
 import com.tiefensuche.soundcrowd.utils.MediaIDHelper.extractMusicIDFromMediaID
+import io.github.tiefensuche.SongRec
+import org.json.JSONObject
 
 /**
  * Manage the interactions among the container service, the queue manager and the actual playback.
@@ -51,6 +56,8 @@ internal class PlaybackManager(private val mServiceCallback: PlaybackServiceCall
         }
 
     private var mRepeatMode = PlaybackStateCompat.REPEAT_MODE_NONE
+
+    private val songRec = SongRec()
 
     init {
         mMediaSessionCallback = MediaSessionCallback()
@@ -197,6 +204,29 @@ internal class PlaybackManager(private val mServiceCallback: PlaybackServiceCall
         if (mMusicProvider.getMusic(extractMusicIDFromMediaID(mediaId)) != null) {
             setCurrentMediaId(mediaId)
             handlePlayRequestAtPosition(position)
+        }
+    }
+
+    internal fun tag(metadata: MediaMetadataCompat, filename: String, result: Result<Bundle>) {
+        result.detach()
+
+        val position = playback.currentStreamPosition
+        AsyncTask.execute {
+            val data = Bundle()
+            playback.setRecord(true)
+            Thread.sleep(10000)
+            playback.setRecord(false)
+            val signature = songRec.makeSignatureFromFile(filename)
+            val response = songRec.recognizeSongFromSignature(signature)
+            val json = JSONObject(response)
+            if (json.has("track")) {
+                val track = json.getJSONObject("track")
+                val result = "${track.getString("subtitle")} - ${track.getString("title")}"
+                mMusicProvider.addCuePoint(metadata, position.toInt(), result)
+                data.putInt(Cues.POSITION, position.toInt())
+                data.putString(RESULT, result)
+            }
+            result.sendResult(data)
         }
     }
 
