@@ -325,8 +325,10 @@ internal class FullScreenPlayerFragment : Fragment() {
     }
 
     internal fun onMetadataChanged(metadata: MediaMetadataCompat?) {
+        if (metadata == null)
+            return
 
-        if (metadata != null) {
+        if (metadata.description.mediaId != mCurrentMetadata?.description?.mediaId) {
             // Small sliding-up bar
             mLine1.text = metadata.description.title
             mLine2.text = metadata.description.subtitle
@@ -344,18 +346,18 @@ internal class FullScreenPlayerFragment : Fragment() {
 
             mShare.visibility = if (metadata.containsKey(MediaMetadataCompatExt.METADATA_KEY_URL)) VISIBLE else GONE
 
-            metadata.getRating(MediaMetadataCompatExt.METADATA_KEY_FAVORITE)?.let { rating ->
-                mLike.setColorFilter(if (rating.hasHeart()) Color.RED else Color.WHITE)
-                mLike.setOnClickListener {
-                    activity?.let { it1 -> MediaControllerCompat.getMediaController(it1).transportControls.setRating(RatingCompat.newHeartRating(!rating.hasHeart())) }
-                }
-                mLike.visibility = VISIBLE
-            } ?: run {
-                mLike.visibility = GONE
-            }
-
-            mCurrentMetadata = metadata
             fetchImageAsync(metadata.description)
+            mCurrentMetadata = metadata
+        }
+
+        metadata.getRating(MediaMetadataCompatExt.METADATA_KEY_FAVORITE)?.let { rating ->
+            mLike.setColorFilter(if (rating.hasHeart()) Color.RED else Color.WHITE)
+            mLike.setOnClickListener {
+                activity?.let { MediaControllerCompat.getMediaController(it).transportControls.setRating(RatingCompat.newHeartRating(!rating.hasHeart())) }
+            }
+            mLike.visibility = VISIBLE
+        } ?: run {
+            mLike.visibility = GONE
         }
     }
 
