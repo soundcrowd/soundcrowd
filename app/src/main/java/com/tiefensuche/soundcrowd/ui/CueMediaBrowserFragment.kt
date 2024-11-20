@@ -19,12 +19,8 @@ internal class CueMediaBrowserFragment : CollectionMediaBrowserFragment() {
 
     override val mediaId = CUE_POINTS
 
-    override fun onCreateView(
-        inflater: LayoutInflater,
-        container: ViewGroup?,
-        savedInstanceState: Bundle?
-    ): View {
-        val rootView = super.onCreateView(inflater, container, savedInstanceState)
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
         mBrowserAdapter =
             CueListItemAdapter(requests, object : CueListItemAdapter.OnItemClickListener {
                 override fun onItemClick(item: MediaBrowserCompat.MediaItem, position: Long) {
@@ -51,8 +47,18 @@ internal class CueMediaBrowserFragment : CollectionMediaBrowserFragment() {
                     }
                 }
             })
+    }
+
+    override fun onCreateView(
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View {
+        val rootView = super.onCreateView(inflater, container, savedInstanceState)
+
         mRecyclerView.adapter = mBrowserAdapter
         mRecyclerView.layoutManager = LinearLayoutManager(rootView.context)
+
         return rootView
     }
 

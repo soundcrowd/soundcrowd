@@ -11,13 +11,19 @@ import com.tiefensuche.soundcrowd.R
 import kotlin.math.round
 
 internal open class GridMediaBrowserFragment : CollectionMediaBrowserFragment() {
-    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
-        val rootView = super.onCreateView(inflater, container, savedInstanceState)
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
         mBrowserAdapter = GridItemAdapter(requests, object : MediaItemAdapter.OnItemClickListener {
             override fun onItemClick(item: MediaBrowserCompat.MediaItem) {
                 mMediaFragmentListener.onMediaItemSelected(item)
             }
-        }, ContextCompat.getColor(rootView.context, R.color.colorPrimary))
+        }, ContextCompat.getColor(requireContext(), R.color.colorPrimary))
+    }
+
+    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
+        val rootView = super.onCreateView(inflater, container, savedInstanceState)
+
         mRecyclerView.adapter = mBrowserAdapter
         mRecyclerView.layoutManager = GridLayoutManager(
             rootView.context,

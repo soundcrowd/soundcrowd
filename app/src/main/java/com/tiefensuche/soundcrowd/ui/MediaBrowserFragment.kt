@@ -79,11 +79,15 @@ internal abstract class MediaBrowserFragment : Fragment() {
                 ?: arguments?.getParcelable<MediaDescriptionCompat>(ARG_MEDIA_DESCRIPTION)?.mediaId
                 ?: DEFAULT_MEDIA_ID
 
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        requests = GlideApp.with(this)
+    }
+
     @SuppressLint("ClickableViewAccessibility")
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         val rootView = inflater.inflate(R.layout.fragment_list, container, false)
 
-        requests = GlideApp.with(this)
         mNoMediaView = rootView.findViewById(R.id.error_no_media)
         mProgressBar = rootView.findViewById(R.id.progressBar)
 

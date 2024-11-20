@@ -14,7 +14,7 @@ import kotlin.math.round
 
 internal class StreamMediaBrowserFragment : MediaBrowserFragment() {
 
-    lateinit var mSwipeRefreshLayout: SwipeRefreshLayout
+    private lateinit var mSwipeRefreshLayout: SwipeRefreshLayout
 
     override fun onResult(action: String, extras: Bundle, resultData: Bundle) {
         mSwipeRefreshLayout.isRefreshing = false
@@ -27,13 +27,18 @@ internal class StreamMediaBrowserFragment : MediaBrowserFragment() {
         super.onError(action, extras, data)
     }
 
-    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
-        val rootView = super.onCreateView(inflater, container, savedInstanceState)
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
         mBrowserAdapter = GridItemAdapter(requests, object : MediaItemAdapter.OnItemClickListener {
             override fun onItemClick(item: MediaBrowserCompat.MediaItem) {
                 mMediaFragmentListener.onMediaItemSelected(item)
             }
-        }, ContextCompat.getColor(rootView.context, R.color.colorPrimary))
+        }, ContextCompat.getColor(requireContext(), R.color.colorPrimary))
+    }
+
+    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
+        val rootView = super.onCreateView(inflater, container, savedInstanceState)
+
         mRecyclerView.adapter = mBrowserAdapter
         mRecyclerView.layoutManager = GridLayoutManager(
             rootView.context,
@@ -67,9 +72,5 @@ internal class StreamMediaBrowserFragment : MediaBrowserFragment() {
 
     override fun setFilter(filter: CharSequence?) {
 
-    }
-
-    companion object {
-        private val TAG = this::class.simpleName
     }
 }
