@@ -14,6 +14,7 @@ import android.support.v4.media.RatingCompat
 import android.support.v4.media.session.MediaSessionCompat
 import android.support.v4.media.session.PlaybackStateCompat
 import android.util.Log
+import com.tiefensuche.soundcrowd.R
 import com.tiefensuche.soundcrowd.extensions.MediaMetadataCompatExt
 import com.tiefensuche.soundcrowd.plugins.Callback
 import com.tiefensuche.soundcrowd.sources.MusicProvider
@@ -117,6 +118,17 @@ internal class PlaybackManager(private val mServiceCallback: PlaybackServiceCall
 
         val stateBuilder = PlaybackStateCompat.Builder()
                 .setActions(availableActions)
+
+        val metadata = mMusicProvider.getMusic(extractMusicIDFromMediaID(playback.currentMediaId))
+        metadata?.getRating(MediaMetadataCompatExt.METADATA_KEY_FAVORITE)?.let {
+            val customAction = PlaybackStateCompat.CustomAction.Builder(
+                CUSTOM_ACTION_FAVORITE,
+                "Like",
+                R.drawable.ic_round_favorite_24
+            ).build()
+
+            stateBuilder.addCustomAction(customAction)
+        }
 
         var state = playback.getState()
 
@@ -280,6 +292,19 @@ internal class PlaybackManager(private val mServiceCallback: PlaybackServiceCall
             when (action) {
                 CUSTOM_ACTION_PLAY_SEEK -> extras.getString(MEDIA_ID)?.let {
                     playAtPosition(it, extras.getLong(POSITION)) }
+                CUSTOM_ACTION_FAVORITE -> {
+                    mQueueManager.currentMusic?.description?.mediaId?.let {
+                        val metadata =
+                            mMusicProvider.getMusic(extractMusicIDFromMediaID(it)) ?: return
+                        favorite(
+                            metadata,
+                            RatingCompat.newHeartRating(
+                                !metadata.getRating(MediaMetadataCompatExt.METADATA_KEY_FAVORITE)
+                                    .hasHeart()
+                            )
+                        )
+                    } ?: Log.d(TAG, "failed to get media id")
+                }
                 CUSTOM_ACTION_ADD_CUE_POINT -> {
                     mQueueManager.currentMusic?.description?.mediaId?.let {
                         val musicId = extractMusicIDFromMediaID(it)
@@ -315,20 +340,9 @@ internal class PlaybackManager(private val mServiceCallback: PlaybackServiceCall
 
         override fun onSetRating(rating: RatingCompat) {
             Log.d(TAG, "onSetRating. hasHeart=" + rating.hasHeart())
-
             mQueueManager.currentMusic?.description?.mediaId?.let {
                 val metadata = mMusicProvider.getMusic(extractMusicIDFromMediaID(it)) ?: return
-                AsyncTask.execute {
-                    mMusicProvider.favorite(metadata, object : Callback<Boolean> {
-                        override fun onResult(result: Boolean) {
-                            if (result) {
-                                triggerUpdate(metadata, rating)
-                            } else {
-                                Log.d(TAG, "failed to favorite track")
-                            }
-                        }
-                    })
-                }
+                favorite(metadata, rating)
             } ?: Log.d(TAG, "failed to get media id")
         }
 
@@ -342,16 +356,28 @@ internal class PlaybackManager(private val mServiceCallback: PlaybackServiceCall
             mServiceCallback.onShuffleModeChanged(shuffleMode)
         }
 
-        private fun triggerUpdate(metadata: MediaMetadataCompat, rating: RatingCompat) {
-            val builder = MediaMetadataCompat.Builder(metadata)
-                    .putRating(MediaMetadataCompatExt.METADATA_KEY_FAVORITE, rating)
-            mQueueManager.mListener.onMetadataChanged(builder.build())
-            updatePlaybackState(null)
+        private fun favorite(metadata: MediaMetadataCompat, rating: RatingCompat) {
+            AsyncTask.execute {
+                mMusicProvider.favorite(metadata, object : Callback<Boolean> {
+                    override fun onResult(result: Boolean) {
+                        if (result) {
+                            val newMetadata = MediaMetadataCompat.Builder(metadata)
+                                .putRating(MediaMetadataCompatExt.METADATA_KEY_FAVORITE, rating)
+                                .build()
+                            mMusicProvider.updateMetadata(newMetadata)
+                            mQueueManager.mListener.onMetadataChanged(newMetadata)
+                        } else {
+                            Log.d(TAG, "failed to favorite track")
+                        }
+                    }
+                })
+            }
         }
     }
 
     companion object {
         const val CUSTOM_ACTION_PLAY_SEEK = "com.tiefensuche.soundcrowd.PLAY_SEEK"
+        const val CUSTOM_ACTION_FAVORITE = "com.tiefensuche.soundcrowd.FAVORITE"
         const val CUSTOM_ACTION_ADD_CUE_POINT = "com.tiefensuche.soundcrowd.ADD_CUE_POINT"
         const val CUSTOM_ACTION_REMOVE_CUE_POINT = "com.tiefensuche.soundcrowd.REMOVE_CUE_POINT"
         const val CUSTOM_ACTION_SET_CUE_POINT = "com.tiefensuche.soundcrowd.SET_CUE_POINT"
