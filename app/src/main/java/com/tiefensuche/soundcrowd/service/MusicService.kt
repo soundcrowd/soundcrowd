@@ -238,7 +238,7 @@ internal class MusicService : MediaBrowserServiceCompat(), PlaybackManager.Playb
                     // To make the app more responsive, fetch and cache catalog information now.
                     // This can help improve the response time in the method
                     // {@link #onLoadChildren(String, Result<List<MediaItem>>) onLoadChildren()}.
-                    mMusicProvider.retrieveMediaAsync(request, object : MusicProvider.Callback<Any?> {
+                    mMusicProvider.retrieveMediaAsync(request, object : MusicProvider.Callback {
 
                         override fun onSuccess() {
                             data.putParcelableArrayList(RESULT, mMusicProvider.getChildren(request))
@@ -252,10 +252,6 @@ internal class MusicService : MediaBrowserServiceCompat(), PlaybackManager.Playb
                         }
                     })
                 }
-            }
-            ACTION_ADD_CUE_POINT -> {
-                mMusicProvider.addCuePoint(mSession.controller.metadata, extras)
-                result.sendResult(data)
             }
             else -> {
                 data.putString(ARG_ERROR, "Unknown command")

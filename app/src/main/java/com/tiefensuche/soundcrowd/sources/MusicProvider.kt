@@ -14,7 +14,6 @@ import android.support.v4.media.MediaMetadataCompat
 import android.util.Log
 import com.tiefensuche.soundcrowd.extensions.MediaMetadataCompatExt
 import com.tiefensuche.soundcrowd.plugins.IPlugin
-import com.tiefensuche.soundcrowd.service.Database
 import com.tiefensuche.soundcrowd.service.MusicService
 import com.tiefensuche.soundcrowd.service.PluginManager
 import com.tiefensuche.soundcrowd.sources.MusicProvider.Media.CUE_POINTS
@@ -527,12 +526,12 @@ internal class MusicProvider(context: MusicService) {
      * Get the list of music tracks from a server and caches the track information
      * for future reference, keying tracks by musicId and grouping by genre.
      */
-    internal fun retrieveMediaAsync(request: Request, callback: Callback<Any?>) {
+    internal fun retrieveMediaAsync(request: Request, callback: Callback) {
         // Asynchronously load the music catalog in a separate thread
         AsyncTask.execute { retrieveMedia(request, callback) }
     }
 
-    private fun retrieveMedia(request: Request, callback: Callback<Any?>?) {
+    private fun retrieveMedia(request: Request, callback: Callback?) {
         val dir = library.getPath(request, true)
         when (request.source) {
             LOCAL -> {
@@ -631,24 +630,40 @@ internal class MusicProvider(context: MusicService) {
         }
     }
 
-    fun addCuePoint(metadata: MediaMetadataCompat, extras: Bundle) {
-        MusicService.database.addCuePoint(
-            metadata,
-            extras.getInt(Database.POSITION),
-            extras.getString(Database.DESCRIPTION, "")
-        )
+    fun addCuePoint(musicId: String, position: Int, description: String = "") {
         val request = Request(CUE_POINTS)
-        val dir = library.getPath(request, true)
+        val dir = try {
+            library.getPath(request, false)
+        } catch (ex: Exception) {
+            retrieveMediaAsync(request, object: Callback {
+                override fun onSuccess() {
+                    addCuePoint(musicId, position, description)
+                }
+
+                override fun onError(message: String, e: Exception?) {}
+            })
+            return
+        }
+        val metadata = getMusic(musicId) ?: return
         dir.add(metadata)
-        val musicId = metadata.getString(MediaMetadataCompat.METADATA_KEY_MEDIA_ID)
+        MusicService.database.addCuePoint(metadata, position, description)
         val cues = JSONArray(metadata.getString(Cues.CUES))
             .put(
                 JSONObject()
-                    .put(Cues.POSITION, extras.getInt(Database.POSITION))
-                    .put(Cues.DESCRIPTION, extras.getString(Database.DESCRIPTION, ""))
+                    .put(Cues.POSITION, position)
+                    .put(Cues.DESCRIPTION, description)
             )
-        library.keys[musicId]?.metadata = MediaMetadataCompat.Builder(getMusic(musicId))
-            .putString(Cues.CUES, cues.toString()).build()
+        updateMetadata(
+            MediaMetadataCompat.Builder(metadata)
+                .putString(Cues.CUES, cues.toString())
+                .build()
+        )
+    }
+
+    fun updateMetadata(metadata: MediaMetadataCompat) {
+        metadata.description?.mediaId?.let {
+            library.keys[extractMusicIDFromMediaID(it)]?.metadata = metadata
+        }
     }
 
     fun updateLastPosition(metadata: MediaMetadataCompat, position: Long) {
@@ -658,7 +673,7 @@ internal class MusicProvider(context: MusicService) {
             .putLong(Cues.LAST_POSITION, position).build()
     }
 
-    interface Callback<T> {
+    interface Callback {
         fun onSuccess()
         fun onError(message: String, e: Exception? = null)
     }
@@ -688,7 +703,6 @@ internal class MusicProvider(context: MusicService) {
     companion object {
         const val ACTION_GET_MEDIA = "GET_MEDIA"
         const val ACTION_GET_PLUGINS = "GET_PLUGINS"
-        const val ACTION_ADD_CUE_POINT = "ACTION_ADD_CUE_POINT"
         const val MEDIA_ID = "MEDIA_ID"
         const val OFFSET = "OFFSET"
         const val QUERY = "QUERY"
