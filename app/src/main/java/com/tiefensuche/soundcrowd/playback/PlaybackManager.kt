@@ -19,6 +19,7 @@ import com.tiefensuche.soundcrowd.plugins.Callback
 import com.tiefensuche.soundcrowd.service.Database.Companion.MEDIA_ID
 import com.tiefensuche.soundcrowd.service.Database.Companion.POSITION
 import com.tiefensuche.soundcrowd.sources.MusicProvider
+import com.tiefensuche.soundcrowd.sources.MusicProvider.Cues.DESCRIPTION
 import com.tiefensuche.soundcrowd.sources.MusicProvider.Media.LAST_MEDIA
 import com.tiefensuche.soundcrowd.utils.MediaIDHelper.extractMusicIDFromMediaID
 
@@ -275,10 +276,19 @@ internal class PlaybackManager(private val mServiceCallback: PlaybackServiceCall
             mQueueManager.updateMetadata()
         }
 
-        override fun onCustomAction(action: String?, extras: Bundle?) {
+        override fun onCustomAction(action: String, extras: Bundle) {
             when (action) {
-                CUSTOM_ACTION_PLAY_SEEK -> extras?.getString(MEDIA_ID)?.let {
+                CUSTOM_ACTION_PLAY_SEEK -> extras.getString(MEDIA_ID)?.let {
                     playAtPosition(it, extras.getLong(POSITION)) }
+                CUSTOM_ACTION_ADD_CUE_POINT -> {
+                    mQueueManager.currentMusic?.description?.mediaId?.let {
+                        val musicId = extractMusicIDFromMediaID(it)
+                        mMusicProvider.addCuePoint(musicId,
+                            playback.currentStreamPosition.toInt(),
+                            extras.getString(DESCRIPTION, ""))
+                        mQueueManager.mListener.onMetadataChanged(mMusicProvider.getMusic(musicId))
+                    }
+                }
                 else -> Log.e(TAG, "Unsupported action: $action")
             }
         }
@@ -322,6 +332,7 @@ internal class PlaybackManager(private val mServiceCallback: PlaybackServiceCall
 
     companion object {
         const val CUSTOM_ACTION_PLAY_SEEK = "com.tiefensuche.soundcrowd.PLAY_SEEK"
+        const val CUSTOM_ACTION_ADD_CUE_POINT = "com.tiefensuche.soundcrowd.ADD_CUE_POINT"
         private val TAG = PlaybackManager::class.simpleName
     }
 }

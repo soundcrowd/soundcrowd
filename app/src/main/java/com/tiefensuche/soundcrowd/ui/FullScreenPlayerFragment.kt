@@ -54,6 +54,7 @@ import com.tiefensuche.soundcrowd.extensions.MediaMetadataCompatExt
 import com.tiefensuche.soundcrowd.images.ArtworkHelper
 import com.tiefensuche.soundcrowd.images.GlideApp
 import com.tiefensuche.soundcrowd.images.GlideRequests
+import com.tiefensuche.soundcrowd.playback.PlaybackManager.Companion.CUSTOM_ACTION_ADD_CUE_POINT
 import com.tiefensuche.soundcrowd.service.Database.Companion.DESCRIPTION
 import com.tiefensuche.soundcrowd.service.Database.Companion.POSITION
 import com.tiefensuche.soundcrowd.service.MusicService
@@ -527,7 +528,10 @@ internal class FullScreenPlayerFragment : Fragment() {
             val bundle = Bundle()
             bundle.putInt(POSITION, currentPosition)
             bundle.putString(DESCRIPTION, text)
-            mMediaBrowserProvider.mediaBrowser?.sendCustomAction(MusicProvider.ACTION_ADD_CUE_POINT, bundle, null)
+            MediaControllerCompat.getMediaController(activity()).transportControls.sendCustomAction(
+                CUSTOM_ACTION_ADD_CUE_POINT,
+                bundle
+            )
             mWaveformHandler.addCuePoint(it, currentPosition, mDuration, text ?: "")
         }
     }
