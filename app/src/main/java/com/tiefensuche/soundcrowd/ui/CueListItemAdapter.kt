@@ -33,6 +33,11 @@ internal class CueListItemAdapter(private val requests: GlideRequests, private v
         viewHolder.subitem.adapter = CuesAdapter(mDataset[position])
     }
 
+    override fun onViewRecycled(holder: ViewHolder) {
+        super.onViewRecycled(holder)
+        holder.subitem.visibility = View.GONE
+    }
+
     inner class ViewHolder internal constructor(view: View) : RecyclerView.ViewHolder(view) {
 
         var mediaItem = 0
@@ -80,10 +85,9 @@ internal class CueListItemAdapter(private val requests: GlideRequests, private v
         }
 
         override fun onBindViewHolder(holder: CuesViewHolder, position: Int) {
-            holder.button.text = DateUtils.formatElapsedTime((cues[position].first / 1000)) + (if (cues[position].second != "") ": ${cues[position].second}" else "")
+            holder.button.text = DateUtils.formatElapsedTime(cues[position].first / 1000) + if (cues[position].second != "") ": ${cues[position].second}" else ""
             holder.button.setOnClickListener { listener.onItemClick(item, cues[position].first) }
         }
-
     }
 
     inner class CuesViewHolder internal constructor(view: View) : RecyclerView.ViewHolder(view) {
