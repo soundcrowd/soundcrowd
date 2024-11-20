@@ -696,7 +696,7 @@ internal class MusicProvider(context: MusicService) {
         )
     }
 
-    private fun updateMetadata(metadata: MediaMetadataCompat) {
+    fun updateMetadata(metadata: MediaMetadataCompat) {
         metadata.description?.mediaId?.let {
             library.keys[it]?.metadata = metadata
         }
