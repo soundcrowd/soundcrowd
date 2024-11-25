@@ -42,6 +42,8 @@ import android.view.View.INVISIBLE
 import android.view.View.OnClickListener
 import android.view.View.VISIBLE
 import android.view.ViewGroup
+import android.view.animation.Animation
+import android.view.animation.AnimationUtils
 import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.ProgressBar
@@ -72,6 +74,7 @@ import java.util.concurrent.Executors
 import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.TimeUnit
 import kotlin.math.roundToInt
+
 
 /**
  * A full screen player that shows the current playing music with a background image
@@ -273,13 +276,20 @@ internal class FullScreenPlayerFragment : Fragment() {
             seek((currentPosition + 10000).toLong())
         }
 
-        val startShazam = rootView.findViewById<ImageView>(R.id.shazam)
-        startShazam.setOnClickListener {
+        val startTagging = rootView.findViewById<ImageView>(R.id.shazam)
+        val pulse: Animation = AnimationUtils.loadAnimation(context, R.anim.pulse)
+        startTagging.setOnClickListener {
+            startTagging.isEnabled = false
+            startTagging.setColorFilter(Color.RED)
+            startTagging.startAnimation(pulse)
             mMediaBrowserProvider.mediaBrowser?.sendCustomAction(MusicProvider.ACTION_START_TAGGING, Bundle(), object : CustomActionCallback() {
                 override fun onResult(action: String?, extras: Bundle?, resultData: Bundle) {
                     resultData.getString(RESULT)?.let {
                         mWaveformHandler.addCuePoint(mCurrentMetadata!!, resultData.getInt(POSITION), mDuration, it)
                     } ?: Toast.makeText(context, "No result", Toast.LENGTH_SHORT).show()
+                    startTagging.isEnabled = true
+                    startTagging.setColorFilter(Color.WHITE)
+                    startTagging.clearAnimation()
                 }
             })
         }
