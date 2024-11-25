@@ -26,6 +26,7 @@ public final class RecordAudioBufferSink implements TeeAudioProcessor.AudioBuffe
     private final String outputFileName;
     private final byte[] scratchBuffer;
     private final ByteBuffer scratchByteBuffer;
+    private final Object fileLock = new Object();
 
     private int sampleRateHz;
     private int channelCount;
@@ -63,11 +64,13 @@ public final class RecordAudioBufferSink implements TeeAudioProcessor.AudioBuffe
     public void handleBuffer(ByteBuffer buffer) {
         if (!isRecording)
             return;
-        try {
-            maybePrepareFile();
-            writeBuffer(buffer);
-        } catch (IOException e) {
-            Log.e(TAG, "Error writing data", e);
+        synchronized (fileLock) {
+            try {
+                maybePrepareFile();
+                writeBuffer(buffer);
+            } catch (IOException e) {
+                Log.e(TAG, "Error writing data", e);
+            }
         }
     }
 
@@ -145,5 +148,14 @@ public final class RecordAudioBufferSink implements TeeAudioProcessor.AudioBuffe
 
     void setRecord(boolean value) {
         isRecording = value;
+        if (!value) {
+            synchronized (fileLock) {
+                try {
+                    reset();
+                } catch (IOException e) {
+                    // ignore
+                }
+            }
+        }
     }
 }
