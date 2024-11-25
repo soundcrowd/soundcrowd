@@ -114,6 +114,8 @@ internal abstract class MediaBrowserFragment : Fragment() {
     }
 
     fun requestMedia(offset: Int = 0, refresh: Boolean = false) {
+        mProgressBar.visibility = View.VISIBLE
+
         val bundle = Bundle()
 
         if (offset > 0)
