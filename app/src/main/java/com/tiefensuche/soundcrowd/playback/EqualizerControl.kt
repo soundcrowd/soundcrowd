@@ -20,6 +20,7 @@ internal class EqualizerControl {
 
         const val CONFIG_EQUALIZER_ENABLED = "config.equalizer.enabled"
         const val CONFIG_PRESET = "config.equalizer.preset"
+        const val CONFIG_BAND_VALUES = "config.equalizer.band.values"
         const val CONFIG_BASSBOOST_ENABLED = "config.bassboost.enabled"
         const val CONFIG_BASSBOOST_STRENGTH = "config.bassboost.strength"
         const val CONFIG_LOUDNESS_ENABLED = "config.loudness.enabled"
@@ -32,15 +33,18 @@ internal class EqualizerControl {
         internal var mPresetReverb: PresetReverb? = null
         internal var mLoudnessEnhancer: LoudnessEnhancer? = null
 
-        private var audioSessionId: Int = 0
+        internal var audioSessionId: Int = 0
 
         internal fun setupEqualizerFX(audioSessionId: Int, context: Context) {
             val preferences = PreferenceManager.getDefaultSharedPreferences(context)
-            if (audioSessionId != 0 && EqualizerControl.audioSessionId != audioSessionId) {
-                EqualizerControl.audioSessionId = audioSessionId
+            if (audioSessionId != 0 && this.audioSessionId != audioSessionId) {
+                this.audioSessionId = audioSessionId
                 try {
                     if (preferences.getBoolean(CONFIG_EQUALIZER_ENABLED, false)) {
-                        setEqualizer(preferences.getInt(CONFIG_PRESET, 0).toShort())
+                        setEqualizer(
+                            preferences.getInt(CONFIG_PRESET, 0).toShort(),
+                            preferences.getString(CONFIG_BAND_VALUES, null)
+                        )
                     }
                     if (preferences.getBoolean(CONFIG_BASSBOOST_ENABLED, false)) {
                         setBassBoost(preferences.getInt(CONFIG_BASSBOOST_STRENGTH, 0).toShort())
@@ -57,28 +61,38 @@ internal class EqualizerControl {
             }
         }
 
-        internal fun setEqualizer(preset: Short) {
+        internal fun setEqualizer(preset: Short, values: String?) {
             if (mEqualizer == null) {
                 mEqualizer = Equalizer(Integer.MAX_VALUE, audioSessionId)
             }
-            mEqualizer?.enabled = true
-            mEqualizer?.usePreset(preset)
+            mEqualizer?.let {
+                if (preset < it.numberOfPresets)
+                    it.usePreset(preset)
+                else {
+                    if (values == null)
+                        return
+                    for (i in values.split(",").map { it.toShort() }.withIndex()) {
+                        it.setBandLevel(i.index.toShort(), i.value)
+                    }
+                }
+                it.enabled = true
+            }
         }
 
         internal fun setBassBoost(strength: Short) {
             if (mBassBoost == null) {
                 mBassBoost = BassBoost(Integer.MAX_VALUE, audioSessionId)
             }
-            mBassBoost?.enabled = true
             mBassBoost?.setStrength(strength)
+            mBassBoost?.enabled = true
         }
 
         internal fun setReverb(preset: Short) {
             if (mPresetReverb == null) {
                 mPresetReverb = PresetReverb(Integer.MAX_VALUE, audioSessionId)
             }
-            mPresetReverb?.enabled = true
             mPresetReverb?.preset = preset
+            mPresetReverb?.enabled = true
         }
 
         @RequiresApi(api = Build.VERSION_CODES.KITKAT)
@@ -86,8 +100,8 @@ internal class EqualizerControl {
             if (mLoudnessEnhancer == null) {
                 mLoudnessEnhancer = LoudnessEnhancer(audioSessionId)
             }
-            mLoudnessEnhancer?.enabled = true
             mLoudnessEnhancer?.setTargetGain(targetGain)
+            mLoudnessEnhancer?.enabled = true
         }
 
         internal fun releaseAudioEffect(audioEffect: AudioEffect?) {
@@ -95,6 +109,7 @@ internal class EqualizerControl {
                 if (audioEffect?.enabled == true) {
                     audioEffect.enabled = false
                 }
+                audioEffect?.release()
             } catch (e: RuntimeException) {
                 Log.e(TAG, "can not release audio effect", e)
             }
