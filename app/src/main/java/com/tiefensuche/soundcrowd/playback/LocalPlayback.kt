@@ -323,6 +323,8 @@ internal class LocalPlayback(private val mContext: Context, private val mMusicPr
             mMediaPlayer = ExoPlayer.Builder(mContext).build()
             mMediaPlayer?.let {
 
+                EqualizerControl.setupEqualizerFX(it.audioSessionId, mContext)
+
                 // Make sure the media player will acquire a wake-lock while
                 // playing. If we don't do that, the CPU might go to sleep while the
                 // song is playing, causing playback to stop.
@@ -358,11 +360,6 @@ internal class LocalPlayback(private val mContext: Context, private val mMusicPr
         Log.e(TAG, "Media player error: ${error.message}")
         mCallback?.onError(error.message.toString())
         super.onPlayerError(error)
-    }
-
-    override fun onAudioSessionIdChanged(audioSessionId: Int) {
-        EqualizerControl.setupEqualizerFX(audioSessionId, mContext)
-        super.onAudioSessionIdChanged(audioSessionId)
     }
 
     /**
