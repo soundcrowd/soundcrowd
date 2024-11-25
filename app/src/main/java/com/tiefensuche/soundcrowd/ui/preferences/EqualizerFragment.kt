@@ -25,6 +25,7 @@ import androidx.annotation.RequiresApi
 import androidx.fragment.app.Fragment
 import com.tiefensuche.soundcrowd.R
 import com.tiefensuche.soundcrowd.playback.EqualizerControl
+import com.tiefensuche.soundcrowd.playback.EqualizerControl.Companion.CONFIG_BAND_VALUES
 import com.tiefensuche.soundcrowd.playback.EqualizerControl.Companion.CONFIG_BASSBOOST_ENABLED
 import com.tiefensuche.soundcrowd.playback.EqualizerControl.Companion.CONFIG_BASSBOOST_STRENGTH
 import com.tiefensuche.soundcrowd.playback.EqualizerControl.Companion.CONFIG_EQUALIZER_ENABLED
@@ -33,6 +34,7 @@ import com.tiefensuche.soundcrowd.playback.EqualizerControl.Companion.CONFIG_LOU
 import com.tiefensuche.soundcrowd.playback.EqualizerControl.Companion.CONFIG_PRESET
 import com.tiefensuche.soundcrowd.playback.EqualizerControl.Companion.CONFIG_REVERB_ENABLED
 import com.tiefensuche.soundcrowd.playback.EqualizerControl.Companion.CONFIG_REVERB_PRESET
+import com.tiefensuche.soundcrowd.playback.EqualizerControl.Companion.audioSessionId
 import com.tiefensuche.soundcrowd.playback.EqualizerControl.Companion.mBassBoost
 import com.tiefensuche.soundcrowd.playback.EqualizerControl.Companion.mEqualizer
 import com.tiefensuche.soundcrowd.playback.EqualizerControl.Companion.mLoudnessEnhancer
@@ -90,14 +92,14 @@ internal class EqualizerFragment : Fragment() {
                 val row = LinearLayout(context)
                 row.orientation = LinearLayout.VERTICAL
                 val params = LinearLayout.LayoutParams(
-                        LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.MATCH_PARENT)
+                    LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.MATCH_PARENT)
                 params.leftMargin = 10
                 params.rightMargin = 10
                 row.layoutParams = params
 
                 val layoutParams = LinearLayout.LayoutParams(
-                        ViewGroup.LayoutParams.WRAP_CONTENT,
-                        ViewGroup.LayoutParams.MATCH_PARENT)
+                    ViewGroup.LayoutParams.WRAP_CONTENT,
+                    ViewGroup.LayoutParams.MATCH_PARENT)
                 layoutParams.weight = 1f
                 layoutParams.gravity = Gravity.CENTER
 
@@ -109,12 +111,17 @@ internal class EqualizerFragment : Fragment() {
                 bar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
                     override fun onProgressChanged(seekBar: SeekBar, progress: Int,
                                                    fromUser: Boolean) {
-                        try {
-                            if (it.enabled) {
+                        if (!seekBar.isEnabled)
+                            return
+                        mEqualizer?.let {
+                            try {
                                 it.setBandLevel(i.toShort(), (progress + minEQLevel).toShort())
+                                mPreferences.edit().putString(
+                                    CONFIG_BAND_VALUES,
+                                    bandBars.map { (it.progress + minEQLevel).toShort() }.joinToString(",")).apply()
+                            } catch (e: RuntimeException) {
+                                Log.d(TAG, "can not set band " + i + " to " + (progress + minEQLevel), e)
                             }
-                        } catch (e: RuntimeException) {
-                            Log.d(TAG, "can not set band " + i + " to " + (progress + minEQLevel), e)
                         }
                     }
 
@@ -156,28 +163,35 @@ internal class EqualizerFragment : Fragment() {
                 Log.d(TAG, "preset available: ${it.getPresetName(i.toShort())}")
                 adapter.add(it.getPresetName(i.toShort()))
             }
+            adapter.add("Custom")
         }
         return adapter
     }
 
     private fun setupEqualizer(spinner: Spinner, checkBox: CheckBox, layout: LinearLayout) {
         setupBands(layout)
-        setEnabledBands(checkBox.isChecked)
-
         setupViews(checkBox, spinner, loadPresets(spinner.context), CONFIG_EQUALIZER_ENABLED, CONFIG_PRESET) { enabled, value ->
-            setEnabledBands(enabled)
             if (enabled) {
-                EqualizerControl.setEqualizer(value.toShort())
+                EqualizerControl.setEqualizer(value.toShort(), mPreferences.getString(CONFIG_BAND_VALUES, null))
+                if (bandBars.isEmpty()) {
+                    setupBands(layout)
+                    spinner.adapter = loadPresets(spinner.context)
+                    spinner.setSelection(mPreferences.getInt(CONFIG_PRESET, 0))
+                }
                 mEqualizer?.let {
+                    setEnabledBands(value.toShort() == it.numberOfPresets)
                     val minEQLevel = it.bandLevelRange[0]
                     for (i in bandBars.indices) {
                         bandBars[i].progress = it.getBandLevel(i.toShort()) - minEQLevel
                     }
                 }
             } else {
+                setEnabledBands(false)
                 releaseAudioEffect(mEqualizer)
+                mEqualizer = null
             }
         }
+        setEnabledBands(checkBox.isChecked && spinner.selectedItemId.toShort() == mEqualizer?.numberOfPresets)
     }
 
     private fun setupReverb(spinner: Spinner, checkBox: CheckBox) {
@@ -188,6 +202,7 @@ internal class EqualizerFragment : Fragment() {
                 EqualizerControl.setReverb(value.toShort())
             } else {
                 releaseAudioEffect(mPresetReverb)
+                mPresetReverb = null
             }
         }
     }
@@ -198,6 +213,7 @@ internal class EqualizerFragment : Fragment() {
                 setBassBoost(value.toShort())
             } else {
                 releaseAudioEffect(mBassBoost)
+                mBassBoost = null
             }
         }
     }
@@ -210,13 +226,15 @@ internal class EqualizerFragment : Fragment() {
                 setLoudness(value)
             } else {
                 releaseAudioEffect(mLoudnessEnhancer)
+                mLoudnessEnhancer = null
             }
         }
     }
 
     private fun setupViews(checkBox: CheckBox, controlView: View, keyEnabled: String, keyValue: String, checkboxFunc: (enabled: Boolean, value: Int) -> Unit) {
+        checkBox.isEnabled = audioSessionId != 0
         checkBox.isChecked = mPreferences.getBoolean(keyEnabled, false)
-        controlView.isEnabled = checkBox.isChecked
+        controlView.isEnabled = checkBox.isEnabled && checkBox.isChecked
         checkBox.setOnCheckedChangeListener { _, b ->
             mPreferences.edit().putBoolean(keyEnabled, b).apply()
             controlView.isEnabled = b
@@ -253,6 +271,9 @@ internal class EqualizerFragment : Fragment() {
         spinner.setSelection(mPreferences.getInt(keyValue, 0))
         spinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
             override fun onItemSelected(adapterView: AdapterView<*>, view: View, i: Int, l: Long) {
+                if (mPreferences.getInt(keyValue, 0) == i) {
+                    return
+                }
                 mPreferences.edit().putInt(keyValue, i).apply()
                 try {
                     checkboxFunc.invoke(true, i)
