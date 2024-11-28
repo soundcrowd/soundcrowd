@@ -23,7 +23,6 @@ import com.tiefensuche.soundcrowd.playback.LocalPlayback
 import com.tiefensuche.soundcrowd.playback.PlaybackManager
 import com.tiefensuche.soundcrowd.playback.QueueManager
 import com.tiefensuche.soundcrowd.sources.MusicProvider
-import com.tiefensuche.soundcrowd.sources.MusicProvider.Companion.ACTION_ADD_CUE_POINT
 import com.tiefensuche.soundcrowd.sources.MusicProvider.Companion.ACTION_GET_MEDIA
 import com.tiefensuche.soundcrowd.sources.MusicProvider.Companion.ACTION_GET_PLUGINS
 import com.tiefensuche.soundcrowd.sources.MusicProvider.Companion.RESULT

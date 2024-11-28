@@ -16,10 +16,10 @@ import android.support.v4.media.session.PlaybackStateCompat
 import android.util.Log
 import com.tiefensuche.soundcrowd.extensions.MediaMetadataCompatExt
 import com.tiefensuche.soundcrowd.plugins.Callback
-import com.tiefensuche.soundcrowd.service.Database.Companion.MEDIA_ID
-import com.tiefensuche.soundcrowd.service.Database.Companion.POSITION
 import com.tiefensuche.soundcrowd.sources.MusicProvider
+import com.tiefensuche.soundcrowd.sources.MusicProvider.Companion.MEDIA_ID
 import com.tiefensuche.soundcrowd.sources.MusicProvider.Cues.DESCRIPTION
+import com.tiefensuche.soundcrowd.sources.MusicProvider.Cues.POSITION
 import com.tiefensuche.soundcrowd.sources.MusicProvider.Media.LAST_MEDIA
 import com.tiefensuche.soundcrowd.utils.MediaIDHelper.extractMusicIDFromMediaID
 
@@ -289,6 +289,26 @@ internal class PlaybackManager(private val mServiceCallback: PlaybackServiceCall
                         mQueueManager.mListener.onMetadataChanged(mMusicProvider.getMusic(musicId))
                     }
                 }
+                CUSTOM_ACTION_SET_CUE_POINT -> {
+                    extras.getString(MEDIA_ID)?.let {
+                        mMusicProvider.setCuePoint(it,
+                            extras.getInt(POSITION),
+                            extras.getString(DESCRIPTION, ""))
+                        mQueueManager.currentMusic?.description?.mediaId?.let { mediaId ->
+                            if (extractMusicIDFromMediaID(mediaId) == it)
+                                mQueueManager.mListener.onMetadataChanged(mMusicProvider.getMusic(it))
+                        }
+                    }
+                }
+                CUSTOM_ACTION_REMOVE_CUE_POINT -> {
+                    extras.getString(MEDIA_ID)?.let {
+                        mMusicProvider.deleteCuePoint(it, extras.getInt(POSITION))
+                        mQueueManager.currentMusic?.description?.mediaId?.let { mediaId ->
+                            if (extractMusicIDFromMediaID(mediaId) == it)
+                                mQueueManager.mListener.onMetadataChanged(mMusicProvider.getMusic(it))
+                        }
+                    }
+                }
                 else -> Log.e(TAG, "Unsupported action: $action")
             }
         }
@@ -333,6 +353,8 @@ internal class PlaybackManager(private val mServiceCallback: PlaybackServiceCall
     companion object {
         const val CUSTOM_ACTION_PLAY_SEEK = "com.tiefensuche.soundcrowd.PLAY_SEEK"
         const val CUSTOM_ACTION_ADD_CUE_POINT = "com.tiefensuche.soundcrowd.ADD_CUE_POINT"
+        const val CUSTOM_ACTION_REMOVE_CUE_POINT = "com.tiefensuche.soundcrowd.REMOVE_CUE_POINT"
+        const val CUSTOM_ACTION_SET_CUE_POINT = "com.tiefensuche.soundcrowd.SET_CUE_POINT"
         private val TAG = PlaybackManager::class.simpleName
     }
 }
