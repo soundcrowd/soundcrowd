@@ -124,7 +124,7 @@ internal class PlaybackManager(private val mServiceCallback: PlaybackServiceCall
             val customAction = PlaybackStateCompat.CustomAction.Builder(
                 CUSTOM_ACTION_FAVORITE,
                 "Like",
-                R.drawable.ic_round_favorite_24
+                if (it.hasHeart()) R.drawable.baseline_favorite_24 else R.drawable.baseline_favorite_border_24
             ).build()
 
             stateBuilder.addCustomAction(customAction)
@@ -357,21 +357,30 @@ internal class PlaybackManager(private val mServiceCallback: PlaybackServiceCall
         }
 
         private fun favorite(metadata: MediaMetadataCompat, rating: RatingCompat) {
-            AsyncTask.execute {
-                mMusicProvider.favorite(metadata, object : Callback<Boolean> {
-                    override fun onResult(result: Boolean) {
-                        if (result) {
-                            val newMetadata = MediaMetadataCompat.Builder(metadata)
-                                .putRating(MediaMetadataCompatExt.METADATA_KEY_FAVORITE, rating)
-                                .build()
-                            mMusicProvider.updateMetadata(newMetadata)
-                            mQueueManager.mListener.onMetadataChanged(newMetadata)
-                        } else {
-                            Log.d(TAG, "failed to favorite track")
+            object : AsyncTask<MediaMetadataCompat, Void, Boolean>() {
+                override fun doInBackground(vararg p0: MediaMetadataCompat?): Boolean {
+                    var result = false
+                    mMusicProvider.favorite(metadata, object : Callback<Boolean> {
+                        override fun onResult(r: Boolean) {
+                            result = r
                         }
+                    })
+                    return result
+                }
+
+                override fun onPostExecute(result: Boolean) {
+                    if (result) {
+                        val newMetadata = MediaMetadataCompat.Builder(metadata)
+                            .putRating(MediaMetadataCompatExt.METADATA_KEY_FAVORITE, rating)
+                            .build()
+                        mMusicProvider.updateMetadata(newMetadata)
+                        mQueueManager.mListener.onMetadataChanged(newMetadata)
+                        updatePlaybackState(null)
+                    } else {
+                        Log.d(TAG, "failed to favorite track")
                     }
-                })
-            }
+                }
+            }.execute()
         }
     }
 
