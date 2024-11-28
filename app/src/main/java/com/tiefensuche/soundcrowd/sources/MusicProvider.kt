@@ -621,7 +621,7 @@ internal class MusicProvider(context: MusicService) {
     ) {
         try {
             PluginManager.plugins[metadata.getString(MediaMetadataCompatExt.METADATA_KEY_SOURCE)]?.favorite(
-                metadata.getString(extractMusicIDFromMediaID(MediaMetadataCompat.METADATA_KEY_MEDIA_ID)),
+                metadata.getString(MediaMetadataCompat.METADATA_KEY_MEDIA_ID),
                 callback
             )
                 ?: callback.onResult(false)
@@ -630,21 +630,20 @@ internal class MusicProvider(context: MusicService) {
         }
     }
 
-    fun addCuePoint(musicId: String, position: Int, description: String = "") {
+    private fun getCuePoints(): BrowsableItem {
         val request = Request(CUE_POINTS)
         val dir = try {
             library.getPath(request, false)
         } catch (ex: Exception) {
-            retrieveMediaAsync(request, object: Callback {
-                override fun onSuccess() {
-                    addCuePoint(musicId, position, description)
-                }
-
-                override fun onError(message: String, e: Exception?) {}
-            })
-            return
+            retrieveMedia(request, null)
+            library.getPath(request, false)
         }
+        return dir
+    }
+
+    fun addCuePoint(musicId: String, position: Int, description: String = "") {
         val metadata = getMusic(musicId) ?: return
+        val dir = getCuePoints()
         dir.add(metadata)
         MusicService.database.addCuePoint(metadata, position, description)
         val cues = JSONArray(metadata.getString(Cues.CUES))
@@ -660,9 +659,46 @@ internal class MusicProvider(context: MusicService) {
         )
     }
 
-    fun updateMetadata(metadata: MediaMetadataCompat) {
+    fun setCuePoint(musicId: String, position: Int, description: String = "") {
+        val metadata = getMusic(musicId) ?: return
+        MusicService.database.setDescription(musicId, position, description)
+        val cues = JSONArray(metadata.getString(Cues.CUES))
+        for (i in 0 until cues.length()) {
+            val cue = cues.getJSONObject(i)
+            if (cue.getInt(Cues.POSITION) == position) {
+                cue.put(Cues.DESCRIPTION, description)
+                cues.put(i, cue)
+                break
+            }
+        }
+        updateMetadata(
+            MediaMetadataCompat.Builder(metadata)
+                .putString(Cues.CUES, cues.toString())
+                .build()
+        )
+    }
+
+    fun deleteCuePoint(musicId: String, position: Int) {
+        val metadata = getMusic(musicId) ?: return
+        MusicService.database.deleteCuePoint(musicId, position)
+        val cues = JSONArray(metadata.getString(Cues.CUES))
+        for (i in 0 until cues.length()) {
+            val cue = cues.getJSONObject(i)
+            if (cue.getInt(Cues.POSITION) == position) {
+                cues.remove(i)
+                break
+            }
+        }
+        updateMetadata(
+            MediaMetadataCompat.Builder(metadata)
+                .putString(Cues.CUES, cues.toString())
+                .build()
+        )
+    }
+
+    private fun updateMetadata(metadata: MediaMetadataCompat) {
         metadata.description?.mediaId?.let {
-            library.keys[extractMusicIDFromMediaID(it)]?.metadata = metadata
+            library.keys[it]?.metadata = metadata
         }
     }
 

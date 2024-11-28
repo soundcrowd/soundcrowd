@@ -25,9 +25,9 @@ internal class Database(context: Context) : MetadataDatabase(context) {
     companion object {
         private var TAG = Database::class.simpleName
 
-        const val MEDIA_ID = "media_id"
-        const val POSITION = "position"
-        const val DESCRIPTION = "description"
+        private const val MEDIA_ID = "media_id"
+        private const val POSITION = "position"
+        private const val DESCRIPTION = "description"
 
         private const val DATABASE_MEDIA_ITEM_CUE_POINTS_NAME = "MediaItemStars"
         private const val DATABASE_MEDIA_ITEMS_CUE_POINTS_CREATE = "create table if not exists $DATABASE_MEDIA_ITEM_CUE_POINTS_NAME ($MEDIA_ID text not null, $POSITION int not null, $DESCRIPTION text, CONSTRAINT pk_media_item_star PRIMARY KEY ($MEDIA_ID,$POSITION))"
@@ -78,16 +78,15 @@ internal class Database(context: Context) : MetadataDatabase(context) {
     internal fun updatePosition(metadata: MediaMetadataCompat, position: Long) {
         addMediaItem(metadata)
         metadata.description.mediaId?.let {
-            val musicId = MediaIDHelper.extractMusicIDFromMediaID(it)
             val values = ContentValues()
-            values.put(ID, musicId)
+            values.put(ID, it)
             values.put(POSITION, position)
             try {
                 writableDatabase.insertOrThrow(DATABASE_MEDIA_ITEMS_METADATA_NAME, null, values)
             } catch (e: SQLException) {
                 values.remove(ID)
                 try {
-                    writableDatabase.update(DATABASE_MEDIA_ITEMS_METADATA_NAME, values, "$ID=?", arrayOf(musicId))
+                    writableDatabase.update(DATABASE_MEDIA_ITEMS_METADATA_NAME, values, "$ID=?", arrayOf(it))
                 } catch (e1: SQLiteException) {
                     Log.e(TAG, "error while updating position", e1)
                 }

@@ -55,10 +55,11 @@ import com.tiefensuche.soundcrowd.images.ArtworkHelper
 import com.tiefensuche.soundcrowd.images.GlideApp
 import com.tiefensuche.soundcrowd.images.GlideRequests
 import com.tiefensuche.soundcrowd.playback.PlaybackManager.Companion.CUSTOM_ACTION_ADD_CUE_POINT
-import com.tiefensuche.soundcrowd.service.Database.Companion.DESCRIPTION
-import com.tiefensuche.soundcrowd.service.Database.Companion.POSITION
-import com.tiefensuche.soundcrowd.service.MusicService
-import com.tiefensuche.soundcrowd.sources.MusicProvider
+import com.tiefensuche.soundcrowd.playback.PlaybackManager.Companion.CUSTOM_ACTION_REMOVE_CUE_POINT
+import com.tiefensuche.soundcrowd.playback.PlaybackManager.Companion.CUSTOM_ACTION_SET_CUE_POINT
+import com.tiefensuche.soundcrowd.sources.MusicProvider.Companion.MEDIA_ID
+import com.tiefensuche.soundcrowd.sources.MusicProvider.Cues.DESCRIPTION
+import com.tiefensuche.soundcrowd.sources.MusicProvider.Cues.POSITION
 import com.tiefensuche.soundcrowd.ui.BaseActivity.Companion.MIME_TEXT
 import com.tiefensuche.soundcrowd.ui.intro.ShowcaseViewManager
 import com.tiefensuche.soundcrowd.utils.Utils
@@ -186,11 +187,11 @@ internal class FullScreenPlayerFragment : Fragment() {
             }
 
             override fun onCuePointSetText(mediaId: String, position: Int, text: String) {
-                MusicService.database.setDescription(mediaId, position, text)
+                setCuePoint(position, text)
             }
 
             override fun onCuePointDelete(mediaId: String, position: Int) {
-                MusicService.database.deleteCuePoint(mediaId, position)
+                deleteCuePoint(position)
             }
 
             override fun onWaveformLoaded() {
@@ -523,17 +524,43 @@ internal class FullScreenPlayerFragment : Fragment() {
         }
     }
 
-    internal fun addCuePoint(text: String? = null) {
+    private fun actionCuePoint(action: String, bundle: Bundle) {
         mCurrentMetadata?.let {
-            val bundle = Bundle()
-            bundle.putInt(POSITION, currentPosition)
-            bundle.putString(DESCRIPTION, text)
             MediaControllerCompat.getMediaController(activity()).transportControls.sendCustomAction(
-                CUSTOM_ACTION_ADD_CUE_POINT,
+                action,
                 bundle
             )
-            mWaveformHandler.addCuePoint(it, currentPosition, mDuration, text ?: "")
         }
+    }
+
+    internal fun addCuePoint(text: String? = null) {
+        val bundle = Bundle()
+        bundle.putInt(POSITION, currentPosition)
+        bundle.putString(DESCRIPTION, text)
+        actionCuePoint(CUSTOM_ACTION_ADD_CUE_POINT, bundle)
+        mCurrentMetadata?.let {
+            mWaveformHandler.addCuePoint(
+                it,
+                currentPosition,
+                mDuration,
+                text ?: ""
+            )
+        }
+    }
+
+    private fun setCuePoint(position: Int, text: String) {
+        val bundle = Bundle()
+        bundle.putString(MEDIA_ID, mCurrentMetadata?.description?.mediaId)
+        bundle.putInt(POSITION, position)
+        bundle.putString(DESCRIPTION, text)
+        actionCuePoint(CUSTOM_ACTION_SET_CUE_POINT, bundle)
+    }
+
+    private fun deleteCuePoint(position: Int) {
+        val bundle = Bundle()
+        bundle.putString(MEDIA_ID, mCurrentMetadata?.description?.mediaId)
+        bundle.putInt(POSITION, position)
+        actionCuePoint(CUSTOM_ACTION_REMOVE_CUE_POINT, bundle)
     }
 
     companion object {
