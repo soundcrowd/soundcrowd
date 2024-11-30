@@ -9,9 +9,11 @@ import android.view.ViewGroup
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.tiefensuche.soundcrowd.R
 import com.tiefensuche.soundcrowd.playback.PlaybackManager.Companion.CUSTOM_ACTION_PLAY_SEEK
+import com.tiefensuche.soundcrowd.playback.PlaybackManager.Companion.CUSTOM_ACTION_REMOVE_CUE_POINT
 import com.tiefensuche.soundcrowd.sources.MusicProvider.Companion.MEDIA_ID
 import com.tiefensuche.soundcrowd.sources.MusicProvider.Cues.POSITION
 import com.tiefensuche.soundcrowd.sources.MusicProvider.Media.CUE_POINTS
+import com.tiefensuche.soundcrowd.utils.MediaIDHelper.extractMusicIDFromMediaID
 
 internal class CueMediaBrowserFragment : CollectionMediaBrowserFragment() {
 
@@ -32,6 +34,18 @@ internal class CueMediaBrowserFragment : CollectionMediaBrowserFragment() {
                     activity?.let {
                         MediaControllerCompat.getMediaController(it).transportControls.sendCustomAction(
                             CUSTOM_ACTION_PLAY_SEEK,
+                            bundle
+                        )
+                    }
+                }
+
+                override fun onItemDelete(item: MediaBrowserCompat.MediaItem, position: Long) {
+                    activity?.let {
+                        val bundle = Bundle()
+                        bundle.putString(MEDIA_ID, extractMusicIDFromMediaID(item.mediaId!!))
+                        bundle.putInt(POSITION, position.toInt())
+                        MediaControllerCompat.getMediaController(it).transportControls.sendCustomAction(
+                            CUSTOM_ACTION_REMOVE_CUE_POINT,
                             bundle
                         )
                     }
