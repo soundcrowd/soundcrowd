@@ -548,7 +548,7 @@ internal class FullScreenPlayerFragment : Fragment() {
         }
     }
 
-    internal fun addCuePoint(text: String? = null) {
+    private fun addCuePoint(text: String? = null) {
         val bundle = Bundle()
         bundle.putInt(POSITION, currentPosition)
         bundle.putString(DESCRIPTION, text)
