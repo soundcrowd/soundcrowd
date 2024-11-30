@@ -6,6 +6,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
+import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -56,6 +57,7 @@ internal class CueListItemAdapter(private val requests: GlideRequests, private v
 
     interface OnItemClickListener {
         fun onItemClick(item: MediaBrowserCompat.MediaItem, position: Long)
+        fun onItemDelete(item: MediaBrowserCompat.MediaItem, position: Long)
     }
 
     inner class CuesAdapter(val item: MediaBrowserCompat.MediaItem) : RecyclerView.Adapter<CuesViewHolder>() {
@@ -85,12 +87,20 @@ internal class CueListItemAdapter(private val requests: GlideRequests, private v
         }
 
         override fun onBindViewHolder(holder: CuesViewHolder, position: Int) {
-            holder.button.text = DateUtils.formatElapsedTime(cues[position].first / 1000) + if (cues[position].second != "") ": ${cues[position].second}" else ""
-            holder.button.setOnClickListener { listener.onItemClick(item, cues[position].first) }
+            val cue = cues[position]
+            holder.buttonPlay.text = DateUtils.formatElapsedTime(cue.first / 1000) + if (cue.second != "") ": ${cue.second}" else ""
+            holder.buttonPlay.setOnClickListener { listener.onItemClick(item, cue.first) }
+            holder.buttonDelete.setOnClickListener {
+                listener.onItemDelete(item, cue.first)
+                cues.removeAt(position)
+                notifyItemRemoved(position)
+                notifyItemRangeChanged(position, itemCount)
+            }
         }
     }
 
     inner class CuesViewHolder internal constructor(view: View) : RecyclerView.ViewHolder(view) {
-        val button: Button = view.findViewById(R.id.button)
+        val buttonPlay: Button = view.findViewById(R.id.button)
+        val buttonDelete: ImageButton = view.findViewById(R.id.delete)
     }
 }
