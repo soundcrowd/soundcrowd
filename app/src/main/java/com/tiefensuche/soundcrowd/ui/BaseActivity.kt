@@ -140,10 +140,7 @@ abstract class BaseActivity : ActionBarCastActivity(), MediaBrowserProvider {
     }
 
     private fun handleIntent(intent: Intent) {
-        if (intent.action != null && intent.action!!.endsWith("intent.action.SEND") && MIME_TEXT == intent.type) {
-            // handle text via share action, that should be a description for a new cue point
-            mFullScreenPlayerFragment?.addCuePoint(intent.getStringExtra(Intent.EXTRA_TEXT))
-        } else if (intent.action != null && intent.action!!.endsWith("intent.action.VIEW") && intent.data != null) {
+        if (intent.action != null && intent.action!!.endsWith("intent.action.VIEW") && intent.data != null) {
             // handle as file path to a music track
             val service = Intent(this, MusicService::class.java)
             service.action = MusicService.ACTION_CMD
