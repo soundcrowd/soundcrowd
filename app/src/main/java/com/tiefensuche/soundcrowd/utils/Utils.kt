@@ -77,16 +77,4 @@ internal object Utils {
             "Dark" -> AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES)
         }
     }
-
-    internal fun isAppInstalled(context: Context, uri: String): Boolean {
-        val pm = context.packageManager
-        try {
-            pm.getPackageInfo(uri, PackageManager.GET_ACTIVITIES)
-            return true
-        } catch (ignored: PackageManager.NameNotFoundException) {
-            // not installed
-        }
-
-        return false
-    }
 }

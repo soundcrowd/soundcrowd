@@ -14,6 +14,7 @@ import android.graphics.drawable.Drawable
 import android.os.Bundle
 import android.os.Handler
 import android.os.SystemClock
+import android.support.v4.media.MediaBrowserCompat.CustomActionCallback
 import android.support.v4.media.MediaDescriptionCompat
 import android.support.v4.media.MediaMetadataCompat
 import android.support.v4.media.RatingCompat
@@ -41,11 +42,14 @@ import android.view.View.INVISIBLE
 import android.view.View.OnClickListener
 import android.view.View.VISIBLE
 import android.view.ViewGroup
+import android.view.animation.Animation
+import android.view.animation.AnimationUtils
 import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.ProgressBar
 import android.widget.SeekBar
 import android.widget.TextView
+import android.widget.Toast
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import com.sothree.slidinguppanel.SlidingUpPanelLayout
@@ -59,16 +63,18 @@ import com.tiefensuche.soundcrowd.playback.PlaybackManager.Companion.CUSTOM_ACTI
 import com.tiefensuche.soundcrowd.playback.PlaybackManager.Companion.CUSTOM_ACTION_SET_CUE_POINT
 import com.tiefensuche.soundcrowd.sources.MusicProvider.Companion.MEDIA_ID
 import com.tiefensuche.soundcrowd.sources.MusicProvider.Cues.DESCRIPTION
+import com.tiefensuche.soundcrowd.sources.MusicProvider
+import com.tiefensuche.soundcrowd.sources.MusicProvider.Companion.RESULT
 import com.tiefensuche.soundcrowd.sources.MusicProvider.Cues.POSITION
 import com.tiefensuche.soundcrowd.ui.BaseActivity.Companion.MIME_TEXT
 import com.tiefensuche.soundcrowd.ui.intro.ShowcaseViewManager
-import com.tiefensuche.soundcrowd.utils.Utils
 import com.tiefensuche.soundcrowd.waveform.WaveformHandler
 import com.tiefensuche.soundcrowd.waveform.WaveformView
 import java.util.concurrent.Executors
 import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.TimeUnit
 import kotlin.math.roundToInt
+
 
 /**
  * A full screen player that shows the current playing music with a background image
@@ -270,15 +276,22 @@ internal class FullScreenPlayerFragment : Fragment() {
             seek((currentPosition + 10000).toLong())
         }
 
-        val startShazam = rootView.findViewById<ImageView>(R.id.shazam)
-        if (Utils.isAppInstalled(rootView.context, "com.shazam.android")) {
-            startShazam.setOnClickListener {
-                val intent = Intent("com.shazam.android.intent.actions.START_TAGGING")
-                intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
-                startActivity(intent)
-            }
-        } else {
-            startShazam.visibility = GONE
+        val startTagging = rootView.findViewById<ImageView>(R.id.shazam)
+        val pulse: Animation = AnimationUtils.loadAnimation(context, R.anim.pulse)
+        startTagging.setOnClickListener {
+            startTagging.isEnabled = false
+            startTagging.setColorFilter(Color.RED)
+            startTagging.startAnimation(pulse)
+            mMediaBrowserProvider.mediaBrowser?.sendCustomAction(MusicProvider.ACTION_START_TAGGING, Bundle(), object : CustomActionCallback() {
+                override fun onResult(action: String?, extras: Bundle?, resultData: Bundle) {
+                    resultData.getString(RESULT)?.let {
+                        mWaveformHandler.addCuePoint(mCurrentMetadata!!, resultData.getInt(POSITION), mDuration, it)
+                    } ?: Toast.makeText(context, "No result", Toast.LENGTH_SHORT).show()
+                    startTagging.isEnabled = true
+                    startTagging.setColorFilter(Color.WHITE)
+                    startTagging.clearAnimation()
+                }
+            })
         }
 
         mSeekbar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
@@ -535,7 +548,7 @@ internal class FullScreenPlayerFragment : Fragment() {
         }
     }
 
-    internal fun addCuePoint(text: String? = null) {
+    private fun addCuePoint(text: String? = null) {
         val bundle = Bundle()
         bundle.putInt(POSITION, currentPosition)
         bundle.putString(DESCRIPTION, text)

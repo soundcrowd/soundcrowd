@@ -25,8 +25,6 @@
         <package android:name="com.tiefensuche.soundcrowd.plugins.beatport" />
         <package android:name="com.tiefensuche.soundcrowd.plugins.tidal" />
         <package android:name="com.tiefensuche.soundcrowd.plugins.cache" />
-
-        <package android:name="com.shazam.android" />
     </queries>
 
     <application
@@ -81,13 +79,6 @@
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
                 <data android:scheme="soundcrowd" />
-            </intent-filter>
-
-            <!-- Share target to create a cue point -->
-            <intent-filter android:label="Create cue point">
-                <action android:name="android.intent.action.SEND" />
-                <category android:name="android.intent.category.DEFAULT" />
-                <data android:mimeType="text/plain" />
             </intent-filter>
         </activity>
 

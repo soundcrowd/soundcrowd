@@ -22,7 +22,11 @@ import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player.Listener
 import androidx.media3.datasource.DataSource
 import androidx.media3.datasource.DataSpec
+import androidx.media3.exoplayer.DefaultRenderersFactory
 import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.exoplayer.audio.AudioSink
+import androidx.media3.exoplayer.audio.DefaultAudioSink
+import androidx.media3.exoplayer.audio.TeeAudioProcessor
 import androidx.media3.exoplayer.source.ProgressiveMediaSource
 import com.tiefensuche.soundcrowd.extensions.MediaMetadataCompatExt
 import com.tiefensuche.soundcrowd.extensions.UrlResolver
@@ -87,10 +91,13 @@ internal class LocalPlayback(private val mContext: Context, private val mMusicPr
     override val currentStreamPosition: Long
         get() = mMediaPlayer?.currentPosition ?: mCurrentPosition
 
+    val sink: RecordAudioBufferSink
+
     init {
         PluginManager.loadPlugin<UrlResolver>(mContext,
                 "com.tiefensuche.soundcrowd.plugins.cache",
                 "Extension")?.let { this.urlResolver = it }
+        sink = RecordAudioBufferSink(mContext.filesDir.path + "/rec.wav")
     }
 
     override fun start() {}
@@ -226,6 +233,10 @@ internal class LocalPlayback(private val mContext: Context, private val mMusicPr
         this.mCallback = callback
     }
 
+    override fun setRecord(value: Boolean) {
+        sink.setRecord(value)
+    }
+
     /**
      * Try to get the system audio focus.
      */
@@ -320,7 +331,21 @@ internal class LocalPlayback(private val mContext: Context, private val mMusicPr
     private fun createMediaPlayerIfNeeded() {
         Log.d(TAG, "createMediaPlayerIfNeeded. needed? ${mMediaPlayer == null}")
         if (mMediaPlayer == null) {
-            mMediaPlayer = ExoPlayer.Builder(mContext).build()
+            mMediaPlayer = ExoPlayer.Builder(mContext)
+                .setRenderersFactory( object : DefaultRenderersFactory(mContext) {
+                    override fun buildAudioSink(
+                        context: Context,
+                        enableFloatOutput: Boolean,
+                        enableAudioTrackPlaybackParams: Boolean
+                    ): AudioSink {
+                        return DefaultAudioSink.Builder(context)
+                            .setEnableFloatOutput(enableFloatOutput)
+                            .setEnableAudioTrackPlaybackParams(enableAudioTrackPlaybackParams)
+                            .setAudioProcessors(arrayOf(TeeAudioProcessor(sink)))
+                            .build()
+                    }
+                })
+                .build()
             mMediaPlayer?.let {
 
                 EqualizerControl.setupEqualizerFX(it.audioSessionId, mContext)
