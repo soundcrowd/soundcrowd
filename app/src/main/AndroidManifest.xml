@@ -25,6 +25,8 @@
         <package android:name="com.tiefensuche.soundcrowd.plugins.beatport" />
         <package android:name="com.tiefensuche.soundcrowd.plugins.tidal" />
         <package android:name="com.tiefensuche.soundcrowd.plugins.cache" />
+
+        <package android:name="com.shazam.android" />
     </queries>
 
     <application
