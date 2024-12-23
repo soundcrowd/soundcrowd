@@ -24,12 +24,15 @@ import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.google.android.material.color.DynamicColors
 import com.google.android.material.navigation.NavigationView
 import com.tiefensuche.soundcrowd.R
+import com.tiefensuche.soundcrowd.sources.MusicProvider.Companion.SUGGESTIONS
 import com.tiefensuche.soundcrowd.sources.MusicProvider.PluginMetadata.CATEGORY
 import com.tiefensuche.soundcrowd.sources.MusicProvider.PluginMetadata.ICON
 import com.tiefensuche.soundcrowd.sources.MusicProvider.PluginMetadata.NAME
+import com.tiefensuche.soundcrowd.sources.MusicProvider.PluginMetadata.SEARCH_TYPES
 import com.tiefensuche.soundcrowd.ui.browser.CueMediaBrowserFragment
 import com.tiefensuche.soundcrowd.ui.browser.MediaBrowserFragment
 import com.tiefensuche.soundcrowd.ui.browser.PlaylistsMediaBrowserFragment
+import com.tiefensuche.soundcrowd.ui.browser.SuggestionMediaBrowserFragment
 import com.tiefensuche.soundcrowd.ui.preferences.EqualizerFragment
 import com.tiefensuche.soundcrowd.ui.preferences.PreferenceFragment
 
@@ -52,7 +55,10 @@ abstract class ActionBarCastActivity : AppCompatActivity() {
     internal lateinit var sheetBehavior: BottomSheetBehavior<FragmentContainerView>
     private lateinit var mDrawerToggle: ActionBarDrawerToggle
 
+    private var menu: Menu? = null
     private val paths = ArrayList<Pair<String, ArrayList<Bundle>>>()
+    private val searchCategories = ArrayList<List<String>>()
+    internal var selectedSearchCategory: String? = null
 
     private val mBackStackChangedListener = FragmentManager.OnBackStackChangedListener { this.updateDrawerToggle() }
 
@@ -78,6 +84,13 @@ abstract class ActionBarCastActivity : AppCompatActivity() {
     internal val currentFragmentMediaId: String?
         get() = (supportFragmentManager.findFragmentByTag(MediaBrowserFragment::class.java.name) as? MediaBrowserFragment)?.mediaId ?:
         (supportFragmentManager.findFragmentByTag(TabFragment::class.java.name) as? TabFragment)?.mediaId
+
+    internal val tabFragment: TabFragment?
+        get() = supportFragmentManager.findFragmentByTag(TabFragment::class.java.name) as? TabFragment
+    internal val browseFragment: MediaBrowserFragment?
+        get() = supportFragmentManager.findFragmentByTag(MediaBrowserFragment::class.java.name) as? MediaBrowserFragment
+    internal val suggestionFragment: SuggestionMediaBrowserFragment?
+        get() = supportFragmentManager.findFragmentByTag(SUGGESTIONS) as? SuggestionMediaBrowserFragment
 
     public override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -137,11 +150,18 @@ abstract class ActionBarCastActivity : AppCompatActivity() {
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
         super.onCreateOptionsMenu(menu)
+        this.menu = menu
         menuInflater.inflate(R.menu.main, menu)
         return true
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        if (item.groupId == 1) {
+            item.isChecked = true
+            selectedSearchCategory = item.title.toString()
+            return true
+        }
+
         if (mDrawerToggle.onOptionsItemSelected(item)) {
             return true
         }
@@ -217,6 +237,8 @@ abstract class ActionBarCastActivity : AppCompatActivity() {
     }
 
     private fun setFragmentId(id: Int) {
+        menu?.removeGroup(1)
+        selectedSearchCategory = ""
         when (id) {
             R.id.navigation_allmusic -> setFragment(LocalTabFragment())
             R.id.navigation_playing_queue -> setFragment(QueueFragment())
@@ -234,9 +256,24 @@ abstract class ActionBarCastActivity : AppCompatActivity() {
                     putParcelableArrayList(CATEGORY, paths[id - 1].second)
                 }
                 setFragment(fragment)
+                setSearchCategories(id - 1)
             }
         }
         mNavigationView.setCheckedItem(id)
+    }
+
+    private fun setSearchCategories(id: Int) {
+        menu?.removeGroup(1)
+        for (category in searchCategories[id].withIndex()) {
+            menu!!.add(1, category.index, 0, category.value).apply {
+                if (category.index == 0) {
+                    selectedSearchCategory = title.toString()
+                    isChecked = true
+                }
+            }
+        }
+        menu?.setGroupCheckable(1, true, true)
+        menu?.setGroupVisible(1, false)
     }
 
     private fun setFragment(fragment: Fragment) {
@@ -266,6 +303,7 @@ abstract class ActionBarCastActivity : AppCompatActivity() {
             item.isCheckable = true
             item.icon = BitmapDrawable(resources, plugin.getParcelable<Bitmap>(ICON)!!)
             paths.add(Pair(plugin.getString(NAME)!!, plugin.getParcelableArrayList(CATEGORY)!!))
+            searchCategories.add(plugin.getParcelableArrayList<Bundle>(SEARCH_TYPES)!!.map { it.getString(NAME)!! })
         }
         setFragmentId(getDefaultSharedPreferences(this).getInt(getString(R.string.preference_last_fragment), R.id.navigation_allmusic))
     }

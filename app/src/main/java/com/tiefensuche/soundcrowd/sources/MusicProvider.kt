@@ -119,7 +119,7 @@ internal class MusicProvider(context: Context) {
         }
 
         private fun parseCommand(cmd: String, type: String, query: String): Boolean {
-            if (!listOf(QUERY).contains(cmd))
+            if (!listOf(QUERY, SUGGESTIONS).contains(cmd))
                 return false
 
             this.cmd = cmd
@@ -288,6 +288,12 @@ internal class MusicProvider(context: Context) {
     }
 
     internal fun getChildren(request: Request): List<MediaItem> {
+        if (request.cmd == SUGGESTIONS)
+            return getSuggestions(request)
+
+        if (request.cmd == QUERY)
+            database.addSearchQuery(request.query!!)
+
         if (!hasItems(request)) {
             retrieveMedia(request)
         }
@@ -352,7 +358,16 @@ internal class MusicProvider(context: Context) {
                 })
             }
 
+            val searchCategories = ArrayList<Bundle>()
+            for (category in plugin.searchCategories()) {
+                searchCategories.add(Bundle().apply {
+                    putString(PluginMetadata.NAME, category)
+                    putString(PluginMetadata.CATEGORY, category)
+                })
+            }
+
             bundle.putParcelableArrayList(PluginMetadata.CATEGORY, categories)
+            bundle.putParcelableArrayList(PluginMetadata.SEARCH_TYPES, searchCategories)
             plugins.add(bundle)
         }
 
@@ -487,6 +502,41 @@ internal class MusicProvider(context: Context) {
         return database.getPlaylist(playlistId).mapNotNull { getMusic(it) ?: database.getMediaItem(it) }
     }
 
+    private fun getSuggestions(request: Request): List<MediaItem> {
+        val res = ArrayList<MediaItem>()
+        if (request.query!!.isNotEmpty()) {
+            when (request.source) {
+                LOCAL -> {
+                    val unique = HashSet<CharSequence?>()
+                    request.query!!.lowercase().let {
+                        for (item in library.getPath(Request(LOCAL), false).items()) {
+                            if (item.mediaMetadata.title?.toString()?.lowercase()?.contains(it) == true)
+                                unique.add(item.mediaMetadata.title)
+                        }
+                        for (item in library.getPath(Request("$LOCAL/METADATA_KEY_ARTIST"), false).items()) {
+                            if (item.mediaMetadata.artist?.toString()?.lowercase()?.contains(it) == true)
+                                unique.add(item.mediaMetadata.artist)
+                        }
+                        for (item in library.getPath(Request("$LOCAL/METADATA_KEY_ALBUM"), false).items()) {
+                            if (item.mediaMetadata.albumTitle?.toString()?.lowercase()?.contains(it) == true)
+                                unique.add(item.mediaMetadata.albumTitle)
+                        }
+                    }
+                    unique.forEach {
+                        res.add(MediaItemUtils.createTextItem(it.toString(), false))
+                    }
+                }
+                else -> {
+                    res.addAll(PluginManager.plugins[request.source]?.getSuggestions(request.type!!, request.query!!)
+                        ?.map { MediaItemUtils.createTextItem(it, false) } ?: emptyList())
+                }
+            }
+        }
+
+        res.addAll(database.getRecentSearchQueries(request.query))
+        return res
+    }
+
     private fun getCuePoints(): BrowsableItem {
         val request = Request(CUE_POINTS)
         val dir = try {
@@ -573,6 +623,7 @@ internal class MusicProvider(context: Context) {
     object PluginMetadata {
         const val NAME = "NAME"
         const val CATEGORY = "CATEGORY"
+        const val SEARCH_TYPES = "SEARCH_TYPES"
         const val MEDIA_TYPE = "MEDIA_TYPE"
         const val ICON = "ICON"
     }
@@ -587,6 +638,7 @@ internal class MusicProvider(context: Context) {
     companion object {
         const val MEDIA_ID = "MEDIA_ID"
         const val QUERY = "QUERY"
+        const val SUGGESTIONS = "SUGGESTIONS"
         const val OPTION_REFRESH = "REFRESH"
         const val METADATA_KEY_ARTIST = "METADATA_KEY_ARTIST"
         const val METADATA_KEY_ALBUM = "METADATA_KEY_ALBUM"

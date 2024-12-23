@@ -158,6 +158,7 @@ internal abstract class MediaBrowserFragment : Fragment() {
         fun setBackground(description: MediaItem)
         fun enableCollapse(enable: Boolean)
         fun showSearchButton(show: Boolean)
+        fun setQuery(query: CharSequence?, submit: Boolean)
     }
 
     companion object {
