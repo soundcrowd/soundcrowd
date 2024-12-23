@@ -29,7 +29,7 @@ internal class Database(context: Context) : SQLiteOpenHelper(context, DATABASE_N
 
     companion object {
         private const val DATABASE_NAME = "SoundCrowd"
-        private const val DATABASE_VERSION = 4
+        private const val DATABASE_VERSION = 5
 
         const val ARTIST = "artist"
         const val TITLE = "title"
@@ -51,6 +51,7 @@ internal class Database(context: Context) : SQLiteOpenHelper(context, DATABASE_N
         private const val MEDIA_ID = "media_id"
         private const val POSITION = "position"
         private const val DESCRIPTION = "description"
+        private const val LAST_TIMESTAMP = "last"
 
         private const val DATABASE_MEDIA_ITEM_CUE_POINTS_NAME = "MediaItemStars"
         private const val DATABASE_MEDIA_ITEMS_CUE_POINTS_CREATE = "create table if not exists $DATABASE_MEDIA_ITEM_CUE_POINTS_NAME ($MEDIA_ID text not null, $POSITION int not null, $DESCRIPTION text, CONSTRAINT pk_media_item_star PRIMARY KEY ($MEDIA_ID,$POSITION))"
@@ -60,6 +61,9 @@ internal class Database(context: Context) : SQLiteOpenHelper(context, DATABASE_N
 
         private const val DATABASE_PLAYLISTS_NAME = "Playlists"
         private const val DATABASE_PLAYLISTS_CREATE = "create table if not exists $DATABASE_PLAYLISTS_NAME ($ID integer primary key not null, name text, items text)"
+
+        private const val DATABASE_SEARCH_HISTORY_NAME = "SearchHistory"
+        private const val DATABASE_SEARCH_HISTORY_CREATE = "create table if not exists $DATABASE_SEARCH_HISTORY_NAME ($ID text primary key, $LAST_TIMESTAMP date default current_timestamp)"
     }
 
     private fun addMediaItem(item: MediaItem) {
@@ -109,6 +113,7 @@ internal class Database(context: Context) : SQLiteOpenHelper(context, DATABASE_N
         sqLiteDatabase.execSQL(DATABASE_MEDIA_ITEMS_CUE_POINTS_CREATE)
         sqLiteDatabase.execSQL(DATABASE_MEDIA_ITEMS_METADATA_CREATE)
         sqLiteDatabase.execSQL(DATABASE_PLAYLISTS_CREATE)
+        sqLiteDatabase.execSQL(DATABASE_SEARCH_HISTORY_CREATE)
     }
 
     override fun onUpgrade(sqLiteDatabase: SQLiteDatabase, oldVersion: Int, newVersion: Int) {
@@ -122,6 +127,14 @@ internal class Database(context: Context) : SQLiteOpenHelper(context, DATABASE_N
         if (oldVersion < 4) {
             // needed since 4.1.0
             sqLiteDatabase.execSQL(DATABASE_PLAYLISTS_CREATE)
+
+            // needed since 4.0.0 but database upgrade was missing in release
+            try {
+                sqLiteDatabase.execSQL("ALTER TABLE $DATABASE_MEDIA_ITEMS_NAME ADD COLUMN $DATASOURCE boolean default 0")
+            } catch (_: Exception) {}
+        }
+        if (oldVersion < 5) {
+            sqLiteDatabase.execSQL(DATABASE_SEARCH_HISTORY_CREATE)
 
             // needed since 4.0.0 but database upgrade was missing in release
             try {
@@ -326,5 +339,34 @@ internal class Database(context: Context) : SQLiteOpenHelper(context, DATABASE_N
 
     fun deletePlaylist(playlistId: String) {
         writableDatabase.delete(DATABASE_PLAYLISTS_NAME, "$ID=?", arrayOf(playlistId))
+    }
+
+    fun addSearchQuery(query: String) {
+        val values = ContentValues()
+        values.put(ID, query)
+        try {
+            writableDatabase.insertOrThrow(DATABASE_SEARCH_HISTORY_NAME, null, values)
+        } catch (e: SQLException) {
+            try {
+                writableDatabase.execSQL("update $DATABASE_SEARCH_HISTORY_NAME set last=current_timestamp where $ID=?", arrayOf(query))
+            } catch (e1: SQLiteException) {
+                Log.e(TAG, "error while updating position", e1)
+            }
+        }
+    }
+
+    fun getRecentSearchQueries(query: String?): List<MediaItem> {
+        val items = ArrayList<MediaItem>()
+        try {
+            val cursor = readableDatabase.query(DATABASE_SEARCH_HISTORY_NAME,
+                null, "$ID like ?", arrayOf("%$query%"), null, null, "last desc", "50")
+            while (cursor.moveToNext()) {
+                items.add(MediaItemUtils.createTextItem(cursor.getString(cursor.getColumnIndex(ID)), true))
+            }
+            cursor.close()
+        } catch (e: SQLException) {
+            Log.e(TAG, "error while querying recent search queries", e)
+        }
+        return items
     }
 }

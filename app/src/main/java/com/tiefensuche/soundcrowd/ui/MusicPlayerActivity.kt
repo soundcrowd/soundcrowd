@@ -4,7 +4,8 @@
 package com.tiefensuche.soundcrowd.ui
 
 import android.os.Bundle
-import android.text.TextUtils
+import android.os.Handler
+import android.os.Looper
 import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
@@ -20,16 +21,19 @@ import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.tiefensuche.soundcrowd.R
 import com.tiefensuche.soundcrowd.images.ArtworkHelper
 import com.tiefensuche.soundcrowd.images.GlideApp
-import com.tiefensuche.soundcrowd.plugins.MediaMetadataCompatExt
 import com.tiefensuche.soundcrowd.sources.MusicProvider.Companion.MEDIA_ID
 import com.tiefensuche.soundcrowd.sources.MusicProvider.Companion.QUERY
+import com.tiefensuche.soundcrowd.sources.MusicProvider.Companion.SUGGESTIONS
 import com.tiefensuche.soundcrowd.sources.MusicProvider.Media.CUE_POINTS
 import com.tiefensuche.soundcrowd.sources.MusicProvider.Media.LOCAL
 import com.tiefensuche.soundcrowd.sources.MusicProvider.Media.PLAYLISTS
+import com.tiefensuche.soundcrowd.sources.MusicProvider.PluginMetadata.NAME
+import com.tiefensuche.soundcrowd.ui.browser.CueMediaBrowserFragment
 import com.tiefensuche.soundcrowd.ui.browser.GridMediaBrowserFragment
 import com.tiefensuche.soundcrowd.ui.browser.MediaBrowserFragment
 import com.tiefensuche.soundcrowd.ui.browser.PlaylistMediaBrowserFragment
 import com.tiefensuche.soundcrowd.ui.browser.StreamMediaBrowserFragment
+import com.tiefensuche.soundcrowd.ui.browser.SuggestionMediaBrowserFragment
 import com.tiefensuche.soundcrowd.utils.MediaIDHelper
 import com.tiefensuche.soundcrowd.utils.MediaIDHelper.CATEGORY_SEPARATOR
 
@@ -47,6 +51,8 @@ internal class MusicPlayerActivity : BaseActivity(), MediaBrowserFragment.MediaF
     private var toolbarHeader: View? = null
     private var headerLineTitle: TextView? = null
     private var headerLineSubtitle: TextView? = null
+    private val handler = Handler(Looper.getMainLooper())
+    private var searchSubmitted = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -89,11 +95,15 @@ internal class MusicPlayerActivity : BaseActivity(), MediaBrowserFragment.MediaF
         // Inflate the menu; this adds items to the action bar if it is present.
         MenuItemCompat.setOnActionExpandListener(searchItem, object : MenuItemCompat.OnActionExpandListener {
             override fun onMenuItemActionExpand(menuItem: MenuItem): Boolean {
+                menu.setGroupVisible(1, true)
                 return true
             }
 
             override fun onMenuItemActionCollapse(menuItem: MenuItem): Boolean {
-                supportFragmentManager.popBackStack()
+                menu.setGroupVisible(1, false)
+                if (!searchSubmitted)
+                    supportFragmentManager.popBackStackImmediate()
+                searchSubmitted = false
                 return true
             }
         })
@@ -102,24 +112,33 @@ internal class MusicPlayerActivity : BaseActivity(), MediaBrowserFragment.MediaF
                 ?: throw RuntimeException()
         searchView?.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
             override fun onQueryTextSubmit(query: String): Boolean {
-                currentFragmentMediaId?.let {
-                    if (it == CUE_POINTS)
-                        return false
-                    val bundle = Bundle()
-                    if (!it.startsWith(LOCAL))
-                        bundle.putString(MediaMetadataCompatExt.METADATA_KEY_TYPE, MediaMetadataCompatExt.MediaType.STREAM.name)
-                    navigateToBrowser(QUERY + CATEGORY_SEPARATOR + "Tracks" + CATEGORY_SEPARATOR + MediaIDHelper.toBrowsableName(query))
-                    searchView?.clearFocus()
-                }
+                supportFragmentManager.popBackStack()
+                navigateToBrowser(QUERY + CATEGORY_SEPARATOR + selectedSearchCategory + CATEGORY_SEPARATOR + MediaIDHelper.toBrowsableName(query))
+                searchSubmitted = true
+                searchItem?.collapseActionView()
                 return true
             }
 
             override fun onQueryTextChange(newText: String): Boolean {
-                return false
+                handler.removeCallbacksAndMessages(null)
+                handler.postDelayed({
+                    suggestionFragment?.setQuery(newText)
+                }, 1000)
+                return true
             }
         })
 
         return true
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        if (item.itemId == R.id.action_search) {
+            navigateToBrowser("SUGGESTIONS$CATEGORY_SEPARATOR$selectedSearchCategory")
+            return true
+        }
+        if (item.itemId == android.R.id.home && supportFragmentManager.backStackEntryCount > 1 && supportFragmentManager.getBackStackEntryAt(supportFragmentManager.backStackEntryCount - 2).name == "SUGGESTIONS")
+                supportFragmentManager.popBackStackImmediate(null, 0)
+        return super.onOptionsItemSelected(item)
     }
 
     override fun onMediaItemSelected(items: List<MediaItem>, index: Int, position: Long) {
@@ -165,35 +184,44 @@ internal class MusicPlayerActivity : BaseActivity(), MediaBrowserFragment.MediaF
         Log.d(TAG, "navigateToBrowser, mediaId=$mediaId")
         val currentMediaId = currentFragmentMediaId ?: return
 
-        if (!TextUtils.equals(currentMediaId, mediaId)) {
             val fragment =
-                if (currentMediaId.startsWith(LOCAL))
+                if (mediaId?.startsWith(SUGGESTIONS) == true)
+                    SuggestionMediaBrowserFragment()
+                else if (currentMediaId.startsWith(LOCAL))
                     GridMediaBrowserFragment()
                 else if (currentMediaId.startsWith(PLAYLISTS))
                     PlaylistMediaBrowserFragment()
+                else if (currentMediaId.startsWith(CUE_POINTS))
+                    CueMediaBrowserFragment()
                 else
                     StreamMediaBrowserFragment()
             val bundle = Bundle()
             if (mediaId != null) {
                 var path = currentMediaId
-                if (mediaId.contains(QUERY) && path.contains(CATEGORY_SEPARATOR))
-                    path = path.substring(0, path.indexOf(CATEGORY_SEPARATOR))
+                if ((mediaId.contains(QUERY) || mediaId.contains(SUGGESTIONS)) && path.contains(CATEGORY_SEPARATOR))
+                    path = path.substringBefore(CATEGORY_SEPARATOR)
                 bundle.putString(MEDIA_ID, path + CATEGORY_SEPARATOR + mediaId)
+                if (mediaId.contains(QUERY))
+                    bundle.putString(NAME, mediaId.substringAfterLast(CATEGORY_SEPARATOR))
             }
             fragment.arguments = bundle
-            val transaction = supportFragmentManager.beginTransaction().replace(R.id.container, fragment, MediaBrowserFragment::class.java.name)
+            val transaction = supportFragmentManager.beginTransaction().replace(R.id.container, fragment, if (mediaId?.contains(
+                    SUGGESTIONS) == true) SUGGESTIONS else MediaBrowserFragment::class.java.name)
             // If this is not the top level media (root), we add it to the fragment back stack,
             // so that actionbar toggle and Back will work appropriately:
-            if (mediaId != null) {
-                transaction.addToBackStack(null)
+            if (mediaId != null && !currentMediaId.contains(SUGGESTIONS)) {
+                transaction.addToBackStack(MediaBrowserFragment::class.java.name)
             }
             transaction.commit()
-        }
     }
 
     override fun showSearchButton(show: Boolean) {
         searchItem?.isVisible = show
         searchView?.visibility = if (show) View.VISIBLE else View.GONE
+    }
+
+    override fun setQuery(query: CharSequence?, submit: Boolean) {
+        searchView?.setQuery(query, submit)
     }
 
     companion object {
