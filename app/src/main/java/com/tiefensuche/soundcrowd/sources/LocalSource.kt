@@ -46,7 +46,7 @@ internal class LocalSource(private val context: MusicService) {
                 .putLong(MediaMetadataCompat.METADATA_KEY_DURATION, duration)
                 .putString(MediaMetadataCompat.METADATA_KEY_ALBUM_ART_URI, uri.toString())
                 .putString(MediaMetadataCompat.METADATA_KEY_TITLE, title)
-                .putString(MediaMetadataCompatExt.METADATA_KEY_SOURCE, name)
+                .putString(MediaMetadataCompatExt.METADATA_KEY_SOURCE, NAME)
                 .build()
     }
 
@@ -94,7 +94,7 @@ internal class LocalSource(private val context: MusicService) {
                             .putLong(MediaMetadataCompat.METADATA_KEY_DURATION, duration)
                             .putString(MediaMetadataCompat.METADATA_KEY_ALBUM_ART_URI, trackUri.toString())
                             .putString(MediaMetadataCompat.METADATA_KEY_TITLE, title)
-                            .putString(MediaMetadataCompatExt.METADATA_KEY_SOURCE, name)
+                            .putString(MediaMetadataCompatExt.METADATA_KEY_SOURCE, NAME)
                             .build())
                 } catch (e: Exception) {
                     Log.w(TAG, "error while processing track", e)
@@ -114,7 +114,7 @@ internal class LocalSource(private val context: MusicService) {
     }
 
     companion object {
-        const val name = "Local"
+        const val NAME = "Local"
         private val TAG = LocalSource::class.simpleName
     }
 }

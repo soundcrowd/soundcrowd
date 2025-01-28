@@ -250,7 +250,7 @@ internal class MusicProvider(context: MusicService) {
     ) {
         getMusic(extractMusicIDFromMediaID(mediaId))?.let { metadata ->
             val source = metadata.getString(MediaMetadataCompatExt.METADATA_KEY_SOURCE)
-            if (source == LocalSource.name) {
+            if (source == LocalSource.NAME) {
                 callback.onResult(Pair(metadata, null))
                 return
             }

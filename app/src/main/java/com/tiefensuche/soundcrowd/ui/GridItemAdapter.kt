@@ -1,5 +1,6 @@
 package com.tiefensuche.soundcrowd.ui
 
+import android.content.Context
 import android.graphics.Color
 import android.support.v4.media.MediaMetadataCompat
 import android.text.format.DateUtils
@@ -9,6 +10,7 @@ import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.tiefensuche.soundcrowd.R
 import com.tiefensuche.soundcrowd.extensions.MediaMetadataCompatExt
 import com.tiefensuche.soundcrowd.images.ArtworkHelper
@@ -20,7 +22,7 @@ internal class GridItemAdapter(private val requests: GlideRequests, private val 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
         val convertView = LayoutInflater.from(parent.context)
             .inflate(R.layout.media_grid_item, parent, false)
-        return ViewHolder(convertView)
+        return ViewHolder(convertView, parent.context)
     }
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
@@ -68,7 +70,7 @@ internal class GridItemAdapter(private val requests: GlideRequests, private val 
         holder.mDuration.setTextColor(text)
     }
 
-    inner class ViewHolder internal constructor(holder: View) : RecyclerView.ViewHolder(holder) {
+    inner class ViewHolder internal constructor(holder: View, parentContext: Context) : RecyclerView.ViewHolder(holder) {
 
         val mBackground: ImageView = holder.findViewById(R.id.background)
         val mImageViewArtwork: ImageView = holder.findViewById(R.id.album_art)
@@ -80,6 +82,13 @@ internal class GridItemAdapter(private val requests: GlideRequests, private val 
 
         init {
             holder.setOnClickListener { listener.onItemClick(mDataset[mediaItem]) }
+            holder.setOnLongClickListener {
+                MaterialAlertDialogBuilder(parentContext)
+                    .setTitle("test")
+                    .setMessage("copied")
+                    .show()
+                return@setOnLongClickListener true
+            }
         }
     }
 }
