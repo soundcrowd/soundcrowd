@@ -329,6 +329,11 @@ internal class MusicService : MediaBrowserServiceCompat(), PlaybackManager.Playb
     }
 
     companion object {
+        // The function allowing looking up non-playable music metadata through
+        // the usage of the MusicProvider
+        fun getMusic(musicId : String) : MediaMetadataCompat? {
+            return mMusicProvider.getMusic(musicId)
+        }
 
         // The action of the incoming Intent indicating that it contains a command
         // to be executed (see {@link #onStartCommand})

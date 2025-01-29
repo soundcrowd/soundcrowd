@@ -10,12 +10,14 @@ import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
-import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.tiefensuche.soundcrowd.R
 import com.tiefensuche.soundcrowd.extensions.MediaMetadataCompatExt
 import com.tiefensuche.soundcrowd.images.ArtworkHelper
 import com.tiefensuche.soundcrowd.images.GlideApp
 import com.tiefensuche.soundcrowd.images.GlideRequests
+import com.tiefensuche.soundcrowd.service.Share
+import com.tiefensuche.soundcrowd.service.MusicService
+import com.tiefensuche.soundcrowd.utils.MediaIDHelper.extractMusicIDFromMediaID
 
 internal class GridItemAdapter(private val requests: GlideRequests, private val listener: OnItemClickListener, private val defaultColor: Int) : MediaItemAdapter<GridItemAdapter.ViewHolder>() {
 
@@ -81,12 +83,21 @@ internal class GridItemAdapter(private val requests: GlideRequests, private val 
         var mediaItem = 0
 
         init {
+            // Play on clicking
             holder.setOnClickListener { listener.onItemClick(mDataset[mediaItem]) }
+
+            // Open the sharing board on long clicking
             holder.setOnLongClickListener {
-                MaterialAlertDialogBuilder(parentContext)
-                    .setTitle("test")
-                    .setMessage("copied")
-                    .show()
+                mDataset[mediaItem].description.mediaId?.let { mediaId ->
+                    val metadata : MediaMetadataCompat? = MusicService.getMusic(extractMusicIDFromMediaID(mediaId))
+
+                    if (metadata != null) {
+                        metadata.getString(MediaMetadataCompatExt.METADATA_KEY_URL)?.let {url ->
+                            Share.shareText(holder.context, url)
+                        }
+                    }
+                }
+
                 return@setOnLongClickListener true
             }
         }

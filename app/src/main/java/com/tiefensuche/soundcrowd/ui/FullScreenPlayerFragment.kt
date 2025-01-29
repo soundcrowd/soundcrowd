@@ -57,10 +57,10 @@ import com.tiefensuche.soundcrowd.images.GlideRequests
 import com.tiefensuche.soundcrowd.playback.PlaybackManager.Companion.CUSTOM_ACTION_ADD_CUE_POINT
 import com.tiefensuche.soundcrowd.playback.PlaybackManager.Companion.CUSTOM_ACTION_REMOVE_CUE_POINT
 import com.tiefensuche.soundcrowd.playback.PlaybackManager.Companion.CUSTOM_ACTION_SET_CUE_POINT
+import com.tiefensuche.soundcrowd.service.Share
 import com.tiefensuche.soundcrowd.sources.MusicProvider.Companion.MEDIA_ID
 import com.tiefensuche.soundcrowd.sources.MusicProvider.Cues.DESCRIPTION
 import com.tiefensuche.soundcrowd.sources.MusicProvider.Cues.POSITION
-import com.tiefensuche.soundcrowd.ui.BaseActivity.Companion.MIME_TEXT
 import com.tiefensuche.soundcrowd.ui.intro.ShowcaseViewManager
 import com.tiefensuche.soundcrowd.utils.Utils
 import com.tiefensuche.soundcrowd.waveform.WaveformHandler
@@ -228,12 +228,9 @@ internal class FullScreenPlayerFragment : Fragment() {
 
         mShare = rootView.findViewById(R.id.share)
         mShare.setOnClickListener {
-            mCurrentMetadata?.let {
-                val sharingIntent = Intent(Intent.ACTION_SEND)
+            mCurrentMetadata?.let { it ->
                 it.getString(MediaMetadataCompatExt.METADATA_KEY_URL)?.let {
-                    sharingIntent.type = MIME_TEXT
-                    sharingIntent.putExtra(Intent.EXTRA_TEXT, it)
-                    startActivity(Intent.createChooser(sharingIntent, getString(R.string.share_via)))
+                    Share.shareText(rootView.context, it)
                 }
             }
         }
