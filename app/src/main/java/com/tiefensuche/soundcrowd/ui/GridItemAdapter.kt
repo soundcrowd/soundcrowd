@@ -24,7 +24,7 @@ internal class GridItemAdapter(private val requests: GlideRequests, private val 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
         val convertView = LayoutInflater.from(parent.context)
             .inflate(R.layout.media_grid_item, parent, false)
-        return ViewHolder(convertView, parent.context)
+        return ViewHolder(convertView)
     }
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
@@ -72,7 +72,7 @@ internal class GridItemAdapter(private val requests: GlideRequests, private val 
         holder.mDuration.setTextColor(text)
     }
 
-    inner class ViewHolder internal constructor(holder: View, parentContext: Context) : RecyclerView.ViewHolder(holder) {
+    inner class ViewHolder internal constructor(holder: View) : RecyclerView.ViewHolder(holder) {
 
         val mBackground: ImageView = holder.findViewById(R.id.background)
         val mImageViewArtwork: ImageView = holder.findViewById(R.id.album_art)
