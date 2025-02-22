@@ -69,8 +69,4 @@ internal class StreamMediaBrowserFragment : MediaBrowserFragment() {
             requestMedia(refresh = true)
         }
     }
-
-    override fun setFilter(filter: CharSequence?) {
-
-    }
 }
