@@ -6,17 +6,25 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
+import androidx.viewpager2.adapter.FragmentStateAdapter
+import androidx.viewpager2.widget.ViewPager2
 import com.google.android.material.tabs.TabLayout
-import com.google.android.material.tabs.TabLayout.OnTabSelectedListener
 import com.tiefensuche.soundcrowd.R
 import com.tiefensuche.soundcrowd.sources.MusicProvider
 import com.tiefensuche.soundcrowd.sources.MusicProvider.Companion.MEDIA_ID
 import com.tiefensuche.soundcrowd.sources.MusicProvider.PluginMetadata.CATEGORY
 import com.tiefensuche.soundcrowd.sources.MusicProvider.PluginMetadata.NAME
-import com.tiefensuche.soundcrowd.ui.MediaBrowserFragment.Companion.DEFAULT_MEDIA_ID
 import com.tiefensuche.soundcrowd.utils.MediaIDHelper
 
-internal open class TabFragment : Fragment() {
+internal abstract class TabFragment : Fragment() {
+
+    internal var title: String? = null
+    internal lateinit var mediaIds : List<String>
+    internal lateinit var categories : List<String>
+    private lateinit var viewPager: ViewPager2
+
+    internal open val mediaId: String
+        get() = mediaIds[viewPager.currentItem]
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -27,75 +35,95 @@ internal open class TabFragment : Fragment() {
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        val title = arguments?.getString(NAME)
-        val list = arguments?.getParcelableArrayList<Bundle>(CATEGORY)!!
+
         val tabLayout: TabLayout = view.findViewById(R.id.tab_layout)
 
-        for (item in list) {
-            tabLayout.addTab(tabLayout.newTab().setText(item.getString(CATEGORY)))
+        viewPager = view.findViewById(R.id.pager)
+        // Disable swiping with
+//        viewPager.isUserInputEnabled = false
+        viewPager.adapter = object : FragmentStateAdapter(this) {
+
+            override fun getItemCount(): Int {
+                return mediaIds.size
+            }
+
+            override fun createFragment(position: Int): Fragment {
+                val fragment = this@TabFragment.createFragment(position)
+                fragment.arguments = Bundle().apply {
+                    putString(MEDIA_ID, mediaIds[position])
+                    putString(NAME, title)
+                }
+                return fragment
+            }
+
         }
 
-        tabLayout.addOnTabSelectedListener(object : OnTabSelectedListener {
+        // For transitioning between categories via swiping, smooth scrolling should be used.
+        // When selecting a tab directly, smooth scrolling should not be used to avoid cycling
+        // through all categories and causing all initializations and loads.
+        // The described functionality is not possible with TabLayoutMediator smooth scrolling can
+        // either be used for both or not
+//        TabLayoutMediator(tabLayout, viewPager, false, true) { tab, position ->
+//            tab.text = categories[position]
+//        }.attach()
+
+        // The following workaround provides the intended functionality.
+
+        for (item in categories) {
+            tabLayout.addTab(tabLayout.newTab().setText(item))
+        }
+
+        viewPager.registerOnPageChangeCallback(object : ViewPager2.OnPageChangeCallback() {
+            override fun onPageSelected(position: Int) {
+                tabLayout.getTabAt(position)?.select()
+            }
+        })
+
+        tabLayout.addOnTabSelectedListener(object : TabLayout.OnTabSelectedListener {
             override fun onTabSelected(tab: TabLayout.Tab) {
-                selectId(list[tab.position].getString(NAME)!!, title)
+                if (tab.position != viewPager.currentItem)
+                    viewPager.setCurrentItem(tab.position, false)
             }
 
             override fun onTabUnselected(tab: TabLayout.Tab) {}
 
             override fun onTabReselected(tab: TabLayout.Tab) {}
         })
-
-        selectId(list[0].getString(NAME)!!, title)
     }
 
-    fun selectId(mediaId: String, title: String?) {
-        setFragment(StreamMediaBrowserFragment(), mediaId, title)
-    }
-
-    internal fun setFragment(fragment: MediaBrowserFragment, mediaId: String, title: String?) {
-        activity?.let {
-            fragment.arguments = Bundle().apply {
-                putString(MEDIA_ID, mediaId)
-                putString(NAME, title)
-            }
-            it.supportFragmentManager.beginTransaction()
-                .replace(R.id.tab_container, fragment, MediaBrowserFragment::class.java.name).commit()
-        }
-    }
+    abstract fun createFragment(position: Int): Fragment
 }
 
 internal class LocalTabFragment : TabFragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        val tabLayout: TabLayout = view.findViewById(R.id.tab_layout)
-
-        for (item in listOf("Tracks", "Artists", "Albums")) {
-            tabLayout.addTab(tabLayout.newTab().setText(item))
-        }
-
-        tabLayout.addOnTabSelectedListener(object : OnTabSelectedListener {
-            override fun onTabSelected(tab: TabLayout.Tab) {
-                selectId(tab.position)
-            }
-
-            override fun onTabUnselected(tab: TabLayout.Tab) {}
-
-            override fun onTabReselected(tab: TabLayout.Tab) {}
-
-        })
-
-        selectId(0)
+        title = getString(R.string.drawer_allmusic_title)
+        mediaIds = listOf(
+            MusicProvider.Media.LOCAL,
+            MusicProvider.Media.LOCAL + MediaIDHelper.CATEGORY_SEPARATOR + MediaMetadataCompat.METADATA_KEY_ARTIST,
+            MusicProvider.Media.LOCAL + MediaIDHelper.CATEGORY_SEPARATOR + MediaMetadataCompat.METADATA_KEY_ALBUM
+        )
+        categories = listOf("Tracks", "Artists", "Albums")
+        super.onViewCreated(view, savedInstanceState)
     }
 
-    fun selectId(id: Int) {
-        setFragment(
-            when (id) {
-                0 -> GridMediaBrowserFragment()
-                else -> ListMediaBrowserFragment()
-            }, when (id) {
-                0 -> MusicProvider.Media.LOCAL
-                1 -> MusicProvider.Media.LOCAL + MediaIDHelper.CATEGORY_SEPARATOR + MediaMetadataCompat.METADATA_KEY_ARTIST
-                2 -> MusicProvider.Media.LOCAL + MediaIDHelper.CATEGORY_SEPARATOR + MediaMetadataCompat.METADATA_KEY_ALBUM
-                else -> DEFAULT_MEDIA_ID
-            }, getString(R.string.drawer_allmusic_title))
+    override fun createFragment(position: Int): Fragment {
+        return when (position) {
+            0 -> GridMediaBrowserFragment()
+            else -> ListMediaBrowserFragment()
+        }
+    }
+}
+
+internal class PluginTabFragment : TabFragment() {
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        title = arguments?.getString(NAME)!!
+        val args = arguments?.getParcelableArrayList<Bundle>(CATEGORY)!!
+        mediaIds = args.map { it.getString(NAME)!! }
+        categories = args.map { it.getString(CATEGORY)!! }
+        super.onViewCreated(view, savedInstanceState)
+    }
+
+    override fun createFragment(position: Int): Fragment {
+        return StreamMediaBrowserFragment()
     }
 }

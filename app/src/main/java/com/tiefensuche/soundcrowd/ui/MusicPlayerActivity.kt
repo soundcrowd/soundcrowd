@@ -103,11 +103,11 @@ internal class MusicPlayerActivity : BaseActivity(), MediaBrowserFragment.MediaF
                 ?: throw RuntimeException()
         searchView?.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
             override fun onQueryTextSubmit(query: String): Boolean {
-                browseFragment?.let {
-                    if (it.mediaId == CUE_POINTS)
+                currentFragmentMediaId?.let {
+                    if (it == CUE_POINTS)
                         return false
                     val bundle = Bundle()
-                    if (!it.mediaId.startsWith(LOCAL))
+                    if (!it.startsWith(LOCAL))
                         bundle.putString(MediaMetadataCompatExt.METADATA_KEY_TYPE, MediaMetadataCompatExt.MediaType.STREAM.name)
                     navigateToBrowser(QUERY + CATEGORY_SEPARATOR + MediaIDHelper.toBrowsableName(query),
                             MediaDescriptionCompat.Builder()
@@ -120,8 +120,7 @@ internal class MusicPlayerActivity : BaseActivity(), MediaBrowserFragment.MediaF
             }
 
             override fun onQueryTextChange(newText: String): Boolean {
-                browseFragment?.setFilter(newText)
-                return true
+                return false
             }
         })
 
@@ -166,18 +165,16 @@ internal class MusicPlayerActivity : BaseActivity(), MediaBrowserFragment.MediaF
 
     private fun navigateToBrowser(mediaId: String?, description: MediaDescriptionCompat?) {
         Log.d(TAG, "navigateToBrowser, mediaId=$mediaId")
-        val currentMediaId = browseFragment?.mediaId ?: return
+        val currentMediaId = currentFragmentMediaId ?: return
 
         if (!TextUtils.equals(currentMediaId, mediaId)) {
             val fragment = if (currentMediaId.startsWith(LOCAL)) GridMediaBrowserFragment() else StreamMediaBrowserFragment()
             val bundle = Bundle()
             if (mediaId != null) {
-                browseFragment?.mediaId?.let {
-                    var path = it
-                    if (mediaId.contains(QUERY) && path.contains(CATEGORY_SEPARATOR))
-                        path = path.substring(0, path.indexOf(CATEGORY_SEPARATOR))
-                    bundle.putString(MEDIA_ID, path + CATEGORY_SEPARATOR + mediaId)
-                }
+                var path = currentMediaId
+                if (mediaId.contains(QUERY) && path.contains(CATEGORY_SEPARATOR))
+                    path = path.substring(0, path.indexOf(CATEGORY_SEPARATOR))
+                bundle.putString(MEDIA_ID, path + CATEGORY_SEPARATOR + mediaId)
             }
             bundle.putParcelable(MediaBrowserFragment.ARG_MEDIA_DESCRIPTION, description)
             fragment.arguments = bundle
@@ -194,12 +191,6 @@ internal class MusicPlayerActivity : BaseActivity(), MediaBrowserFragment.MediaF
     override fun showSearchButton(show: Boolean) {
         searchItem?.isVisible = show
         searchView?.visibility = if (show) View.VISIBLE else View.GONE
-    }
-
-    override fun onMediaControllerConnected() {
-        super.onMediaControllerConnected()
-        Log.d(TAG, "onMediaControllerConnected")
-        browseFragment?.requestMedia()
     }
 
     companion object {

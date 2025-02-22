@@ -72,8 +72,9 @@ abstract class ActionBarCastActivity : AppCompatActivity() {
     }
     private var mToolbarInitialized: Boolean = false
 
-    internal val browseFragment: MediaBrowserFragment?
-        get() = supportFragmentManager.findFragmentByTag(MediaBrowserFragment::class.java.name) as? MediaBrowserFragment
+    internal val currentFragmentMediaId: String?
+        get() = (supportFragmentManager.findFragmentByTag(MediaBrowserFragment::class.java.name) as? MediaBrowserFragment)?.mediaId ?:
+        (supportFragmentManager.findFragmentByTag(TabFragment::class.java.name) as? TabFragment)?.mediaId
 
     public override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -220,7 +221,7 @@ abstract class ActionBarCastActivity : AppCompatActivity() {
                 if (id > paths.size)
                     return
                 // handle as addon category
-                val fragment = TabFragment()
+                val fragment = PluginTabFragment()
                 fragment.arguments = Bundle().apply {
                     putString(NAME, paths[id - 1].first)
                     putParcelableArrayList(CATEGORY, paths[id - 1].second)
@@ -232,7 +233,7 @@ abstract class ActionBarCastActivity : AppCompatActivity() {
     }
 
     private fun setFragment(fragment: Fragment) {
-        supportFragmentManager.beginTransaction().replace(R.id.container, fragment, MediaBrowserFragment::class.java.name).commit()
+        supportFragmentManager.beginTransaction().replace(R.id.container, fragment, TabFragment::class.java.name).commit()
     }
 
     private fun updateDrawerToggle() {

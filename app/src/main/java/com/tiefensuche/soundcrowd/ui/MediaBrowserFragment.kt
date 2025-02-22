@@ -102,10 +102,6 @@ internal abstract class MediaBrowserFragment : Fragment() {
         return rootView
     }
 
-    internal open fun setFilter(filter: CharSequence?) {
-        mBrowserAdapter.filter.filter(filter)
-    }
-
     override fun onAttach(activity: Activity) {
         super.onAttach(activity)
 
