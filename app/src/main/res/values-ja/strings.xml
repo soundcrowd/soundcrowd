@@ -3,7 +3,6 @@
   ~ SPDX-License-Identifier: GPL-3.0-only
   -->
 <resources>
-  <string name="app_name">SoundCrowd</string>
   <string name="favorite">お気に入り</string>
   <string name="error_no_metadata">メタデータを取得できません。</string>
   <string name="browse_musics_by_genre_subtitle">%1$s 曲</string>
@@ -20,18 +19,18 @@
   <string name="drawer_allmusic_title">ローカルの音楽</string>
   <string name="drawer_cue_points_title">キューのポイント</string>
   <string name="search_title">検索</string>
-  <string name="equalizer_title" translatable="false">イコライザー</string>
-  <string name="addons_title" translatable="false">アドオン</string>
+  <string name="equalizer_title">イコライザー</string>
   <string name="preferences_title">設定</string>
+  <string name="plugins">プラグイン</string>
   <string name="no_media">音楽のファイルがありません。</string>
   <string name="no_cue_points">キューポイントが見つかりません。トラック内のお気に入りの位置で星印のボタンを押すとここにリストされます。</string>
   <string name="permission">すべての音楽を取得するには、ストレージの読み取り権限の許可が必要です。</string>
   <string name="last_position">最後の位置</string>
   <string name="share_via">共有する</string>
   <!-- Equalizer -->
-  <string name="reverb" translatable="false">リバーブ</string>
-  <string name="bass_boost" translatable="false">バスブースト</string>
-  <string name="loudness" translatable="false">ラウドネス</string>
+  <string name="reverb">リバーブ</string>
+  <string name="bass_boost">バスブースト</string>
+  <string name="loudness">ラウドネス</string>
   <!-- AppIntro -->
   <string name="intro_welcome_title">SoundCrowd Music Player へようこそ</string>
   <string name="intro_welcome_text">SoundCrowd は、長いミュージックセットのためのモダンな音楽プレーヤーです。音楽は波形で視覚化され、トラック内を簡単にナビゲートできます。</string>
@@ -48,15 +47,11 @@
   <string name="showcase_waveform_seek_text">波形を左右にスワイプでトラックをシークします。</string>
   <string name="showcase_search_title">ローカルの音楽をフィルタリングで検索</string>
   <string name="showcase_search_text">ローカルの音楽を検索するには、ここをタップしてください。リストはすぐにフィルタリングされます。グローバル検索をしたい場合は、その後に Enter キーを押してください。</string>
-  <string name="letter_tile_letter_font_family" translatable="false">roboto</string>
-  <string name="loading">読み込み中...</string>
-  <string name="plugins">プラグイン</string>
+  <string name="loading">読み込み中…</string>
   <!-- Preferences -->
   <string name="preference_password_title">パスワード</string>
-  <string name="preference_theme_key">テーマ</string>
   <string name="preference_theme_title">テーマ</string>
   <string name="preference_theme_summary">アプリのテーマを変更します</string>
-  <string name="preference_last_fragment">最後のフラグメント</string>
   <string-array name="preference_theme_modes">
     <item>システム</item>
     <item>ライト</item>

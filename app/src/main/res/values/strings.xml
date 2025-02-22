@@ -2,7 +2,7 @@
   ~ SPDX-License-Identifier: GPL-3.0-only
   -->
 <resources>
-    <string name="app_name">SoundCrowd</string>
+    <string name="app_name" translatable="false">SoundCrowd</string>
     <string name="favorite">Favorite</string>
     <string name="error_no_metadata">Unable to retrieve metadata.</string>
     <string name="browse_musics_by_genre_subtitle">%1$s songs</string>
@@ -20,9 +20,9 @@
     <string name="drawer_allmusic_title">Local Music</string>
     <string name="drawer_cue_points_title">Cue Points</string>
     <string name="search_title">Search</string>
-    <string name="equalizer_title" translatable="false">Equalizer</string>
-    <string name="addons_title" translatable="false">Addons</string>
+    <string name="equalizer_title">Equalizer</string>
     <string name="preferences_title">Preferences</string>
+    <string name="plugins">Plugins</string>
     <string name="no_media">No music files found.</string>
     <string name="no_cue_points">No Cue Points found. Hit the star button for your favorite positions in your tracks to list them here.</string>
     <string name="permission">Need permission to read your storage to retrieve all your music.</string>
@@ -30,9 +30,9 @@
     <string name="share_via">Share via</string>
 
     <!-- Equalizer -->
-    <string name="reverb" translatable="false">Reverb</string>
-    <string name="bass_boost" translatable="false">Bass Boost</string>
-    <string name="loudness" translatable="false">Loudness</string>
+    <string name="reverb">Reverb</string>
+    <string name="bass_boost">Bass Boost</string>
+    <string name="loudness">Loudness</string>
 
     <!-- AppIntro -->
     <string name="intro_welcome_title">Welcome to SoundCrowd Music Player</string>
@@ -53,15 +53,14 @@
     <string name="showcase_search_text">Click here to search in your local music. The list will filter immediately. If you want to search globally, hit enter afterwards.</string>
 
     <string name="letter_tile_letter_font_family" translatable="false">roboto</string>
-    <string name="loading">Loading...</string>
-    <string name="plugins">Plugins</string>
+    <string name="loading">Loading…</string>
 
     <!-- Preferences -->
     <string name="preference_password_title">Password</string>
-    <string name="preference_theme_key">theme</string>
+    <string name="preference_theme_key" translatable="false">theme</string>
     <string name="preference_theme_title">Theme</string>
     <string name="preference_theme_summary">Change app theme</string>
-    <string name="preference_last_fragment">last_fragment</string>
+    <string name="preference_last_fragment" translatable="false">last_fragment</string>
     <string-array name="preference_theme_modes">
         <item>System</item>
         <item>Light</item>
