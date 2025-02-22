@@ -1,5 +1,6 @@
 package com.tiefensuche.soundcrowd.ui
 
+import android.content.Context
 import android.graphics.Color
 import android.support.v4.media.MediaMetadataCompat
 import android.text.format.DateUtils
@@ -14,6 +15,9 @@ import com.tiefensuche.soundcrowd.extensions.MediaMetadataCompatExt
 import com.tiefensuche.soundcrowd.images.ArtworkHelper
 import com.tiefensuche.soundcrowd.images.GlideApp
 import com.tiefensuche.soundcrowd.images.GlideRequests
+import com.tiefensuche.soundcrowd.service.Share
+import com.tiefensuche.soundcrowd.service.MusicService
+import com.tiefensuche.soundcrowd.utils.MediaIDHelper.extractMusicIDFromMediaID
 
 internal class GridItemAdapter(private val requests: GlideRequests, private val listener: OnItemClickListener, private val defaultColor: Int) : MediaItemAdapter<GridItemAdapter.ViewHolder>() {
 
@@ -79,7 +83,23 @@ internal class GridItemAdapter(private val requests: GlideRequests, private val 
         var mediaItem = 0
 
         init {
+            // Play on clicking
             holder.setOnClickListener { listener.onItemClick(mDataset[mediaItem]) }
+
+            // Open the sharing board on long clicking
+            holder.setOnLongClickListener {
+                mDataset[mediaItem].description.mediaId?.let { mediaId ->
+                    val metadata : MediaMetadataCompat? = MusicService.getMusic(extractMusicIDFromMediaID(mediaId))
+
+                    if (metadata != null) {
+                        metadata.getString(MediaMetadataCompatExt.METADATA_KEY_URL)?.let {url ->
+                            Share.shareText(holder.context, url)
+                        }
+                    }
+                }
+
+                return@setOnLongClickListener true
+            }
         }
     }
 }
