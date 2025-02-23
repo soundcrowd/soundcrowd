@@ -13,6 +13,10 @@
             android:icon="@drawable/media3_icon_playlist_add"
             android:title="@string/drawer_playing_queue_title" />
         <item
+            android:id="@+id/navigation_playlists"
+            android:icon="@drawable/media3_icon_queue_next"
+            android:title="@string/drawer_playlists_title" />
+        <item
             android:id="@+id/navigation_cue_points"
             android:icon="@drawable/ic_round_star_24"
             android:title="@string/drawer_cue_points_title" />

@@ -29,7 +29,7 @@ internal class Database(context: Context) : SQLiteOpenHelper(context, DATABASE_N
 
     companion object {
         private const val DATABASE_NAME = "SoundCrowd"
-        private const val DATABASE_VERSION = 3
+        private const val DATABASE_VERSION = 4
 
         const val ARTIST = "artist"
         const val TITLE = "title"
@@ -57,6 +57,9 @@ internal class Database(context: Context) : SQLiteOpenHelper(context, DATABASE_N
 
         private const val DATABASE_MEDIA_ITEMS_METADATA_NAME = "MediaItemsMetadata"
         private const val DATABASE_MEDIA_ITEMS_METADATA_CREATE = "create table if not exists $DATABASE_MEDIA_ITEMS_METADATA_NAME ($ID text primary key, $POSITION long, $ALBUM_ART_URL text, vibrant_color int, text_color int)"
+
+        private const val DATABASE_PLAYLISTS_NAME = "Playlists"
+        private const val DATABASE_PLAYLISTS_CREATE = "create table if not exists $DATABASE_PLAYLISTS_NAME ($ID integer primary key not null, name text, items text)"
     }
 
     private fun addMediaItem(item: MediaItem) {
@@ -105,6 +108,7 @@ internal class Database(context: Context) : SQLiteOpenHelper(context, DATABASE_N
         sqLiteDatabase.execSQL(DATABASE_MEDIA_ITEMS_CREATE)
         sqLiteDatabase.execSQL(DATABASE_MEDIA_ITEMS_CUE_POINTS_CREATE)
         sqLiteDatabase.execSQL(DATABASE_MEDIA_ITEMS_METADATA_CREATE)
+        sqLiteDatabase.execSQL(DATABASE_PLAYLISTS_CREATE)
     }
 
     override fun onUpgrade(sqLiteDatabase: SQLiteDatabase, oldVersion: Int, newVersion: Int) {
@@ -116,6 +120,9 @@ internal class Database(context: Context) : SQLiteOpenHelper(context, DATABASE_N
             2 -> {
                 sqLiteDatabase.execSQL("ALTER TABLE $DATABASE_MEDIA_ITEMS_NAME ADD COLUMN $PLUGIN text")
                 sqLiteDatabase.execSQL("ALTER TABLE $DATABASE_MEDIA_ITEMS_NAME ADD COLUMN $DATASOURCE boolean default false")
+            }
+            3 -> {
+                sqLiteDatabase.execSQL(DATABASE_PLAYLISTS_CREATE)
             }
         }
     }
@@ -227,5 +234,91 @@ internal class Database(context: Context) : SQLiteOpenHelper(context, DATABASE_N
         } catch (e: SQLException) {
             Log.e(TAG, "error while setting description", e)
         }
+    }
+
+    fun createPlaylist(name: String, metadata: MediaItem) {
+        addMediaItem(metadata)
+        val values = ContentValues()
+        values.put("name", name)
+        values.put("items", metadata.mediaId)
+        writableDatabase.insertOrThrow(DATABASE_PLAYLISTS_NAME, null, values)
+    }
+
+    fun updatePlaylist(playlistId: String, tracks: List<MediaItem>) {
+        tracks.forEach { addMediaItem(it) }
+        val values = ContentValues()
+        values.put(ID, playlistId)
+        values.put("items", tracks.joinToString(",") { it.mediaId })
+        try {
+            writableDatabase.insertOrThrow(DATABASE_PLAYLISTS_NAME, null, values)
+        } catch (e: SQLException) {
+            values.remove(ID)
+            writableDatabase.update(DATABASE_PLAYLISTS_NAME, values, "$ID=?", arrayOf(playlistId))
+        }
+    }
+
+    fun addPlaylist(playlistId: String, metadata: MediaItem) {
+        addMediaItem(metadata)
+        val cursor = readableDatabase.query(DATABASE_PLAYLISTS_NAME,
+            arrayOf("items"), "$ID=?", arrayOf(playlistId),
+            null, null, null)
+        if (cursor.moveToNext()) {
+            val items = cursor.getString(cursor.getColumnIndex("items"))
+            val values = ContentValues()
+            values.put("items", if (items.isEmpty()) metadata.mediaId else "$items,${metadata.mediaId}")
+            writableDatabase.update(DATABASE_PLAYLISTS_NAME, values, "$ID=?", arrayOf(playlistId))
+        }
+    }
+
+    fun movePlaylist(playlistId: String, musicId: String, position: Int) {
+        val cursor = readableDatabase.query(DATABASE_PLAYLISTS_NAME,
+            arrayOf("items"), "$ID=?", arrayOf(playlistId),
+            null, null, null)
+        while (cursor.moveToNext()) {
+            val items = cursor.getString(cursor.getColumnIndex("items")).split(",").toMutableList()
+            items.remove(musicId)
+            items.add(position, musicId)
+            val values = ContentValues()
+            values.put("items", items.joinToString(","))
+            writableDatabase.update(DATABASE_PLAYLISTS_NAME, values, "$ID=?", arrayOf(playlistId))
+        }
+    }
+
+    fun removePlaylist(playlistId: String, musicId: String) {
+        val cursor = readableDatabase.query(DATABASE_PLAYLISTS_NAME,
+            arrayOf("items"), "$ID=?", arrayOf(playlistId),
+            null, null, null)
+        while (cursor.moveToNext()) {
+            val items = cursor.getString(cursor.getColumnIndex("items")).split(",").toMutableList()
+            items.remove(musicId)
+            val values = ContentValues()
+            values.put("items", items.joinToString(","))
+            writableDatabase.update(DATABASE_PLAYLISTS_NAME, values, "$ID=?", arrayOf(playlistId))
+        }
+    }
+
+    fun getPlaylists(): List<MediaItem> {
+        val result = ArrayList<MediaItem>()
+        val cursor = readableDatabase.query(DATABASE_PLAYLISTS_NAME, arrayOf(ID, "name"), "name is not null", null, null, null, null, null)
+        while (cursor.moveToNext()) {
+            result.add(MediaItemUtils.createBrowsableItem(cursor.getInt(cursor.getColumnIndex(ID)).toString(), cursor.getString(cursor.getColumnIndex("name")), MediaMetadataCompatExt.MediaType.COLLECTION))
+        }
+        cursor.close()
+        return result
+    }
+
+    fun getPlaylist(playlistId: String): List<String> {
+        val result = ArrayList<String>()
+        val cursor = readableDatabase.query(DATABASE_PLAYLISTS_NAME, arrayOf("items"), "$ID=?", arrayOf(playlistId), null, null, null, null)
+        if (cursor.moveToFirst()) {
+            val items = cursor.getString(cursor.getColumnIndex("items")).split(",")
+            items.forEach { result.add(it) }
+        }
+        cursor.close()
+        return result
+    }
+
+    fun deletePlaylist(playlistId: String) {
+        writableDatabase.delete(DATABASE_PLAYLISTS_NAME, "$ID=?", arrayOf(playlistId))
     }
 }

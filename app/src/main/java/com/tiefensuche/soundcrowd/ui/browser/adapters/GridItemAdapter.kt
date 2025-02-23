@@ -1,21 +1,38 @@
 package com.tiefensuche.soundcrowd.ui.browser.adapters
 
+import android.app.AlertDialog
+import android.content.Context
 import android.graphics.Color
+import android.os.Bundle
 import android.text.format.DateUtils
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.AdapterView
+import android.widget.ArrayAdapter
+import android.widget.EditText
 import android.widget.ImageView
+import android.widget.ListView
+import android.widget.PopupMenu
 import android.widget.TextView
+import androidx.core.content.ContextCompat
+import androidx.media3.common.MediaItem
+import androidx.media3.session.SessionCommand
 import androidx.recyclerview.widget.RecyclerView
 import com.tiefensuche.soundcrowd.R
 import com.tiefensuche.soundcrowd.images.ArtworkHelper
 import com.tiefensuche.soundcrowd.images.GlideApp
 import com.tiefensuche.soundcrowd.images.GlideRequests
 import com.tiefensuche.soundcrowd.plugins.MediaMetadataCompatExt
+import com.tiefensuche.soundcrowd.service.PlaybackService.Companion.ARG_NAME
+import com.tiefensuche.soundcrowd.service.PlaybackService.Companion.ARG_PLAYLIST_ID
+import com.tiefensuche.soundcrowd.service.PlaybackService.Companion.COMMAND_PLAYLIST_ADD
+import com.tiefensuche.soundcrowd.service.PlaybackService.Companion.COMMAND_PLAYLIST_CREATE
 import com.tiefensuche.soundcrowd.service.Share
+import com.tiefensuche.soundcrowd.sources.MusicProvider.Media.PLAYLISTS
+import com.tiefensuche.soundcrowd.ui.browser.MediaBrowserFragment.MediaFragmentListener
 
-internal class GridItemAdapter(private val requests: GlideRequests, private val listener: OnItemClickListener, private val defaultColor: Int) : MediaItemAdapter<GridItemAdapter.ViewHolder>() {
+internal class GridItemAdapter(private val requests: GlideRequests, private val listener: MediaFragmentListener) : MediaItemAdapter<GridItemAdapter.ViewHolder>() {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
         val convertView = LayoutInflater.from(parent.context)
@@ -54,7 +71,7 @@ internal class GridItemAdapter(private val requests: GlideRequests, private val 
             }
 
             override fun onError() {
-                setColors(holder, defaultColor, Color.WHITE)
+                setColors(holder, ContextCompat.getColor(holder.mTitleView.context, R.color.colorPrimary), Color.WHITE)
             }
         })
     }
@@ -88,13 +105,80 @@ internal class GridItemAdapter(private val requests: GlideRequests, private val 
 
         init {
             // Play on clicking
-            holder.setOnClickListener { listener.onItemClick(mDataset, mediaItem) }
+            holder.setOnClickListener { listener.onMediaItemSelected(mDataset, mediaItem) }
 
-            // Open the sharing board on long clicking
-            holder.setOnLongClickListener {
-                shareMedia(this)
-                return@setOnLongClickListener true
+            // Open menu on long clicking
+            if (mDataset[mediaItem].mediaMetadata.isPlayable == true) {
+                holder.setOnLongClickListener {
+                    val menu = PopupMenu(holder.context, mBackground)
+                    menu.menuInflater.inflate(R.menu.popup_mediaitem, menu.menu)
+                    menu.setOnMenuItemClickListener { menuItem ->
+                        when (menuItem.itemId) {
+                            R.id.addToQueue -> {
+                                listener.mediaBrowser.addMediaItem(mDataset[mediaItem])
+                            }
+                            R.id.playNext -> {
+                                listener.mediaBrowser.addMediaItem(listener.mediaBrowser.currentMediaItemIndex + 1, mDataset[mediaItem])
+                            }
+                            R.id.addToPlaylist -> {
+                                showPlaylistsDialog(holder.context, mDataset[mediaItem])
+                            }
+                            R.id.share -> {
+                                shareMedia(this)
+                            }
+                        }
+                        true
+                    }
+                    menu.show()
+                    true
+                }
             }
+        }
+
+        private fun showPlaylistsDialog(context: Context, item: MediaItem) {
+            val childrenFuture =
+                listener.mediaBrowser.getChildren(PLAYLISTS, 0, Int.MAX_VALUE, null)
+            childrenFuture.addListener({
+                val children = childrenFuture.get().value!!
+                lateinit var text : EditText
+                val alert = AlertDialog.Builder(context)
+                    .setView(R.layout.menu_playlist)
+                    .setTitle("Playlist")
+                    .setCancelable(false)
+                    .setPositiveButton("Create") { _, _ ->
+                        listener.mediaBrowser.sendCustomCommand(
+                            SessionCommand(
+                                COMMAND_PLAYLIST_CREATE,
+                                Bundle.EMPTY
+                            ), item, Bundle().apply {
+                                putString(
+                                    ARG_NAME,
+                                    text.text.toString()
+                                )
+                            })
+                    }
+                    .setNegativeButton("Cancel") { _, _ -> }
+                    .create()
+
+                alert.show()
+
+                val list = alert.findViewById<ListView>(R.id.list_playlists)
+                list.adapter = ArrayAdapter(context, android.R.layout.simple_list_item_1, android.R.id.text1, children.map { it.mediaMetadata.title })
+                list.onItemClickListener =
+                    AdapterView.OnItemClickListener { _, _, position, _ ->
+                        listener.mediaBrowser.sendCustomCommand(
+                            SessionCommand(
+                                COMMAND_PLAYLIST_ADD,
+                                Bundle.EMPTY
+                            ),
+                            item,
+                            Bundle().apply { putString(ARG_PLAYLIST_ID, children[position].mediaId) }
+                        )
+                        alert.dismiss()
+                    }
+                text = alert.findViewById(R.id.edittext_newplaylist)
+
+            }, ContextCompat.getMainExecutor(context))
         }
     }
 }

@@ -26,10 +26,12 @@ import com.google.android.material.navigation.NavigationView
 import com.tiefensuche.soundcrowd.R
 import com.tiefensuche.soundcrowd.sources.MusicProvider.Companion.MEDIA_ID
 import com.tiefensuche.soundcrowd.sources.MusicProvider.Media.CUE_POINTS
+import com.tiefensuche.soundcrowd.sources.MusicProvider.Media.PLAYLISTS
 import com.tiefensuche.soundcrowd.sources.MusicProvider.PluginMetadata.CATEGORY
 import com.tiefensuche.soundcrowd.sources.MusicProvider.PluginMetadata.ICON
 import com.tiefensuche.soundcrowd.sources.MusicProvider.PluginMetadata.NAME
 import com.tiefensuche.soundcrowd.ui.browser.CueMediaBrowserFragment
+import com.tiefensuche.soundcrowd.ui.browser.ListMediaBrowserFragment
 import com.tiefensuche.soundcrowd.ui.browser.MediaBrowserFragment
 import com.tiefensuche.soundcrowd.ui.preferences.EqualizerFragment
 import com.tiefensuche.soundcrowd.ui.preferences.PreferenceFragment
@@ -79,7 +81,7 @@ abstract class ActionBarCastActivity : AppCompatActivity() {
     internal val currentFragmentMediaId: String?
         get() = (supportFragmentManager.findFragmentByTag(MediaBrowserFragment::class.java.name) as? MediaBrowserFragment)?.mediaId ?:
         (supportFragmentManager.findFragmentByTag(TabFragment::class.java.name) as? TabFragment)?.mediaId
-
+    
     public override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         PreferenceFragment.applyTheme(getDefaultSharedPreferences(this).getString(getString(R.string.preference_theme_key), "System")!!)
@@ -221,7 +223,12 @@ abstract class ActionBarCastActivity : AppCompatActivity() {
         when (id) {
             R.id.navigation_allmusic -> setFragment(LocalTabFragment())
             R.id.navigation_playing_queue -> setFragment(QueueFragment())
-            R.id.navigation_cue_points -> setFragment(CueMediaBrowserFragment())
+            R.id.navigation_playlists -> setFragment(ListMediaBrowserFragment().apply {
+                arguments = Bundle().apply {
+                    putString(MEDIA_ID, PLAYLISTS)
+                    putString(NAME, "Playlists")
+                }
+            })
             R.id.navigation_cue_points -> setFragment(CueMediaBrowserFragment().apply {
                 arguments = Bundle().apply {
                     putString(MEDIA_ID, CUE_POINTS)
@@ -246,7 +253,7 @@ abstract class ActionBarCastActivity : AppCompatActivity() {
     }
 
     private fun setFragment(fragment: Fragment) {
-        supportFragmentManager.beginTransaction().replace(R.id.container, fragment, TabFragment::class.java.name).commit()
+        supportFragmentManager.beginTransaction().replace(R.id.container, fragment, if (fragment is TabFragment) TabFragment::class.java.name else MediaBrowserFragment::class.java.name).commit()
     }
 
     private fun updateDrawerToggle() {

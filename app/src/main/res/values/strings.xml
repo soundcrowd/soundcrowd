@@ -20,6 +20,7 @@
     <string name="drawer_allmusic_title">Local Music</string>
     <string name="drawer_cue_points_title">Cue Points</string>
     <string name="drawer_playing_queue_title">Playing Queue</string>
+    <string name="drawer_playlists_title">Playlists</string>
 
     <string name="search_title">Search</string>
     <string name="equalizer_title">Equalizer</string>
