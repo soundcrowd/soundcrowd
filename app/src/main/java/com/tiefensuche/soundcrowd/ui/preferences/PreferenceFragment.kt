@@ -5,17 +5,28 @@
 package com.tiefensuche.soundcrowd.ui.preferences
 
 import android.os.Bundle
+import androidx.appcompat.app.AppCompatDelegate
 import androidx.preference.EditTextPreference
 import androidx.preference.ListPreference
 import androidx.preference.Preference
 import androidx.preference.PreferenceCategory
 import androidx.preference.PreferenceFragmentCompat
+import androidx.preference.SeekBarPreference
 import com.tiefensuche.soundcrowd.R
 import com.tiefensuche.soundcrowd.service.PluginManager
-import com.tiefensuche.soundcrowd.ui.MediaBrowserFragment
-import com.tiefensuche.soundcrowd.utils.Utils
+import com.tiefensuche.soundcrowd.ui.browser.MediaBrowserFragment
 
 class PreferenceFragment : PreferenceFragmentCompat() {
+
+    companion object {
+        internal fun applyTheme(theme: String) {
+            when (theme) {
+                "System" -> AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM)
+                "Light" -> AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO)
+                "Dark" -> AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES)
+            }
+        }
+    }
 
     private fun addMainPreferences() {
         val category = PreferenceCategory(requireActivity())
@@ -28,16 +39,26 @@ class PreferenceFragment : PreferenceFragmentCompat() {
         theme.key = getString(R.string.preference_theme_key)
         theme.title = getString(R.string.preference_theme_title)
         theme.entries = resources.getStringArray(R.array.preference_theme_modes)
-        theme.entryValues = resources.getStringArray(R.array.preference_theme_modes)
+        theme.entryValues = resources.getStringArray(R.array.preference_theme_mode_keys)
         theme.setValueIndex(0)
         theme.summary = getString(R.string.preference_theme_summary)
         theme.onPreferenceChangeListener =
             Preference.OnPreferenceChangeListener { _, newValue ->
-                Utils.applyTheme(newValue as String)
+                applyTheme(newValue as String)
                 true
             }
         theme.isIconSpaceReserved = false
         category.addPreference(theme)
+
+        val cache = SeekBarPreference(requireContext())
+        cache.key = getString(R.string.cache_size_key)
+        cache.title = getString(R.string.cache_size_title)
+        cache.summary = getString(R.string.cache_size_summary)
+        cache.max = 8192
+        cache.min = 512
+        cache.showSeekBarValue = true
+        cache.isIconSpaceReserved = false
+        category.addPreference(cache)
     }
 
     private fun addPluginPreferences() {

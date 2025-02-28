@@ -1,15 +1,16 @@
-package com.tiefensuche.soundcrowd.ui
+package com.tiefensuche.soundcrowd.ui.browser
 
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.media3.common.MediaItem
 import androidx.recyclerview.widget.RecyclerView
 
 internal open class CollectionMediaBrowserFragment : MediaBrowserFragment() {
 
-    override fun onResult(action: String, extras: Bundle, resultData: Bundle) {
-        super.onResult(action, extras, resultData)
+    override fun onResult(items: List<MediaItem>) {
+        super.onResult(items)
         // Create alphabetical sections for root category
         setupIndexScrollBar()
         mBrowserAdapter.notifyDataChanged()

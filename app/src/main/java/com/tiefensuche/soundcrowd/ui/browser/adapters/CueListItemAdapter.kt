@@ -1,6 +1,5 @@
-package com.tiefensuche.soundcrowd.ui
+package com.tiefensuche.soundcrowd.ui.browser.adapters
 
-import android.support.v4.media.MediaBrowserCompat
 import android.text.format.DateUtils
 import android.view.LayoutInflater
 import android.view.View
@@ -9,6 +8,7 @@ import android.widget.Button
 import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.TextView
+import androidx.media3.common.MediaItem
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.tiefensuche.soundcrowd.R
@@ -27,9 +27,9 @@ internal class CueListItemAdapter(private val requests: GlideRequests, private v
 
     override fun onBindViewHolder(viewHolder: ViewHolder, position: Int) {
         viewHolder.mediaItem = position
-        viewHolder.title.text = mDataset[position].description.title
-        viewHolder.artist.text = mDataset[position].description.subtitle
-        ArtworkHelper.loadArtwork(requests, mDataset[position].description, viewHolder.mImageViewArtwork)
+        viewHolder.title.text = mDataset[position].mediaMetadata.title
+        viewHolder.artist.text = mDataset[position].mediaMetadata.artist
+        ArtworkHelper.loadArtwork(requests, mDataset[position], viewHolder.mImageViewArtwork)
 
         viewHolder.subitem.adapter = CuesAdapter(mDataset[position])
     }
@@ -56,20 +56,24 @@ internal class CueListItemAdapter(private val requests: GlideRequests, private v
     }
 
     interface OnItemClickListener {
-        fun onItemClick(item: MediaBrowserCompat.MediaItem, position: Long)
-        fun onItemDelete(item: MediaBrowserCompat.MediaItem, position: Long)
+        fun onItemClick(item: MediaItem, position: Long)
+        fun onItemDelete(item: MediaItem, position: Long)
     }
 
-    inner class CuesAdapter(val item: MediaBrowserCompat.MediaItem) : RecyclerView.Adapter<CuesViewHolder>() {
+    inner class CuesAdapter(val item: MediaItem) : RecyclerView.Adapter<CuesViewHolder>() {
 
         private val cues = ArrayList<Pair<Long, String>>()
 
         init {
-            item.description.extras?.getString(MusicProvider.Cues.CUES)?.let {
+            item.mediaMetadata.extras?.getString(MusicProvider.Cues.CUES)?.let {
                 val json = JSONArray(it)
                 for (i in 0 until json.length()) {
                     val pos = json.getJSONObject(i).getLong(MusicProvider.Cues.POSITION)
-                    val desc = json.getJSONObject(i).getString(MusicProvider.Cues.DESCRIPTION)
+                    val desc = json.getJSONObject(i).run {
+                        if (has(MusicProvider.Cues.DESCRIPTION))
+                            getString(MusicProvider.Cues.DESCRIPTION)
+                        else ""
+                    }
                     this.cues.add(Pair(pos, desc))
                 }
             }

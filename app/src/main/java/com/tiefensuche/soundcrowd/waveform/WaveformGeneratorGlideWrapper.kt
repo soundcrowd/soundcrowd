@@ -11,8 +11,8 @@ import com.bumptech.glide.Priority
 import com.bumptech.glide.load.DataSource
 import com.bumptech.glide.load.data.DataFetcher
 import com.ringdroid.soundfile.SoundFile
-import com.tiefensuche.soundcrowd.extensions.WebRequests
 import com.tiefensuche.soundcrowd.images.SoundCrowdGlideModule
+import com.tiefensuche.soundcrowd.plugins.WebRequests
 import org.json.JSONArray
 import org.json.JSONException
 import org.json.JSONObject
@@ -23,8 +23,7 @@ internal class WaveformGeneratorGlideWrapper(private val context: Context, priva
     override fun loadData(priority: Priority, callback: DataFetcher.DataCallback<in Bitmap>) {
         try {
             val key = params.key
-            val jsonArray: JSONArray
-            jsonArray = if (key.startsWith("http")) {
+            val jsonArray: JSONArray = if (key.startsWith("http")) {
                 val jsonObject = JSONObject(WebRequests.get(key).value)
                 jsonObject.getJSONArray("samples")
             } else {

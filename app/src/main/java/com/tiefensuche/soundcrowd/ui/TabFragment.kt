@@ -1,7 +1,6 @@
 package com.tiefensuche.soundcrowd.ui
 
 import android.os.Bundle
-import android.support.v4.media.MediaMetadataCompat
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -14,6 +13,9 @@ import com.tiefensuche.soundcrowd.sources.MusicProvider
 import com.tiefensuche.soundcrowd.sources.MusicProvider.Companion.MEDIA_ID
 import com.tiefensuche.soundcrowd.sources.MusicProvider.PluginMetadata.CATEGORY
 import com.tiefensuche.soundcrowd.sources.MusicProvider.PluginMetadata.NAME
+import com.tiefensuche.soundcrowd.ui.browser.GridMediaBrowserFragment
+import com.tiefensuche.soundcrowd.ui.browser.ListMediaBrowserFragment
+import com.tiefensuche.soundcrowd.ui.browser.StreamMediaBrowserFragment
 import com.tiefensuche.soundcrowd.utils.MediaIDHelper
 
 internal abstract class TabFragment : Fragment() {
@@ -99,8 +101,8 @@ internal class LocalTabFragment : TabFragment() {
         title = getString(R.string.drawer_allmusic_title)
         mediaIds = listOf(
             MusicProvider.Media.LOCAL,
-            MusicProvider.Media.LOCAL + MediaIDHelper.CATEGORY_SEPARATOR + MediaMetadataCompat.METADATA_KEY_ARTIST,
-            MusicProvider.Media.LOCAL + MediaIDHelper.CATEGORY_SEPARATOR + MediaMetadataCompat.METADATA_KEY_ALBUM
+            MusicProvider.Media.LOCAL + MediaIDHelper.CATEGORY_SEPARATOR + "METADATA_KEY_ARTIST",
+            MusicProvider.Media.LOCAL + MediaIDHelper.CATEGORY_SEPARATOR + "METADATA_KEY_ALBUM"
         )
         categories = listOf("Tracks", "Artists", "Albums")
         super.onViewCreated(view, savedInstanceState)

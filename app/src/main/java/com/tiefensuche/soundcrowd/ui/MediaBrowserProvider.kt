@@ -3,9 +3,9 @@
  */
 package com.tiefensuche.soundcrowd.ui
 
-import android.support.v4.media.MediaBrowserCompat
+import androidx.media3.session.MediaBrowser
 
 internal interface MediaBrowserProvider {
 
-    val mediaBrowser: MediaBrowserCompat?
+    val mediaBrowser: MediaBrowser
 }

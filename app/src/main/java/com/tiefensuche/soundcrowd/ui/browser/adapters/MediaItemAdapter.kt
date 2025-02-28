@@ -1,23 +1,23 @@
 /*
  * SPDX-License-Identifier: GPL-3.0-only
  */
-package com.tiefensuche.soundcrowd.ui
+package com.tiefensuche.soundcrowd.ui.browser.adapters
 
-import android.support.v4.media.MediaBrowserCompat
 import android.widget.Filter
 import android.widget.Filterable
 import android.widget.SectionIndexer
+import androidx.media3.common.MediaItem
 import androidx.recyclerview.widget.RecyclerView
 import java.util.Locale
 
 internal abstract class MediaItemAdapter<T : RecyclerView.ViewHolder?> : RecyclerView.Adapter<T>(), Filterable, SectionIndexer {
 
     private val mLock = Any()
-    internal var mDataset: MutableList<MediaBrowserCompat.MediaItem> = ArrayList()
+    internal var mDataset: MutableList<MediaItem> = ArrayList()
 
     // Filter
     private var mFilter: ArrayFilter? = null
-    private var mObjects: List<MediaBrowserCompat.MediaItem> = ArrayList()
+    private var mObjects: List<MediaItem> = ArrayList()
 
     // Section
     private var sectionList: List<Char> = ArrayList()
@@ -29,7 +29,7 @@ internal abstract class MediaItemAdapter<T : RecyclerView.ViewHolder?> : Recycle
     internal val count: Int
         get() = itemCount
 
-    internal fun add(item: MediaBrowserCompat.MediaItem) {
+    internal fun add(item: MediaItem) {
         mDataset.add(item)
     }
 
@@ -52,7 +52,7 @@ internal abstract class MediaItemAdapter<T : RecyclerView.ViewHolder?> : Recycle
 
         var currentIndex = '#'
         for ((currentCount, item) in mDataset.withIndex()) {
-            val index = item.description.title?.first()?.uppercaseChar() ?: '#'
+            val index = item.mediaMetadata.title?.first()?.uppercaseChar() ?: '#'
             if (currentIndex != index) {
                 currentIndex = index
                 sectionList.add(index)
@@ -93,7 +93,7 @@ internal abstract class MediaItemAdapter<T : RecyclerView.ViewHolder?> : Recycle
     }
 
     interface OnItemClickListener {
-        fun onItemClick(item: MediaBrowserCompat.MediaItem)
+        fun onItemClick(items: List<MediaItem>, position: Int)
     }
 
     /**
@@ -108,7 +108,7 @@ internal abstract class MediaItemAdapter<T : RecyclerView.ViewHolder?> : Recycle
             val results = FilterResults()
 
             if (prefix == null || prefix.isEmpty()) {
-                val list: ArrayList<MediaBrowserCompat.MediaItem>
+                val list: ArrayList<MediaItem>
                 synchronized(mLock) {
                     list = ArrayList(mObjects)
                 }
@@ -117,20 +117,20 @@ internal abstract class MediaItemAdapter<T : RecyclerView.ViewHolder?> : Recycle
             } else {
                 val prefixString = prefix.toString().lowercase(Locale.getDefault())
 
-                val values: ArrayList<MediaBrowserCompat.MediaItem>
+                val values: ArrayList<MediaItem>
                 synchronized(mLock) {
                     values = ArrayList(mObjects)
                 }
 
                 val count = values.size
-                val newValues = ArrayList<MediaBrowserCompat.MediaItem>()
+                val newValues = ArrayList<MediaItem>()
 
                 for (i in 0 until count) {
                     val value = values[i]
-                    var valueText = value.description.title?.toString()
+                    var valueText = value.mediaMetadata.title?.toString()
                         ?.lowercase(Locale.getDefault())
-                    if (value.description.subtitle != null) {
-                        valueText = value.description.subtitle?.toString()
+                    if (value.mediaMetadata.artist != null) {
+                        valueText = value.mediaMetadata.artist?.toString()
                             ?.lowercase(Locale.getDefault()) + " " + valueText
                     }
                     val keywords = prefixString.split(" ".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
@@ -154,7 +154,7 @@ internal abstract class MediaItemAdapter<T : RecyclerView.ViewHolder?> : Recycle
         }
 
         override fun publishResults(constraint: CharSequence, results: FilterResults) {
-            mDataset = (results.values as List<MediaBrowserCompat.MediaItem>).toMutableList()
+            mDataset = (results.values as List<MediaItem>).toMutableList()
             notifyDataSetChanged()
         }
     }

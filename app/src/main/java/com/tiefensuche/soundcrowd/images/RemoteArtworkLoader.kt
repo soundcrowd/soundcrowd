@@ -4,7 +4,7 @@
 
 package com.tiefensuche.soundcrowd.images
 
-import android.support.v4.media.MediaDescriptionCompat
+import androidx.media3.common.MediaItem
 import com.bumptech.glide.load.Options
 import com.bumptech.glide.load.model.GlideUrl
 import com.bumptech.glide.load.model.ModelLoader
@@ -17,19 +17,19 @@ import java.io.InputStream
  * Download artworks from remote from given url via [com.bumptech.glide.Glide] based
  * on [BaseGlideUrlLoader]
  */
-internal class RemoteArtworkLoader private constructor(urlLoader: ModelLoader<GlideUrl, InputStream>) : BaseGlideUrlLoader<MediaDescriptionCompat>(urlLoader) {
+internal class RemoteArtworkLoader private constructor(urlLoader: ModelLoader<GlideUrl, InputStream>) : BaseGlideUrlLoader<MediaItem>(urlLoader) {
 
-    override fun getUrl(descriptionCompat: MediaDescriptionCompat, width: Int, height: Int, options: Options): String {
-        return descriptionCompat.iconUri.toString()
+    override fun getUrl(descriptionCompat: MediaItem, width: Int, height: Int, options: Options): String {
+        return descriptionCompat.mediaMetadata.artworkUri.toString()
     }
 
-    override fun handles(description: MediaDescriptionCompat): Boolean {
-        return description.iconUri?.toString()?.startsWith("http") ?: false
+    override fun handles(description: MediaItem): Boolean {
+        return description.mediaMetadata.artworkUri.toString().startsWith("http")
     }
 
-    class Factory : ModelLoaderFactory<MediaDescriptionCompat, InputStream> {
+    class Factory : ModelLoaderFactory<MediaItem, InputStream> {
 
-        override fun build(multiFactory: MultiModelLoaderFactory): ModelLoader<MediaDescriptionCompat, InputStream> {
+        override fun build(multiFactory: MultiModelLoaderFactory): ModelLoader<MediaItem, InputStream> {
             return RemoteArtworkLoader(multiFactory.build(GlideUrl::class.java, InputStream::class.java))
         }
 

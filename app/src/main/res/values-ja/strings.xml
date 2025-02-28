@@ -57,4 +57,6 @@
     <item>ライト</item>
     <item>ダーク</item>
   </string-array>
+  <string name="cache_size_title">キャッシュのサイズ</string>
+  <string name="cache_size_summary">LRU キャッシュの最大サイズを設定します</string>
 </resources>

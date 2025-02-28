@@ -146,7 +146,7 @@ public final class RecordAudioBufferSink implements TeeAudioProcessor.AudioBuffe
         }
     }
 
-    void setRecord(boolean value) {
+    public void setRecord(boolean value) {
         isRecording = value;
         if (!value) {
             synchronized (fileLock) {

@@ -9,7 +9,6 @@ import android.os.Build
 import android.os.Bundle
 import androidx.fragment.app.Fragment
 import com.github.appintro.AppIntro
-import com.github.appintro.AppIntroFragment
 import com.github.appintro.AppIntroFragment.Companion.createInstance
 import com.github.appintro.model.SliderPage
 import com.tiefensuche.soundcrowd.R

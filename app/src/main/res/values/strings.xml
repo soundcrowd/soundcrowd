@@ -61,9 +61,17 @@
     <string name="preference_theme_title">Theme</string>
     <string name="preference_theme_summary">Change app theme</string>
     <string name="preference_last_fragment" translatable="false">last_fragment</string>
+    <string-array name="preference_theme_mode_keys" translatable="false">
+        <item>System</item>
+        <item>Light</item>
+        <item>Dark</item>
+    </string-array>
     <string-array name="preference_theme_modes">
         <item>System</item>
         <item>Light</item>
         <item>Dark</item>
     </string-array>
+    <string name="cache_size_key" translatable="false">cache_size</string>
+    <string name="cache_size_title">Cache size</string>
+    <string name="cache_size_summary">Maximal cache size for the LRU cache in MB</string>
 </resources>

@@ -23,12 +23,15 @@ import com.google.android.material.color.DynamicColors
 import com.google.android.material.navigation.NavigationView
 import com.sothree.slidinguppanel.SlidingUpPanelLayout
 import com.tiefensuche.soundcrowd.R
+import com.tiefensuche.soundcrowd.sources.MusicProvider.Companion.MEDIA_ID
+import com.tiefensuche.soundcrowd.sources.MusicProvider.Media.CUE_POINTS
 import com.tiefensuche.soundcrowd.sources.MusicProvider.PluginMetadata.CATEGORY
 import com.tiefensuche.soundcrowd.sources.MusicProvider.PluginMetadata.ICON
 import com.tiefensuche.soundcrowd.sources.MusicProvider.PluginMetadata.NAME
+import com.tiefensuche.soundcrowd.ui.browser.CueMediaBrowserFragment
+import com.tiefensuche.soundcrowd.ui.browser.MediaBrowserFragment
 import com.tiefensuche.soundcrowd.ui.preferences.EqualizerFragment
 import com.tiefensuche.soundcrowd.ui.preferences.PreferenceFragment
-import com.tiefensuche.soundcrowd.utils.Utils
 
 /**
  * Abstract activity with toolbar, navigation drawer and cast support. Needs to be extended by
@@ -44,7 +47,7 @@ import com.tiefensuche.soundcrowd.utils.Utils
 abstract class ActionBarCastActivity : AppCompatActivity() {
 
     internal var mToolbar: Toolbar? = null
-    internal lateinit var mNavigationView: NavigationView
+    private lateinit var mNavigationView: NavigationView
     private lateinit var mDrawerLayout: DrawerLayout
     internal lateinit var slidingUpPanelLayout: SlidingUpPanelLayout
     private lateinit var mDrawerToggle: ActionBarDrawerToggle
@@ -78,7 +81,7 @@ abstract class ActionBarCastActivity : AppCompatActivity() {
 
     public override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        Utils.applyTheme(getDefaultSharedPreferences(this).getString(getString(R.string.preference_theme_key), "System")!!)
+        PreferenceFragment.applyTheme(getDefaultSharedPreferences(this).getString(getString(R.string.preference_theme_key), "System")!!)
         DynamicColors.applyToActivitiesIfAvailable(application)
         setContentView(R.layout.activity_player)
         slidingUpPanelLayout = findViewById(R.id.sliding_layout)
@@ -214,7 +217,12 @@ abstract class ActionBarCastActivity : AppCompatActivity() {
     private fun setFragmentId(id: Int) {
         when (id) {
             R.id.navigation_allmusic -> setFragment(LocalTabFragment())
-            R.id.navigation_cue_points -> setFragment(CueMediaBrowserFragment())
+            R.id.navigation_cue_points -> setFragment(CueMediaBrowserFragment().apply {
+                arguments = Bundle().apply {
+                    putString(MEDIA_ID, CUE_POINTS)
+                    putString(NAME, "Cue Points")
+                }
+            })
             R.id.navigation_equalizer -> setFragment(EqualizerFragment())
             R.id.navigation_preferences -> setFragment(PreferenceFragment())
             else -> {

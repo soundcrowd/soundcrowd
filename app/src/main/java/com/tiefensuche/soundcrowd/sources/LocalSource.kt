@@ -6,16 +6,16 @@ package com.tiefensuche.soundcrowd.sources
 
 import android.Manifest
 import android.content.ContentUris
+import android.content.Context
 import android.content.pm.PackageManager
 import android.media.MediaMetadataRetriever
 import android.net.Uri
 import android.os.Build
 import android.provider.MediaStore
-import android.support.v4.media.MediaMetadataCompat
 import android.util.Log
 import androidx.core.content.ContextCompat
-import com.tiefensuche.soundcrowd.extensions.MediaMetadataCompatExt
-import com.tiefensuche.soundcrowd.service.MusicService
+import androidx.media3.common.MediaItem
+import com.tiefensuche.soundcrowd.plugins.MediaItemUtils
 import java.util.*
 
 /**
@@ -23,31 +23,20 @@ import java.util.*
  *
  * Created by tiefensuche on 02.04.2016.
  */
-internal class LocalSource(private val context: MusicService) {
+internal class LocalSource(private val context: Context) {
 
-    private val tracks = ArrayList<MediaMetadataCompat>()
+    private val tracks = ArrayList<MediaItem>()
 
-    internal fun resolve(uri: Uri): MediaMetadataCompat {
+    internal fun resolve(uri: Uri): MediaItem {
         val mmr = MediaMetadataRetriever()
         mmr.setDataSource(context, uri)
-        val artist = mmr.extractMetadata(MediaMetadataRetriever.METADATA_KEY_ARTIST)
-        val album = mmr.extractMetadata(MediaMetadataRetriever.METADATA_KEY_ALBUM)
-        val title = mmr.extractMetadata(MediaMetadataRetriever.METADATA_KEY_TITLE)
-        val duration = java.lang.Long.parseLong(mmr.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION))
+        val artist = mmr.extractMetadata(MediaMetadataRetriever.METADATA_KEY_ARTIST) ?: "artist"
+        val album = mmr.extractMetadata(MediaMetadataRetriever.METADATA_KEY_ALBUM) ?: "album"
+        val title = mmr.extractMetadata(MediaMetadataRetriever.METADATA_KEY_TITLE) ?: "title"
+        val duration = mmr.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)?.toLong() ?: 0
         mmr.release()
 
-        return MediaMetadataCompat.Builder()
-                .putString(MediaMetadataCompat.METADATA_KEY_MEDIA_ID, uri.toString().hashCode().toString())
-                .putString(MediaMetadataCompat.METADATA_KEY_MEDIA_URI, uri.toString())
-                .putString(MediaMetadataCompatExt.METADATA_KEY_TYPE, MediaMetadataCompatExt.MediaType.MEDIA.name)
-                .putString(MediaMetadataCompatExt.METADATA_KEY_WAVEFORM_URL, uri.toString())
-                .putString(MediaMetadataCompat.METADATA_KEY_ARTIST, artist)
-                .putString(MediaMetadataCompat.METADATA_KEY_ALBUM, album)
-                .putLong(MediaMetadataCompat.METADATA_KEY_DURATION, duration)
-                .putString(MediaMetadataCompat.METADATA_KEY_ALBUM_ART_URI, uri.toString())
-                .putString(MediaMetadataCompat.METADATA_KEY_TITLE, title)
-                .putString(MediaMetadataCompatExt.METADATA_KEY_SOURCE, NAME)
-                .build()
+        return MediaItemUtils.createMediaItem(uri.toString().hashCode().toString(), uri, title, duration, artist, album, uri, uri.toString(), plugin = NAME)
     }
 
     @Throws(Exception::class)
@@ -81,21 +70,9 @@ internal class LocalSource(private val context: MusicService) {
                     val artist = musicCursor.getString(artistColumn)
                     val album = musicCursor.getString(albumColumn)
                     val duration = musicCursor.getLong(durationColumn)
+                    val uri = ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, id)
 
-                    val trackUri = ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, id)
-
-                    tracks.add(MediaMetadataCompat.Builder()
-                            .putString(MediaMetadataCompat.METADATA_KEY_MEDIA_ID, id.toString())
-                            .putString(MediaMetadataCompat.METADATA_KEY_MEDIA_URI, trackUri.toString())
-                            .putString(MediaMetadataCompatExt.METADATA_KEY_TYPE, MediaMetadataCompatExt.MediaType.MEDIA.name)
-                            .putString(MediaMetadataCompatExt.METADATA_KEY_WAVEFORM_URL, trackUri.toString())
-                            .putString(MediaMetadataCompat.METADATA_KEY_ARTIST, artist)
-                            .putString(MediaMetadataCompat.METADATA_KEY_ALBUM, album)
-                            .putLong(MediaMetadataCompat.METADATA_KEY_DURATION, duration)
-                            .putString(MediaMetadataCompat.METADATA_KEY_ALBUM_ART_URI, trackUri.toString())
-                            .putString(MediaMetadataCompat.METADATA_KEY_TITLE, title)
-                            .putString(MediaMetadataCompatExt.METADATA_KEY_SOURCE, NAME)
-                            .build())
+                    tracks.add(MediaItemUtils.createMediaItem(id.toString(), uri, title, duration, artist, album, uri, uri.toString(), plugin = NAME))
                 } catch (e: Exception) {
                     Log.w(TAG, "error while processing track", e)
                 }
@@ -106,7 +83,7 @@ internal class LocalSource(private val context: MusicService) {
     }
 
     @Throws(Exception::class)
-    internal fun tracks(): ArrayList<MediaMetadataCompat> {
+    internal fun tracks(): ArrayList<MediaItem> {
         if (tracks.isEmpty()) {
             loadMusic()
         }

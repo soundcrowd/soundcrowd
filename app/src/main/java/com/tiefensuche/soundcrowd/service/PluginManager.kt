@@ -33,7 +33,7 @@ internal class PluginManager(private val context: Context) {
             return loadPlugin(context, packageName, "Plugin")
         }
 
-        fun <T> loadPlugin(context: Context, packageName: String, className: String): T? {
+        private fun <T> loadPlugin(context: Context, packageName: String, className: String): T? {
             var plugin: T? = null
             try {
                 val appInfo = context.packageManager.getApplicationInfo(packageName, 0)

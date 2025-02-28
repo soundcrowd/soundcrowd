@@ -5,6 +5,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.tiefensuche.soundcrowd">
 
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"
                      android:maxSdkVersion="32"/>
@@ -19,12 +20,6 @@
         <intent>
             <action android:name="com.tiefensuche.soundcrowd.plugins" />
         </intent>
-        <package android:name="com.tiefensuche.soundcrowd.plugins.soundcloud" />
-        <package android:name="com.tiefensuche.soundcrowd.plugins.youtube" />
-        <package android:name="com.tiefensuche.soundcrowd.plugins.spotify" />
-        <package android:name="com.tiefensuche.soundcrowd.plugins.beatport" />
-        <package android:name="com.tiefensuche.soundcrowd.plugins.tidal" />
-        <package android:name="com.tiefensuche.soundcrowd.plugins.cache" />
     </queries>
 
     <application
@@ -86,25 +81,13 @@
          consumers through MediaBrowserService and MediaSession. Consumers connect to it through
          MediaBrowser (for browsing) and MediaController (for play session control) -->
         <service
-            android:name=".service.MusicService"
+            android:name=".service.PlaybackService"
             android:exported="false"
             android:foregroundServiceType="mediaPlayback">
             <intent-filter>
-                <action android:name="android.media.browse.MediaBrowserService" />
+                <action android:name="androidx.media3.session.MediaLibraryService"/>
             </intent-filter>
         </service>
-
-        <!-- A receiver that will receive media buttons and send as
-            intents to your MediaBrowserServiceCompat implementation.
-            Required on pre-Lollipop. More information at
-            http://developer.android.com/reference/android/support/v4/media/session/MediaButtonReceiver.html -->
-        <receiver
-            android:name="androidx.media.session.MediaButtonReceiver"
-            android:exported="false">
-            <intent-filter>
-                <action android:name="android.intent.action.MEDIA_BUTTON" />
-            </intent-filter>
-        </receiver>
 
     </application>
 

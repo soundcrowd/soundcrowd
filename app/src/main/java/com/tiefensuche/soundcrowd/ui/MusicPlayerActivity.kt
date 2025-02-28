@@ -4,9 +4,6 @@
 package com.tiefensuche.soundcrowd.ui
 
 import android.os.Bundle
-import android.support.v4.media.MediaBrowserCompat
-import android.support.v4.media.MediaDescriptionCompat
-import android.support.v4.media.session.MediaControllerCompat
 import android.text.TextUtils
 import android.util.Log
 import android.view.Menu
@@ -17,16 +14,20 @@ import android.widget.RelativeLayout
 import android.widget.TextView
 import androidx.appcompat.widget.SearchView
 import androidx.core.view.MenuItemCompat
+import androidx.media3.common.MediaItem
 import com.google.android.material.appbar.CollapsingToolbarLayout
 import com.sothree.slidinguppanel.SlidingUpPanelLayout
 import com.tiefensuche.soundcrowd.R
-import com.tiefensuche.soundcrowd.extensions.MediaMetadataCompatExt
 import com.tiefensuche.soundcrowd.images.ArtworkHelper
 import com.tiefensuche.soundcrowd.images.GlideApp
+import com.tiefensuche.soundcrowd.plugins.MediaMetadataCompatExt
 import com.tiefensuche.soundcrowd.sources.MusicProvider.Companion.MEDIA_ID
 import com.tiefensuche.soundcrowd.sources.MusicProvider.Companion.QUERY
 import com.tiefensuche.soundcrowd.sources.MusicProvider.Media.CUE_POINTS
 import com.tiefensuche.soundcrowd.sources.MusicProvider.Media.LOCAL
+import com.tiefensuche.soundcrowd.ui.browser.GridMediaBrowserFragment
+import com.tiefensuche.soundcrowd.ui.browser.MediaBrowserFragment
+import com.tiefensuche.soundcrowd.ui.browser.StreamMediaBrowserFragment
 import com.tiefensuche.soundcrowd.ui.intro.ShowcaseViewManager
 import com.tiefensuche.soundcrowd.utils.MediaIDHelper
 import com.tiefensuche.soundcrowd.utils.MediaIDHelper.CATEGORY_SEPARATOR
@@ -42,7 +43,7 @@ internal class MusicPlayerActivity : BaseActivity(), MediaBrowserFragment.MediaF
     private var searchView: SearchView? = null
     private var searchItem: MenuItem? = null
     internal lateinit var controls: RelativeLayout
-    internal var collapsingToolbarLayout: CollapsingToolbarLayout? = null
+    private var collapsingToolbarLayout: CollapsingToolbarLayout? = null
     private var toolbarHeader: View? = null
     private var headerLineTitle: TextView? = null
     private var headerLineSubtitle: TextView? = null
@@ -109,11 +110,7 @@ internal class MusicPlayerActivity : BaseActivity(), MediaBrowserFragment.MediaF
                     val bundle = Bundle()
                     if (!it.startsWith(LOCAL))
                         bundle.putString(MediaMetadataCompatExt.METADATA_KEY_TYPE, MediaMetadataCompatExt.MediaType.STREAM.name)
-                    navigateToBrowser(QUERY + CATEGORY_SEPARATOR + MediaIDHelper.toBrowsableName(query),
-                            MediaDescriptionCompat.Builder()
-                                    .setTitle(query)
-                                    .setSubtitle(getString(R.string.search_title))
-                                    .setExtras(bundle).build())
+                    navigateToBrowser(QUERY + CATEGORY_SEPARATOR + "Tracks" + CATEGORY_SEPARATOR + MediaIDHelper.toBrowsableName(query))
                     searchView?.clearFocus()
                 }
                 return true
@@ -127,16 +124,17 @@ internal class MusicPlayerActivity : BaseActivity(), MediaBrowserFragment.MediaF
         return true
     }
 
-    override fun onMediaItemSelected(item: MediaBrowserCompat.MediaItem) {
-        when {
-            item.isPlayable -> {
-                Log.d(TAG, "isPlayable: ${item.mediaId}")
-
-                MediaControllerCompat.getMediaController(this).transportControls
-                        .playFromMediaId(item.mediaId, null)
-            }
-            item.isBrowsable -> navigateToBrowser(item.mediaId, item.description)
-            else -> Log.w(TAG, "Ignoring MediaItem that is neither browsable nor playable: mediaId=${item.mediaId}")
+    override fun onMediaItemSelected(items: List<MediaItem>, index: Int, position: Long) {
+        val item = items[index]
+        if (item.mediaMetadata.isPlayable == true) {
+            mediaBrowser.setMediaItems(items, index, position)
+            mediaBrowser.prepare()
+            mediaBrowser.play()
+        } else if (item.mediaMetadata.isBrowsable == true) {
+            Log.d(TAG, "isBrowsable: ${item.mediaId}")
+            navigateToBrowser(item.mediaId)
+        } else {
+            Log.w(TAG, "Ignoring MediaItem that is neither browsable nor playable: mediaId=${item.mediaId}")
         }
     }
 
@@ -150,7 +148,7 @@ internal class MusicPlayerActivity : BaseActivity(), MediaBrowserFragment.MediaF
         headerLineSubtitle?.text = title
     }
 
-    override fun setBackground(description: MediaDescriptionCompat) {
+    override fun setBackground(description: MediaItem) {
         ArtworkHelper.loadArtwork(GlideApp.with(this), description, findViewById(R.id.container_image))
     }
 
@@ -163,7 +161,7 @@ internal class MusicPlayerActivity : BaseActivity(), MediaBrowserFragment.MediaF
         }
     }
 
-    private fun navigateToBrowser(mediaId: String?, description: MediaDescriptionCompat?) {
+    private fun navigateToBrowser(mediaId: String?) {
         Log.d(TAG, "navigateToBrowser, mediaId=$mediaId")
         val currentMediaId = currentFragmentMediaId ?: return
 
@@ -176,7 +174,6 @@ internal class MusicPlayerActivity : BaseActivity(), MediaBrowserFragment.MediaF
                     path = path.substring(0, path.indexOf(CATEGORY_SEPARATOR))
                 bundle.putString(MEDIA_ID, path + CATEGORY_SEPARATOR + mediaId)
             }
-            bundle.putParcelable(MediaBrowserFragment.ARG_MEDIA_DESCRIPTION, description)
             fragment.arguments = bundle
             val transaction = supportFragmentManager.beginTransaction().replace(R.id.container, fragment, MediaBrowserFragment::class.java.name)
             // If this is not the top level media (root), we add it to the fragment back stack,
@@ -202,7 +199,6 @@ internal class MusicPlayerActivity : BaseActivity(), MediaBrowserFragment.MediaF
          * the [FullScreenPlayerFragment], speeding up the screen rendering
          * while the [android.support.v4.media.session.MediaControllerCompat] is connecting.
          */
-        const val EXTRA_CURRENT_MEDIA_DESCRIPTION = "com.tiefensuche.soundcrowd.CURRENT_MEDIA_DESCRIPTION"
         private val TAG = MusicPlayerActivity::class.simpleName
         private var mPanelState: SlidingUpPanelLayout.PanelState = SlidingUpPanelLayout.PanelState.COLLAPSED
     }

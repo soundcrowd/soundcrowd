@@ -6,8 +6,8 @@ package com.tiefensuche.soundcrowd.images
 
 import android.content.Context
 import android.graphics.Bitmap
-import android.support.v4.media.MediaDescriptionCompat
 import android.util.Log
+import androidx.media3.common.MediaItem
 import com.bumptech.glide.Glide
 import com.bumptech.glide.GlideBuilder
 import com.bumptech.glide.Registry
@@ -33,11 +33,36 @@ internal class SoundCrowdGlideModule : AppGlideModule() {
         barGap = density.toInt()
         bottomBorder = density.toInt()
 
-        registry.append(Bitmap::class.java, Bitmap::class.java, WaveformResourceDecoder(glide.bitmapPool))
-                .append(StringKey::class.java, Bitmap::class.java, WaveformModelLoader.Factory(context)) // Waveform generation from JSON and extraction for local files
-                .append(MediaDescriptionCompat::class.java, Bitmap::class.java, MetadataArtworkLoader.Factory()) // Artwork directly from media description
-                .append(MediaDescriptionCompat::class.java, ByteBuffer::class.java, ArtworkLoader.Factory(context)) // Artwork extraction from local files
-                .append(MediaDescriptionCompat::class.java, InputStream::class.java, RemoteArtworkLoader.Factory()) // Remote artwork download
+        registry
+            .append(
+                Bitmap::class.java,
+                Bitmap::class.java,
+                WaveformResourceDecoder(glide.bitmapPool)
+            )
+            // Waveform generation from JSON and extraction for local files
+            .append(
+                StringKey::class.java,
+                Bitmap::class.java,
+                WaveformModelLoader.Factory(context)
+            )
+            // Artwork directly from media description
+            .append(
+                MediaItem::class.java,
+                ByteArray::class.java,
+                MetadataArtworkLoader.Factory()
+            )
+            // Artwork extraction from local files
+            .append(
+                MediaItem::class.java,
+                ByteBuffer::class.java,
+                ArtworkLoader.Factory(context)
+            )
+            // Remote artwork download
+            .append(
+                MediaItem::class.java,
+                InputStream::class.java,
+                RemoteArtworkLoader.Factory()
+            )
     }
 
     override fun applyOptions(context: Context, builder: GlideBuilder) {
