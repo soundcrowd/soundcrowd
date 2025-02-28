@@ -11,11 +11,11 @@ android {
     defaultConfig {
         namespace 'com.tiefensuche.soundcrowd'
         applicationId 'com.tiefensuche.soundcrowd'
-        versionName "3.6.1"
         compileSdk 35
-        minSdkVersion 21
-        targetSdkVersion 35
+        minSdk 21
+        targetSdk 35
         versionCode 76
+        versionName "3.6.1"
         proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
     }
 
