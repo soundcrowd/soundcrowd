@@ -11,21 +11,19 @@ import android.content.pm.PackageManager
 import android.graphics.BitmapFactory
 import android.os.Build
 import android.os.Bundle
-import android.os.RemoteException
-import android.support.v4.media.MediaBrowserCompat
-import android.support.v4.media.MediaMetadataCompat
-import android.support.v4.media.session.MediaControllerCompat
-import android.support.v4.media.session.MediaSessionCompat
-import android.support.v4.media.session.PlaybackStateCompat
 import android.util.Log
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.Lifecycle
+import androidx.media3.common.MediaMetadata
+import androidx.media3.common.Player
+import androidx.media3.session.MediaBrowser
+import androidx.media3.session.SessionCommand
+import androidx.media3.session.SessionToken
 import com.sothree.slidinguppanel.SlidingUpPanelLayout
 import com.tiefensuche.soundcrowd.R
-import com.tiefensuche.soundcrowd.service.MusicService
-import com.tiefensuche.soundcrowd.service.MusicService.Companion.ARG_URL
-import com.tiefensuche.soundcrowd.sources.MusicProvider
-import com.tiefensuche.soundcrowd.sources.MusicProvider.Companion.RESULT
+import com.tiefensuche.soundcrowd.service.PlaybackService
+import com.tiefensuche.soundcrowd.service.PlaybackService.Companion.COMMAND_GET_PLUGINS
+import com.tiefensuche.soundcrowd.service.PlaybackService.Companion.RESULT
 import com.tiefensuche.soundcrowd.ui.intro.IntroActivity
 import com.tiefensuche.soundcrowd.ui.intro.ShowcaseViewManager
 
@@ -34,78 +32,26 @@ import com.tiefensuche.soundcrowd.ui.intro.ShowcaseViewManager
  */
 abstract class BaseActivity : ActionBarCastActivity(), MediaBrowserProvider {
 
-    // Callback that ensures that we are showing the controls
-    private val mMediaControllerCallback = object : MediaControllerCompat.Callback() {
-        override fun onPlaybackStateChanged(state: PlaybackStateCompat?) {
-            if (shouldShowControls()) {
-                showPlaybackControls()
-            } else {
-                Log.d(TAG, "mediaControllerCallback.onPlaybackStateChanged: hiding controls because state is ${state?.state}")
-                hidePlaybackControls()
-            }
-            mFullScreenPlayerFragment?.onPlaybackStateChanged(state)
-        }
-
-        override fun onMetadataChanged(metadata: MediaMetadataCompat) {
-            if (shouldShowControls()) {
-                showPlaybackControls()
-            } else {
-                Log.d(TAG, "mediaControllerCallback.onMetadataChanged: hiding controls because metadata is null")
-                hidePlaybackControls()
-            }
-            mFullScreenPlayerFragment?.onMetadataChanged(metadata)
-        }
-
-        override fun onRepeatModeChanged(repeatMode: Int) {
-            mFullScreenPlayerFragment?.updateRepeatMode(repeatMode)
-        }
-
-        override fun onShuffleModeChanged(shuffleMode: Int) {
-            mFullScreenPlayerFragment?.updateShuffleMode(shuffleMode)
-        }
-    }
-
-    override lateinit var mediaBrowser: MediaBrowserCompat
+    override lateinit var mediaBrowser: MediaBrowser
     private var mFullScreenPlayerFragment: FullScreenPlayerFragment? = null
-    private val mConnectionCallback = object : MediaBrowserCompat.ConnectionCallback() {
-        override fun onConnected() {
-            getPlugins()
-            try {
-                connectToSession(mediaBrowser.sessionToken)
-                onMediaControllerConnected()
-                handleIntent(intent)
-            } catch (e: RemoteException) {
-                Log.e(TAG, "could not connect media controller", e)
-                hidePlaybackControls()
-            }
-        }
-    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         Log.d(TAG, "Activity onCreate")
 
-        if (Build.VERSION.SDK_INT >= 21) {
-            // Since our app icon has the same color as colorPrimary, our entry in the Recent Apps
-            // list gets weird. We need to change either the icon or the color
-            // of the TaskDescription.
-            val taskDesc = ActivityManager.TaskDescription(
-                    title.toString(),
-                    BitmapFactory.decodeResource(resources, R.mipmap.ic_launcher),
-                    resources.getColor(R.color.colorPrimary))
-            setTaskDescription(taskDesc)
-        }
-
-        // Connect a media browser just to get the media session token. There are other ways
-        // this can be done, for example by sharing the session token directly.
-        mediaBrowser = MediaBrowserCompat(this,
-                ComponentName(this, MusicService::class.java), mConnectionCallback, null)
+        val taskDesc = ActivityManager.TaskDescription(
+                title.toString(),
+                BitmapFactory.decodeResource(resources, R.mipmap.ic_launcher),
+                resources.getColor(R.color.colorPrimary))
+        setTaskDescription(taskDesc)
 
         // Only check if a full screen player is needed on the first time:
         if (savedInstanceState == null) {
             startFullScreenActivityIfNeeded(intent)
         }
+
+        checkPermissions()
     }
 
     override fun onStart() {
@@ -113,20 +59,6 @@ abstract class BaseActivity : ActionBarCastActivity(), MediaBrowserProvider {
         Log.d(TAG, "Activity onStart")
 
         mFullScreenPlayerFragment = supportFragmentManager.findFragmentById(R.id.fragment_fullscreen_player) as? FullScreenPlayerFragment
-        checkPermissions()
-    }
-
-    override fun onStop() {
-        super.onStop()
-        Log.d(TAG, "Activity onStop")
-        if (MediaControllerCompat.getMediaController(this) != null) {
-            MediaControllerCompat.getMediaController(this).unregisterCallback(mMediaControllerCallback)
-        }
-    }
-
-    override fun onDestroy() {
-        super.onDestroy()
-        mediaBrowser.disconnect()
     }
 
     override fun onNewIntent(intent: Intent) {
@@ -142,11 +74,7 @@ abstract class BaseActivity : ActionBarCastActivity(), MediaBrowserProvider {
     private fun handleIntent(intent: Intent) {
         if (intent.action != null && intent.action!!.endsWith("intent.action.VIEW") && intent.data != null) {
             // handle as file path to a music track
-            val service = Intent(this, MusicService::class.java)
-            service.action = MusicService.ACTION_CMD
-            service.putExtra(MusicService.CMD_NAME, MusicService.CMD_RESOLVE)
-            service.putExtra(ARG_URL, intent.data)
-            startService(service)
+            mediaBrowser.sendCustomCommand(SessionCommand(PlaybackService.COMMAND_RESOLVE, Bundle.EMPTY), Bundle().apply { putParcelable(PlaybackService.ARG_URI, intent.data) })
         }
         intent.action = null
     }
@@ -169,21 +97,6 @@ abstract class BaseActivity : ActionBarCastActivity(), MediaBrowserProvider {
         slidingUpPanelLayout.panelState = SlidingUpPanelLayout.PanelState.HIDDEN
     }
 
-    internal open fun onMediaControllerConnected() {
-        mFullScreenPlayerFragment?.onMediaControllerConnected()
-    }
-
-    @Throws(RemoteException::class)
-    private fun connectToSession(token: MediaSessionCompat.Token) {
-        val mediaController = MediaControllerCompat(this, token)
-        MediaControllerCompat.setMediaController(this, mediaController)
-        mediaController.registerCallback(mMediaControllerCallback)
-
-        if (shouldShowControls()) {
-            showPlaybackControls()
-        }
-    }
-
     /**
      * Check if the MediaSession is active and in a "playback-able" state
      * (not NONE and not STOPPED).
@@ -191,32 +104,53 @@ abstract class BaseActivity : ActionBarCastActivity(), MediaBrowserProvider {
      * @return true if the MediaSession's state requires playback controls to be visible.
      */
     private fun shouldShowControls(): Boolean {
-        val mediaController = MediaControllerCompat.getMediaController(this)
-        return mediaController != null && mediaController.metadata != null
+        return mediaBrowser.currentMediaItem != null
     }
 
     private fun getPlugins() {
-        mediaBrowser.sendCustomAction(MusicProvider.ACTION_GET_PLUGINS, Bundle(), object : MediaBrowserCompat.CustomActionCallback() {
-            override fun onResult(action: String, extras: Bundle, resultData: Bundle) {
-                updatePlugins(resultData.getParcelableArrayList(RESULT)!!)
-            }
-        })
+        val result = mediaBrowser.sendCustomCommand(SessionCommand(COMMAND_GET_PLUGINS, Bundle.EMPTY), Bundle())
+        result.addListener({
+            updatePlugins(result.get().extras.getParcelableArrayList<Bundle>(RESULT) as List<Bundle>)
+        }, ContextCompat.getMainExecutor(this))
     }
 
     private fun connectMediaBrowser() {
-        if (!mediaBrowser.isConnected) {
-            mediaBrowser.connect()
-        } else {
-            connectToSession(mediaBrowser.sessionToken)
-            // update metadata and playback state in case of reconnecting to a running session
-            // when returning to the activity
-            val mediaController = MediaControllerCompat.getMediaController(this)
-            if (mediaController.metadata != null) {
-                mMediaControllerCallback.onMetadataChanged(mediaController.metadata)
-                mMediaControllerCallback.onPlaybackStateChanged(mediaController.playbackState)
-                handleIntent(intent)
-            }
-        }
+        val sessionToken =
+            SessionToken(this, ComponentName(this, PlaybackService::class.java))
+
+        val browserFuture = MediaBrowser.Builder(this, sessionToken).buildAsync()
+        browserFuture.addListener({
+            mediaBrowser = browserFuture.get()
+            mFullScreenPlayerFragment?.onPlaybackStateChanged()
+            mediaBrowser.addListener(object : Player.Listener {
+                override fun onPlaybackStateChanged(playbackState: Int) {
+                    if (shouldShowControls()) {
+                        showPlaybackControls()
+                    } else {
+                        Log.d(TAG, "mediaControllerCallback.onPlaybackStateChanged: hiding controls because state is ${playbackState}")
+                        hidePlaybackControls()
+                    }
+                    mFullScreenPlayerFragment?.onPlaybackStateChanged()
+                }
+
+                override fun onMediaMetadataChanged(mediaMetadata: MediaMetadata) {
+                    if (shouldShowControls()) {
+                        showPlaybackControls()
+                    } else {
+                        Log.d(TAG, "mediaControllerCallback.onMetadataChanged: hiding controls because metadata is null")
+                        hidePlaybackControls()
+                    }
+                    mFullScreenPlayerFragment?.onMetadataChanged(mediaMetadata)
+                }
+
+                override fun onEvents(player: Player, events: Player.Events) {
+                    if (events.contains(Player.EVENT_IS_PLAYING_CHANGED))
+                        mFullScreenPlayerFragment?.onPlaybackStateChanged()
+                }
+            })
+            handleIntent(intent)
+            getPlugins()
+        }, ContextCompat.getMainExecutor(this))
     }
 
     private fun checkPermissions() {

@@ -1,33 +1,34 @@
 /*
  * SPDX-License-Identifier: GPL-3.0-only
  */
-package com.tiefensuche.soundcrowd.ui
+package com.tiefensuche.soundcrowd.ui.browser
 
 import android.annotation.SuppressLint
 import android.app.Activity
-import android.graphics.Point
 import android.os.Bundle
 import android.support.v4.media.MediaBrowserCompat
-import android.support.v4.media.MediaDescriptionCompat
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ProgressBar
 import android.widget.TextView
+import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
+import androidx.media3.common.MediaItem
+import androidx.media3.session.MediaLibraryService.LibraryParams
+import androidx.media3.session.SessionError.ERROR_INVALID_STATE
+import androidx.media3.session.SessionResult
 import com.tiefensuche.soundcrowd.R
 import com.tiefensuche.soundcrowd.images.GlideApp
 import com.tiefensuche.soundcrowd.images.GlideRequests
-import com.tiefensuche.soundcrowd.service.MusicService
-import com.tiefensuche.soundcrowd.service.MusicService.Companion.ARG_ERROR
+import com.tiefensuche.soundcrowd.service.PlaybackService.Companion.ARG_ERROR
 import com.tiefensuche.soundcrowd.sources.MusicProvider
-import com.tiefensuche.soundcrowd.sources.MusicProvider.Companion.ACTION_GET_MEDIA
 import com.tiefensuche.soundcrowd.sources.MusicProvider.Companion.MEDIA_ID
-import com.tiefensuche.soundcrowd.sources.MusicProvider.Companion.RESULT
 import com.tiefensuche.soundcrowd.sources.MusicProvider.Media.LOCAL
 import com.tiefensuche.soundcrowd.sources.MusicProvider.PluginMetadata.NAME
-import com.tiefensuche.soundcrowd.ui.intro.ShowcaseViewManager
+import com.tiefensuche.soundcrowd.ui.MediaBrowserProvider
+import com.tiefensuche.soundcrowd.ui.browser.adapters.MediaItemAdapter
 import `in`.myinnos.alphabetsindexfastscrollrecycler.IndexFastScrollRecyclerView
 
 /**
@@ -48,36 +49,28 @@ internal abstract class MediaBrowserFragment : Fragment() {
     lateinit var mRecyclerView: IndexFastScrollRecyclerView
     lateinit var requests: GlideRequests
 
-    open fun onResult(action: String, extras: Bundle, resultData: Bundle) {
-        Log.d(TAG, "fragment onResult, action=$action, count=${resultData.size()}")
+    open fun onResult(items: List<MediaItem>) {
+        Log.d(TAG, "fragment onResult, count=${items.count()}")
 
         // hide loading indicators
         mProgressBar.visibility = View.GONE
 
-        resultData.getParcelableArrayList<MediaBrowserCompat.MediaItem>(RESULT)
-            ?.forEach { mBrowserAdapter.add(it) }
-
+        mBrowserAdapter.mDataset.addAll(items)
+        mBrowserAdapter.notifyDataChanged()
+        mProgressBar.visibility = View.GONE
         showNoMedia(mBrowserAdapter.isEmpty)
-        activity?.let {
-            val view = it.findViewById<View>(R.id.toolbar)
-            ShowcaseViewManager.introduce(ShowcaseViewManager.ShowcaseFunction.SEARCH_VIEW, Point(view.width - view.height / 2, view.height / 2), it)
-        }
     }
 
-    open fun onError(action: String, extras: Bundle, data: Bundle) {
+    open fun onError(message: String) {
         Log.e(TAG, "browse fragment onError, id=$id")
 
         // hide loading indicators
         mProgressBar.visibility = View.GONE
-        data.getString(ARG_ERROR)?.let {
-            showMessage(it)
-        }
+        showMessage(message)
     }
 
     internal open val mediaId: String
-        get() = arguments?.getString(MEDIA_ID)
-                ?: arguments?.getParcelable<MediaDescriptionCompat>(ARG_MEDIA_DESCRIPTION)?.mediaId
-                ?: DEFAULT_MEDIA_ID
+        get() = arguments?.getString(MEDIA_ID) ?: DEFAULT_MEDIA_ID
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -109,49 +102,32 @@ internal abstract class MediaBrowserFragment : Fragment() {
             mMediaFragmentListener = activity
     }
 
-    fun requestMedia(offset: Int = 0, refresh: Boolean = false) {
+    internal fun requestMedia(offset: Int = 0, refresh: Boolean = false) {
         mProgressBar.visibility = View.VISIBLE
 
         val bundle = Bundle()
-
-        if (offset > 0)
-            bundle.putInt(MusicProvider.OFFSET, mBrowserAdapter.count)
-
+        bundle.putString(MEDIA_ID, mediaId)
         if (refresh)
             bundle.putBoolean(MusicProvider.OPTION_REFRESH, true)
 
-        bundle.putString(MEDIA_ID, mediaId)
-        mMediaFragmentListener.mediaBrowser?.sendCustomAction(ACTION_GET_MEDIA, bundle, object : MediaBrowserCompat.CustomActionCallback() {
-            override fun onResult(action: String, extras: Bundle, resultData: Bundle) {
-                this@MediaBrowserFragment.onResult(action, extras, resultData)
-            }
-
-            override fun onError(action: String, extras: Bundle, data: Bundle) {
-                this@MediaBrowserFragment.onError(action, extras, data)
-            }
-        })
+        val childrenFuture =
+            mMediaFragmentListener.mediaBrowser.getChildren(mediaId, offset, Int.MAX_VALUE, LibraryParams.Builder().setExtras(bundle).build())
+        childrenFuture.addListener({
+            val result = childrenFuture.get()
+            if (result.resultCode == ERROR_INVALID_STATE)
+                result.params?.extras?.getString(ARG_ERROR)?.let { onError(it) }
+            else
+                result.value?.let { onResult(it) }
+        }, ContextCompat.getMainExecutor(requireContext()))
     }
 
     override fun onStart() {
         super.onStart()
-
-        // fetch browsing information to fill the listview:
-        val mediaBrowser = mMediaFragmentListener.mediaBrowser
-
-        Log.d(TAG, "fragment.onStart, mediaId=$mediaId, onConnected=${mediaBrowser?.isConnected}")
-
-        if (mediaBrowser?.isConnected == true && mBrowserAdapter.isEmpty)
+        if (mMediaFragmentListener.mediaBrowser.isConnected && mBrowserAdapter.isEmpty)
             requestMedia()
     }
 
-    override fun onStop() {
-        super.onStop()
-        val mediaBrowser = mMediaFragmentListener.mediaBrowser
-        if (mediaBrowser != null && mediaBrowser.isConnected)
-            mediaBrowser.unsubscribe(mediaId)
-    }
-
-    fun showMessage(text: String) {
+    private fun showMessage(text: String) {
         mNoMediaView.text = text
         showNoMedia(true)
     }
@@ -161,30 +137,33 @@ internal abstract class MediaBrowserFragment : Fragment() {
     }
 
     open fun updateDescription() {
-        arguments?.let {
-            it.getParcelable<MediaDescriptionCompat>(ARG_MEDIA_DESCRIPTION)?.let {
+        val childrenFuture =
+            mMediaFragmentListener.mediaBrowser.getItem(mediaId)
+        childrenFuture.addListener({
+            if (childrenFuture.get().resultCode == SessionResult.RESULT_SUCCESS) {
+                val children = childrenFuture.get().value!!
                 mMediaFragmentListener.enableCollapse(true)
-                mMediaFragmentListener.setToolbarTitle(it.title)
-                mMediaFragmentListener.setSubtitle(it.subtitle)
-                mMediaFragmentListener.setBackground(it)
-                return
-            } ?: mMediaFragmentListener.setToolbarTitle(it.getString(NAME))
-        }
-        mMediaFragmentListener.enableCollapse(false)
+                mMediaFragmentListener.setToolbarTitle(children.mediaMetadata.title)
+                mMediaFragmentListener.setSubtitle(children.mediaMetadata.artist)
+                mMediaFragmentListener.setBackground(children)
+            } else {
+                mMediaFragmentListener.setToolbarTitle(arguments?.getString(NAME))
+                mMediaFragmentListener.enableCollapse(false)
+            }
+        }, ContextCompat.getMainExecutor(requireContext()))
     }
 
     internal interface MediaFragmentListener : MediaBrowserProvider {
-        fun onMediaItemSelected(item: MediaBrowserCompat.MediaItem)
+        fun onMediaItemSelected(items: List<MediaItem>, index: Int, position: Long = 0)
         fun setToolbarTitle(title: CharSequence?)
         fun setSubtitle(title: CharSequence?)
-        fun setBackground(description: MediaDescriptionCompat)
+        fun setBackground(description: MediaItem)
         fun enableCollapse(enable: Boolean)
         fun showSearchButton(show: Boolean)
     }
 
     companion object {
         private val TAG = MediaBrowserFragment::class.simpleName
-        internal const val ARG_MEDIA_DESCRIPTION = "media_description"
         internal const val DEFAULT_MEDIA_ID = LOCAL
     }
 }

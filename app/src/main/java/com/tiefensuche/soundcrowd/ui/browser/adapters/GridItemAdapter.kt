@@ -1,8 +1,6 @@
-package com.tiefensuche.soundcrowd.ui
+package com.tiefensuche.soundcrowd.ui.browser.adapters
 
-import android.content.Context
 import android.graphics.Color
-import android.support.v4.media.MediaMetadataCompat
 import android.text.format.DateUtils
 import android.view.LayoutInflater
 import android.view.View
@@ -11,12 +9,12 @@ import android.widget.ImageView
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.tiefensuche.soundcrowd.R
-import com.tiefensuche.soundcrowd.extensions.MediaMetadataCompatExt
 import com.tiefensuche.soundcrowd.images.ArtworkHelper
 import com.tiefensuche.soundcrowd.images.GlideApp
 import com.tiefensuche.soundcrowd.images.GlideRequests
+import com.tiefensuche.soundcrowd.plugins.MediaMetadataCompatExt
+import com.tiefensuche.soundcrowd.service.PlaybackService
 import com.tiefensuche.soundcrowd.service.Share
-import com.tiefensuche.soundcrowd.service.MusicService
 import com.tiefensuche.soundcrowd.utils.MediaIDHelper.extractMusicIDFromMediaID
 
 internal class GridItemAdapter(private val requests: GlideRequests, private val listener: OnItemClickListener, private val defaultColor: Int) : MediaItemAdapter<GridItemAdapter.ViewHolder>() {
@@ -29,14 +27,13 @@ internal class GridItemAdapter(private val requests: GlideRequests, private val 
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         holder.mediaItem = position
-        val description = mDataset[position].description
+        val description = mDataset[position].mediaMetadata
         holder.mTitleView.text = description.title
-        holder.mArtistView.text = description.subtitle
+        holder.mArtistView.text = description.artist
         holder.mImageViewSource.setColorFilter(Color.WHITE)
 
         if (description.extras != null) {
-            val duration = description.extras?.getLong(MediaMetadataCompat.METADATA_KEY_DURATION)
-                ?: 0
+            val duration = description.durationMs ?: 0
             if (duration > 0) {
                 holder.mDuration.text = DateUtils.formatElapsedTime(duration / 1000)
             } else {
@@ -53,7 +50,7 @@ internal class GridItemAdapter(private val requests: GlideRequests, private val 
             }
         }
 
-        ArtworkHelper.loadArtwork(requests, description, holder.mImageViewArtwork, object : ArtworkHelper.ColorsListener {
+        ArtworkHelper.loadArtwork(requests, mDataset[position], holder.mImageViewArtwork, object : ArtworkHelper.ColorsListener {
             override fun onColorsReady(colors: IntArray) {
                 setColors(holder, colors[0], colors[1])
             }
@@ -84,21 +81,15 @@ internal class GridItemAdapter(private val requests: GlideRequests, private val 
 
         init {
             // Play on clicking
-            holder.setOnClickListener { listener.onItemClick(mDataset[mediaItem]) }
+            holder.setOnClickListener { listener.onItemClick(mDataset, mediaItem) }
 
             // Open the sharing board on long clicking
-            holder.setOnLongClickListener {
-                mDataset[mediaItem].description.mediaId?.let { mediaId ->
-                    val metadata : MediaMetadataCompat? = MusicService.getMusic(extractMusicIDFromMediaID(mediaId))
-
-                    if (metadata != null) {
-                        metadata.getString(MediaMetadataCompatExt.METADATA_KEY_URL)?.let {url ->
-                            Share.shareText(holder.context, url)
-                        }
-                    }
+            val metadata = PlaybackService.getMusic(extractMusicIDFromMediaID(mDataset[mediaItem].mediaId))
+            metadata?.mediaMetadata?.extras?.getString(MediaMetadataCompatExt.METADATA_KEY_URL)?.let { url ->
+                holder.setOnLongClickListener {
+                    Share.shareText(holder.context, url)
+                    return@setOnLongClickListener true
                 }
-
-                return@setOnLongClickListener true
             }
         }
     }

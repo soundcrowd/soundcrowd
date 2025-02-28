@@ -42,7 +42,7 @@ import com.tiefensuche.soundcrowd.playback.EqualizerControl.Companion.mPresetRev
 import com.tiefensuche.soundcrowd.playback.EqualizerControl.Companion.releaseAudioEffect
 import com.tiefensuche.soundcrowd.playback.EqualizerControl.Companion.setBassBoost
 import com.tiefensuche.soundcrowd.playback.EqualizerControl.Companion.setLoudness
-import com.tiefensuche.soundcrowd.ui.MediaBrowserFragment
+import com.tiefensuche.soundcrowd.ui.browser.MediaBrowserFragment
 
 /**
  * Equalizer with some effects of the android system

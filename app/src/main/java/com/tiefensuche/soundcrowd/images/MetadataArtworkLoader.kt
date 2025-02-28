@@ -1,7 +1,7 @@
 package com.tiefensuche.soundcrowd.images
 
-import android.graphics.Bitmap
 import android.support.v4.media.MediaDescriptionCompat
+import androidx.media3.common.MediaItem
 import com.bumptech.glide.Priority
 import com.bumptech.glide.load.DataSource
 import com.bumptech.glide.load.Options
@@ -14,18 +14,18 @@ import com.tiefensuche.soundcrowd.waveform.StringKey
 /**
  * Returns the artwork bitmap from [MediaDescriptionCompat] if existent.
  */
-internal class MetadataArtworkLoader private constructor() : ModelLoader<MediaDescriptionCompat, Bitmap> {
+internal class MetadataArtworkLoader private constructor() : ModelLoader<MediaItem, ByteArray> {
 
 
-    override fun buildLoadData(model: MediaDescriptionCompat, width: Int, height: Int, options: Options): ModelLoader.LoadData<Bitmap>? {
-        return model.mediaId?.let { ModelLoader.LoadData(StringKey(it), object: DataFetcher<Bitmap> {
+    override fun buildLoadData(model: MediaItem, width: Int, height: Int, options: Options): ModelLoader.LoadData<ByteArray>? {
+        return ModelLoader.LoadData(StringKey(model.mediaId), object: DataFetcher<ByteArray> {
 
-            override fun loadData(priority: Priority, callback: DataFetcher.DataCallback<in Bitmap>) {
-                callback.onDataReady(model.iconBitmap)
+            override fun loadData(priority: Priority, callback: DataFetcher.DataCallback<in ByteArray>) {
+                callback.onDataReady(model.mediaMetadata.artworkData)
             }
 
-            override fun getDataClass(): Class<Bitmap> {
-                return Bitmap::class.java
+            override fun getDataClass(): Class<ByteArray> {
+                return ByteArray::class.java
             }
 
             override fun cleanup() {
@@ -40,17 +40,17 @@ internal class MetadataArtworkLoader private constructor() : ModelLoader<MediaDe
                 // nothing
             }
 
-        })}
+        })
     }
 
-    override fun handles(metadata: MediaDescriptionCompat): Boolean {
-        return metadata.iconBitmap != null
+    override fun handles(metadata: MediaItem): Boolean {
+        return metadata.mediaMetadata.artworkData != null
     }
 
-    internal class Factory : ModelLoaderFactory<MediaDescriptionCompat, Bitmap> {
+    internal class Factory : ModelLoaderFactory<MediaItem, ByteArray> {
 
 
-        override fun build(multiFactory: MultiModelLoaderFactory): ModelLoader<MediaDescriptionCompat, Bitmap> {
+        override fun build(multiFactory: MultiModelLoaderFactory): ModelLoader<MediaItem, ByteArray> {
             return MetadataArtworkLoader()
         }
 

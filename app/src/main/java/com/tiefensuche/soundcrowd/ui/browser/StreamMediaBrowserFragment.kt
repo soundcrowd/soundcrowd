@@ -1,37 +1,39 @@
-package com.tiefensuche.soundcrowd.ui
+package com.tiefensuche.soundcrowd.ui.browser
 
 import android.os.Bundle
-import android.support.v4.media.MediaBrowserCompat
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.core.content.ContextCompat
+import androidx.media3.common.MediaItem
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import com.tiefensuche.soundcrowd.R
+import com.tiefensuche.soundcrowd.ui.browser.adapters.GridItemAdapter
+import com.tiefensuche.soundcrowd.ui.browser.adapters.MediaItemAdapter
 import kotlin.math.round
 
 internal class StreamMediaBrowserFragment : MediaBrowserFragment() {
 
     private lateinit var mSwipeRefreshLayout: SwipeRefreshLayout
 
-    override fun onResult(action: String, extras: Bundle, resultData: Bundle) {
+    override fun onResult(items: List<MediaItem>) {
         mSwipeRefreshLayout.isRefreshing = false
-        super.onResult(action, extras, resultData)
+        super.onResult(items)
         mBrowserAdapter.notifyDataChanged()
     }
 
-    override fun onError(action: String, extras: Bundle, data: Bundle) {
+    override fun onError(message: String) {
         mSwipeRefreshLayout.isRefreshing = false
-        super.onError(action, extras, data)
+        super.onError(message)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         mBrowserAdapter = GridItemAdapter(requests, object : MediaItemAdapter.OnItemClickListener {
-            override fun onItemClick(item: MediaBrowserCompat.MediaItem) {
-                mMediaFragmentListener.onMediaItemSelected(item)
+            override fun onItemClick(items: List<MediaItem>, position: Int) {
+                mMediaFragmentListener.onMediaItemSelected(items, position)
             }
         }, ContextCompat.getColor(requireContext(), R.color.colorPrimary))
     }
@@ -65,7 +67,6 @@ internal class StreamMediaBrowserFragment : MediaBrowserFragment() {
         mSwipeRefreshLayout.isEnabled = true
         mSwipeRefreshLayout.setOnRefreshListener {
             mBrowserAdapter.clear()
-            mBrowserAdapter.notifyDataSetChanged()
             requestMedia(refresh = true)
         }
     }

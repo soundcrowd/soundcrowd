@@ -6,24 +6,22 @@ package com.tiefensuche.soundcrowd.images
 
 import android.content.Context
 import android.media.MediaMetadataRetriever
-import android.support.v4.media.MediaDescriptionCompat
 import android.util.Log
-
+import androidx.media3.common.MediaItem
 import com.bumptech.glide.Priority
 import com.bumptech.glide.load.DataSource
 import com.bumptech.glide.load.data.DataFetcher
-
 import java.nio.ByteBuffer
 
 /**
  * Extract artworks from music files via [MediaMetadataRetriever] within [com.bumptech.glide.Glide]
  */
-internal class ArtworkExtractor internal constructor(private val context: Context, private val description: MediaDescriptionCompat) : DataFetcher<ByteBuffer> {
+internal class ArtworkExtractor internal constructor(private val context: Context, private val description: MediaItem) : DataFetcher<ByteBuffer> {
 
     override fun loadData(priority: Priority, callback: DataFetcher.DataCallback<in ByteBuffer>) {
         val mmr = MediaMetadataRetriever()
         try {
-            mmr.setDataSource(context, description.iconUri)
+            mmr.setDataSource(context, description.mediaMetadata.artworkUri)
             val data = mmr.embeddedPicture
             mmr.release()
 

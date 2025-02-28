@@ -8,10 +8,11 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.Color
 import android.graphics.drawable.Drawable
-import android.support.v4.media.MediaDescriptionCompat
 import android.widget.ImageView
 import androidx.core.content.res.ResourcesCompat
+import androidx.media3.common.MediaItem
 import androidx.palette.graphics.Palette
+import com.bumptech.glide.Glide
 import com.bumptech.glide.request.RequestOptions
 import com.bumptech.glide.request.target.BitmapImageViewTarget
 import com.bumptech.glide.request.target.SimpleTarget
@@ -19,6 +20,8 @@ import com.bumptech.glide.request.transition.Transition
 import com.bumptech.glide.util.LruCache
 import com.tiefensuche.soundcrowd.R
 import com.tiefensuche.soundcrowd.ui.LetterTileDrawable
+import java.nio.ByteBuffer
+
 
 /**
  * Methods for loading artworks via [com.bumptech.glide.Glide] with support for [Palette]
@@ -32,15 +35,15 @@ internal object ArtworkHelper {
     const val MAX_ART_HEIGHT_ICON = 128  // pixels
     private val colorCache = LruCache<String, Palette>((10 * 1024).toLong())
 
-    internal fun loadArtwork(requests: GlideRequests, description: MediaDescriptionCompat, view: ImageView, listener: ColorsListener? = null) {
+    internal fun loadArtwork(requests: GlideRequests, item: MediaItem, view: ImageView, listener: ColorsListener? = null) {
         requests.clear(view)
         if (listener != null) {
-            val placeholder = getPlaceholder(view.context, description)
-            requests.asBitmap().load(description).placeholder(placeholder).apply(RequestOptions.centerCropTransform()).into(object : BitmapImageViewTarget(view) {
+            val placeholder = getPlaceholder(view.context, item)
+            requests.asBitmap().load(item).placeholder(placeholder).apply(RequestOptions.centerCropTransform()).into(object : BitmapImageViewTarget(view) {
                 public override fun setResource(resource: Bitmap?) {
                     if (resource == null)
                         return
-                    description.mediaId?.let {
+                    item.mediaId.let {
                         var palette = colorCache.get(it)
                         if (palette == null) {
                             palette = Palette.Builder(resource).generate()
@@ -67,26 +70,36 @@ internal object ArtworkHelper {
                 }
             })
         } else {
-            requests.load(description).placeholder(getPlaceholder(view.context, description)).thumbnail(0.1f).apply(RequestOptions.centerCropTransform()).into(view)
+            requests.load(item).placeholder(getPlaceholder(view.context, item)).thumbnail(0.1f).apply(RequestOptions.centerCropTransform()).into(view)
         }
     }
 
-    internal fun fetch(context: Context, description: MediaDescriptionCompat, width: Int, height: Int, listener: FetchListener) {
-        GlideApp.with(context).asBitmap().load(description).apply(RequestOptions.centerCropTransform()).override(width, height).into(object : SimpleTarget<Bitmap>() {
-            override fun onResourceReady(resource: Bitmap, transition: Transition<in Bitmap>?) {
-                listener.onFetched(resource)
-            }
-        })
+    internal fun fetch(
+        context: Context,
+        item: MediaItem,
+        width: Int,
+        height: Int,
+        listener: FetchListener
+    ) {
+        Glide.with(context).`as`(ByteBuffer::class.java).load(item).override(width, height)
+            .into(object : SimpleTarget<ByteBuffer>() {
+                override fun onResourceReady(
+                    resource: ByteBuffer,
+                    transition: Transition<in ByteBuffer>?
+                ) {
+                    listener.onFetched(resource)
+                }
+            })
     }
 
-    private fun getPlaceholder(context: Context, description: MediaDescriptionCompat): LetterTileDrawable {
+    private fun getPlaceholder(context: Context, item: MediaItem): LetterTileDrawable {
         val drawable = LetterTileDrawable(context)
-        drawable.setTileDetails(description.title.toString(), description.title.toString())
+        drawable.setTileDetails(item.mediaMetadata.title.toString(), item.mediaMetadata.title.toString())
         return drawable
     }
 
     internal interface FetchListener {
-        fun onFetched(image: Bitmap)
+        fun onFetched(data: ByteBuffer)
     }
 
     internal interface ColorsListener {

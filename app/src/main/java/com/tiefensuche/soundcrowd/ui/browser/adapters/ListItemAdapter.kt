@@ -1,4 +1,4 @@
-package com.tiefensuche.soundcrowd.ui
+package com.tiefensuche.soundcrowd.ui.browser.adapters
 
 import android.view.LayoutInflater
 import android.view.View
@@ -27,10 +27,10 @@ internal class ListItemAdapter(private val requests: GlideRequests, private val 
 
         // Get element from your dataset at this position and replace the
         // contents of the view with that element
-        viewHolder.title.text = mDataset[position].description.title
-        viewHolder.artist.text = mDataset[position].description.subtitle
+        viewHolder.title.text = mDataset[position].mediaMetadata.title
+        viewHolder.artist.text = mDataset[position].mediaMetadata.artist
 
-        ArtworkHelper.loadArtwork(requests, mDataset[position].description, viewHolder.mImageViewArtwork)
+        ArtworkHelper.loadArtwork(requests, mDataset[position], viewHolder.mImageViewArtwork)
     }
 
     inner class ViewHolder internal constructor(view: View) : RecyclerView.ViewHolder(view) {
@@ -41,7 +41,7 @@ internal class ListItemAdapter(private val requests: GlideRequests, private val 
         val mImageViewArtwork: ImageView = view.findViewById(R.id.album_art)
 
         init {
-            view.setOnClickListener { listener.onItemClick(mDataset[mediaItem]) }
+            view.setOnClickListener { listener.onItemClick(mDataset, mediaItem) }
         }
     }
 }

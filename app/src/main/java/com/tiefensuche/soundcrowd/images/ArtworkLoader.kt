@@ -5,7 +5,7 @@
 package com.tiefensuche.soundcrowd.images
 
 import android.content.Context
-import android.support.v4.media.MediaDescriptionCompat
+import androidx.media3.common.MediaItem
 import com.bumptech.glide.load.Options
 import com.bumptech.glide.load.model.ModelLoader
 import com.bumptech.glide.load.model.ModelLoaderFactory
@@ -19,19 +19,19 @@ import java.nio.ByteBuffer
  *
  * Created by tiefensuche on 6/29/17.
  */
-internal class ArtworkLoader(private val context: Context) : ModelLoader<MediaDescriptionCompat, ByteBuffer> {
+internal class ArtworkLoader(private val context: Context) : ModelLoader<MediaItem, ByteBuffer> {
 
-    override fun buildLoadData(model: MediaDescriptionCompat, width: Int, height: Int, options: Options): ModelLoader.LoadData<ByteBuffer>? {
-        return model.mediaId?.let { ModelLoader.LoadData(StringKey(it), ArtworkExtractor(context, model)) }
+    override fun buildLoadData(model: MediaItem, width: Int, height: Int, options: Options): ModelLoader.LoadData<ByteBuffer> {
+        return ModelLoader.LoadData(StringKey(model.mediaId), ArtworkExtractor(context, model))
     }
 
-    override fun handles(description: MediaDescriptionCompat): Boolean {
-        return !(description.iconUri?.toString()?.startsWith("http") ?: true)
+    override fun handles(description: MediaItem): Boolean {
+        return !description.mediaMetadata.artworkUri.toString().startsWith("http")
     }
 
-    internal class Factory(private val context: Context) : ModelLoaderFactory<MediaDescriptionCompat, ByteBuffer> {
+    internal class Factory(private val context: Context) : ModelLoaderFactory<MediaItem, ByteBuffer> {
 
-        override fun build(multiFactory: MultiModelLoaderFactory): ModelLoader<MediaDescriptionCompat, ByteBuffer> {
+        override fun build(multiFactory: MultiModelLoaderFactory): ModelLoader<MediaItem, ByteBuffer> {
             return ArtworkLoader(context)
         }
 
