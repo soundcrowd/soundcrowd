@@ -19,7 +19,7 @@ import androidx.media3.common.Player
 import androidx.media3.session.MediaBrowser
 import androidx.media3.session.SessionCommand
 import androidx.media3.session.SessionToken
-import com.sothree.slidinguppanel.SlidingUpPanelLayout
+import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.tiefensuche.soundcrowd.R
 import com.tiefensuche.soundcrowd.service.PlaybackService
 import com.tiefensuche.soundcrowd.service.PlaybackService.Companion.COMMAND_GET_PLUGINS
@@ -81,18 +81,18 @@ abstract class BaseActivity : ActionBarCastActivity(), MediaBrowserProvider {
     private fun startFullScreenActivityIfNeeded(intent: Intent?) {
         if (intent != null && intent.getBooleanExtra(MusicPlayerActivity.EXTRA_START_FULLSCREEN, false)) {
             showPlaybackControls()
-            slidingUpPanelLayout.panelState = SlidingUpPanelLayout.PanelState.EXPANDED
+            sheetBehavior.state = BottomSheetBehavior.STATE_EXPANDED
         }
     }
 
     private fun showPlaybackControls() {
-        if (slidingUpPanelLayout.panelState == SlidingUpPanelLayout.PanelState.HIDDEN) {
-            slidingUpPanelLayout.panelState = SlidingUpPanelLayout.PanelState.COLLAPSED
+        if (sheetBehavior.state == BottomSheetBehavior.STATE_HIDDEN) {
+            sheetBehavior.state = BottomSheetBehavior.STATE_COLLAPSED
         }
     }
 
     private fun hidePlaybackControls() {
-        slidingUpPanelLayout.panelState = SlidingUpPanelLayout.PanelState.HIDDEN
+        sheetBehavior.state = BottomSheetBehavior.STATE_HIDDEN
     }
 
     /**

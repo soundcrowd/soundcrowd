@@ -36,7 +36,6 @@ import androidx.media3.common.MediaMetadata
 import androidx.media3.common.Player
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionCommand
-import com.sothree.slidinguppanel.SlidingUpPanelLayout
 import com.tiefensuche.soundcrowd.R
 import com.tiefensuche.soundcrowd.images.ArtworkHelper
 import com.tiefensuche.soundcrowd.images.GlideApp
@@ -159,11 +158,11 @@ internal class FullScreenPlayerFragment : Fragment() {
         waveformView.setCallback(object : WaveformView.Callback {
             override fun onSeek(position: Long) {
                 mediaController.seekTo(position)
-                activity().slidingUpPanelLayout.isTouchEnabled = true
+                activity().sheetBehavior.isDraggable = true
             }
 
             override fun onSeeking() {
-                activity().slidingUpPanelLayout.isTouchEnabled = false
+                activity().sheetBehavior.isDraggable = false
             }
 
             override fun onCuePointSetText(mediaId: String, position: Int, text: String) {

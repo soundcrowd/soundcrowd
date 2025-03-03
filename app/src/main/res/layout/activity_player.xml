@@ -9,35 +9,28 @@
     android:layout_height="match_parent"
     tools:context=".ui.MusicPlayerActivity">
 
-    <com.sothree.slidinguppanel.SlidingUpPanelLayout xmlns:sothree="http://schemas.android.com/apk/res-auto"
-        android:id="@+id/sliding_layout"
+    <androidx.coordinatorlayout.widget.CoordinatorLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:gravity="bottom"
-        sothree:umanoInitialState="hidden"
-        sothree:umanoPanelHeight="80dp"
-        sothree:umanoShadowHeight="4dp">
+        android:layout_height="match_parent">
 
         <include
             android:id="@+id/toolbar_container"
             layout="@layout/include_toolbar" />
 
-        <androidx.cardview.widget.CardView
-            android:id="@+id/controls_container"
+        <androidx.fragment.app.FragmentContainerView
+            android:id="@+id/fragment_fullscreen_player"
+            android:name="com.tiefensuche.soundcrowd.ui.FullScreenPlayerFragment"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_alignParentBottom="true"
-            android:visibility="gone">
+            android:clickable="true"
+            android:focusable="true"
+            tools:layout="@layout/fragment_full_player"
+            app:behavior_hideable="true"
+            app:behavior_peekHeight="0dp"
+            app:layout_behavior="@string/bottom_sheet_behavior" />
 
-            <fragment android:name="com.tiefensuche.soundcrowd.ui.FullScreenPlayerFragment"
-                android:id="@+id/fragment_fullscreen_player"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_alignParentBottom="true"
-                tools:layout="@layout/fragment_full_player" />
-
-        </androidx.cardview.widget.CardView>
-    </com.sothree.slidinguppanel.SlidingUpPanelLayout>
+    </androidx.coordinatorlayout.widget.CoordinatorLayout>
 
     <com.google.android.material.navigation.NavigationView
         android:id="@+id/nav_view"
