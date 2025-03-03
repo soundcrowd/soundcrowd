@@ -16,7 +16,7 @@ import androidx.appcompat.widget.SearchView
 import androidx.core.view.MenuItemCompat
 import androidx.media3.common.MediaItem
 import com.google.android.material.appbar.CollapsingToolbarLayout
-import com.sothree.slidinguppanel.SlidingUpPanelLayout
+import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.tiefensuche.soundcrowd.R
 import com.tiefensuche.soundcrowd.images.ArtworkHelper
 import com.tiefensuche.soundcrowd.images.GlideApp
@@ -41,7 +41,6 @@ internal class MusicPlayerActivity : BaseActivity(), MediaBrowserFragment.MediaF
 
     private var searchView: SearchView? = null
     private var searchItem: MenuItem? = null
-    internal lateinit var controls: RelativeLayout
     private var collapsingToolbarLayout: CollapsingToolbarLayout? = null
     private var toolbarHeader: View? = null
     private var headerLineTitle: TextView? = null
@@ -50,31 +49,34 @@ internal class MusicPlayerActivity : BaseActivity(), MediaBrowserFragment.MediaF
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        controls = findViewById(R.id.controls)
         collapsingToolbarLayout = findViewById(R.id.collapsing_toolbar)
         toolbarHeader = findViewById(R.id.toolbar_header)
         headerLineTitle = findViewById(R.id.header_line1)
         headerLineSubtitle = findViewById(R.id.header_line2)
 
-        val playPauseButton = findViewById<ImageView>(R.id.play_pause)
-        val controlsContainer = findViewById<RelativeLayout>(R.id.controls_layout)
+        supportFragmentManager.addFragmentOnAttachListener { _, _ ->
+            val controls = findViewById<RelativeLayout>(R.id.controls)
+            val playPauseButton = findViewById<ImageView>(R.id.play_pause)
+            val controlsContainer = findViewById<RelativeLayout>(R.id.controls_layout)
 
-        slidingUpPanelLayout.addPanelSlideListener(object : SlidingUpPanelLayout.PanelSlideListener {
-            override fun onPanelSlide(panel: View, slideOffset: Float) {
-                controls.alpha = 1 - slideOffset
-            }
-
-            override fun onPanelStateChanged(panel: View, previousState: SlidingUpPanelLayout.PanelState, newState: SlidingUpPanelLayout.PanelState) {
-                mPanelState = newState
-                playPauseButton.isClickable = newState != SlidingUpPanelLayout.PanelState.EXPANDED
-                for (i in 0 until controlsContainer.childCount) {
-                    controlsContainer.getChildAt(i).isClickable = newState == SlidingUpPanelLayout.PanelState.EXPANDED
+            sheetBehavior.addBottomSheetCallback(object : BottomSheetBehavior.BottomSheetCallback() {
+                override fun onStateChanged(bottomSheet: View, newState: Int) {
+                    mPanelState = newState
+                    playPauseButton.isClickable = newState != BottomSheetBehavior.STATE_EXPANDED
+                    for (i in 0 until controlsContainer.childCount) {
+                        controlsContainer.getChildAt(i).isClickable = newState == BottomSheetBehavior.STATE_EXPANDED
+                    }
                 }
-            }
-        })
 
-        if (mPanelState == SlidingUpPanelLayout.PanelState.EXPANDED) {
-            controls.alpha = 0f
+                override fun onSlide(bottomSheet: View, slideOffset: Float) {
+                    controls.alpha = 1 - slideOffset
+                }
+
+            })
+
+            if (mPanelState == BottomSheetBehavior.STATE_EXPANDED) {
+                controls.alpha = 0f
+            }
         }
     }
 
@@ -195,6 +197,6 @@ internal class MusicPlayerActivity : BaseActivity(), MediaBrowserFragment.MediaF
          * while the [android.support.v4.media.session.MediaControllerCompat] is connecting.
          */
         private val TAG = MusicPlayerActivity::class.simpleName
-        private var mPanelState: SlidingUpPanelLayout.PanelState = SlidingUpPanelLayout.PanelState.COLLAPSED
+        private var mPanelState = BottomSheetBehavior.STATE_COLLAPSED
     }
 }

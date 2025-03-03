@@ -17,11 +17,12 @@ import androidx.core.view.GravityCompat
 import androidx.core.view.ViewCompat
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.FragmentContainerView
 import androidx.fragment.app.FragmentManager
 import androidx.preference.PreferenceManager.getDefaultSharedPreferences
+import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.google.android.material.color.DynamicColors
 import com.google.android.material.navigation.NavigationView
-import com.sothree.slidinguppanel.SlidingUpPanelLayout
 import com.tiefensuche.soundcrowd.R
 import com.tiefensuche.soundcrowd.sources.MusicProvider.Companion.MEDIA_ID
 import com.tiefensuche.soundcrowd.sources.MusicProvider.Media.CUE_POINTS
@@ -49,7 +50,7 @@ abstract class ActionBarCastActivity : AppCompatActivity() {
     internal var mToolbar: Toolbar? = null
     private lateinit var mNavigationView: NavigationView
     private lateinit var mDrawerLayout: DrawerLayout
-    internal lateinit var slidingUpPanelLayout: SlidingUpPanelLayout
+    internal lateinit var sheetBehavior: BottomSheetBehavior<FragmentContainerView>
     private lateinit var mDrawerToggle: ActionBarDrawerToggle
 
     private val paths = ArrayList<Pair<String, ArrayList<Bundle>>>()
@@ -84,7 +85,9 @@ abstract class ActionBarCastActivity : AppCompatActivity() {
         PreferenceFragment.applyTheme(getDefaultSharedPreferences(this).getString(getString(R.string.preference_theme_key), "System")!!)
         DynamicColors.applyToActivitiesIfAvailable(application)
         setContentView(R.layout.activity_player)
-        slidingUpPanelLayout = findViewById(R.id.sliding_layout)
+        val bottom = findViewById<FragmentContainerView>(R.id.fragment_fullscreen_player)
+        sheetBehavior = BottomSheetBehavior.from(bottom)
+        sheetBehavior.state = BottomSheetBehavior.STATE_HIDDEN
         initializeToolbar()
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.collapsing_toolbar)) { view, insets ->
             mToolbar?.layoutParams?.height = resources.getDimensionPixelSize(R.dimen.statusbar_height) + insets.systemWindowInsetTop
@@ -158,8 +161,8 @@ abstract class ActionBarCastActivity : AppCompatActivity() {
             return
         }
         // If panel is expanded, collapse it
-        if (slidingUpPanelLayout.panelState == SlidingUpPanelLayout.PanelState.EXPANDED) {
-            slidingUpPanelLayout.panelState = SlidingUpPanelLayout.PanelState.COLLAPSED
+        if (sheetBehavior.state == BottomSheetBehavior.STATE_EXPANDED) {
+            sheetBehavior.state = BottomSheetBehavior.STATE_COLLAPSED
             return
         }
         super.onBackPressed()
@@ -206,8 +209,8 @@ abstract class ActionBarCastActivity : AppCompatActivity() {
             supportFragmentManager.popBackStackImmediate(null, FragmentManager.POP_BACK_STACK_INCLUSIVE)
             setFragmentId(menuItem.itemId)
 
-            if (slidingUpPanelLayout.panelState == SlidingUpPanelLayout.PanelState.EXPANDED) {
-                slidingUpPanelLayout.panelState = SlidingUpPanelLayout.PanelState.COLLAPSED
+            if (sheetBehavior.state == BottomSheetBehavior.STATE_EXPANDED) {
+                sheetBehavior.state = BottomSheetBehavior.STATE_COLLAPSED
             }
             mDrawerLayout.closeDrawers()
             return true
