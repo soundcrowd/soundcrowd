@@ -27,32 +27,32 @@
 
         <ImageView
             android:id="@+id/repeat"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
             android:layout_alignParentEnd="true"
             android:layout_alignParentRight="true"
             android:layout_marginEnd="8dp"
             android:layout_marginRight="8dp"
             android:background="?selectableItemBackgroundBorderless"
             android:padding="8dp"
-            android:src="@drawable/ic_round_repeat_one_24"
+            android:src="@drawable/media3_icon_repeat_off"
             app:tint="@color/white" />
 
         <ImageView
             android:id="@+id/shuffle"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
             android:layout_toStartOf="@id/repeat"
             android:layout_toLeftOf="@id/repeat"
             android:background="?selectableItemBackgroundBorderless"
             android:padding="8dp"
-            android:src="@drawable/ic_round_shuffle_24"
+            android:src="@drawable/media3_icon_shuffle_off"
             app:tint="@color/white" />
 
         <ImageView
             android:id="@+id/star"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
             android:layout_toStartOf="@id/shuffle"
             android:layout_toLeftOf="@id/shuffle"
             android:background="?selectableItemBackgroundBorderless"
@@ -62,8 +62,8 @@
 
         <ImageView
             android:id="@+id/shazam"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
             android:layout_toStartOf="@id/star"
             android:layout_toLeftOf="@id/star"
             android:background="?selectableItemBackgroundBorderless"
@@ -73,8 +73,8 @@
 
         <ImageView
             android:id="@+id/share"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
             android:layout_toStartOf="@id/shazam"
             android:layout_toLeftOf="@id/shazam"
             android:background="?selectableItemBackgroundBorderless"
@@ -84,13 +84,13 @@
 
         <ImageView
             android:id="@+id/favorite"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
             android:layout_toStartOf="@id/share"
             android:layout_toLeftOf="@id/share"
             android:background="?selectableItemBackgroundBorderless"
             android:padding="8dp"
-            android:src="@drawable/ic_round_favorite_24"
+            android:src="@drawable/media3_icon_heart_filled"
             app:tint="@color/white" />
 
     </RelativeLayout>
