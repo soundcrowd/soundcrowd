@@ -21,21 +21,4 @@
         <item name="cornerSize">50%</item>
     </style>
 
-    <!-- Showcase Theme -->
-    <style name="CustomShowcaseTheme" parent="ShowcaseView">
-        <item name="sv_backgroundColor">#A0000000</item>
-        <item name="sv_showcaseColor">@color/colorPrimary</item>
-        <item name="sv_buttonText">Close</item>
-        <item name="sv_titleTextAppearance">@style/CustomTitle</item>
-        <item name="sv_detailTextAppearance">@style/CustomText</item>
-    </style>
-
-    <style name="CustomTitle" parent="TextAppearance.ShowcaseView.Title">
-        <item name="android:textColor">?android:attr/textColorPrimary</item>
-    </style>
-
-    <style name="CustomText" parent="TextAppearance.ShowcaseView.Detail.Light">
-        <item name="android:textColor">?android:attr/textColorPrimary</item>
-    </style>
-
 </resources>

@@ -25,7 +25,6 @@ import com.tiefensuche.soundcrowd.service.PlaybackService
 import com.tiefensuche.soundcrowd.service.PlaybackService.Companion.COMMAND_GET_PLUGINS
 import com.tiefensuche.soundcrowd.service.PlaybackService.Companion.RESULT
 import com.tiefensuche.soundcrowd.ui.intro.IntroActivity
-import com.tiefensuche.soundcrowd.ui.intro.ShowcaseViewManager
 
 /**
  * Base activity for activities that need to show a playback control fragment when media is playing.
@@ -90,7 +89,6 @@ abstract class BaseActivity : ActionBarCastActivity(), MediaBrowserProvider {
         if (slidingUpPanelLayout.panelState == SlidingUpPanelLayout.PanelState.HIDDEN) {
             slidingUpPanelLayout.panelState = SlidingUpPanelLayout.PanelState.COLLAPSED
         }
-        ShowcaseViewManager.introduce(ShowcaseViewManager.ShowcaseFunction.SLIDING_UP, this)
     }
 
     private fun hidePlaybackControls() {

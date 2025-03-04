@@ -28,7 +28,6 @@ import com.tiefensuche.soundcrowd.sources.MusicProvider.Media.LOCAL
 import com.tiefensuche.soundcrowd.ui.browser.GridMediaBrowserFragment
 import com.tiefensuche.soundcrowd.ui.browser.MediaBrowserFragment
 import com.tiefensuche.soundcrowd.ui.browser.StreamMediaBrowserFragment
-import com.tiefensuche.soundcrowd.ui.intro.ShowcaseViewManager
 import com.tiefensuche.soundcrowd.utils.MediaIDHelper
 import com.tiefensuche.soundcrowd.utils.MediaIDHelper.CATEGORY_SEPARATOR
 
@@ -70,10 +69,6 @@ internal class MusicPlayerActivity : BaseActivity(), MediaBrowserFragment.MediaF
                 playPauseButton.isClickable = newState != SlidingUpPanelLayout.PanelState.EXPANDED
                 for (i in 0 until controlsContainer.childCount) {
                     controlsContainer.getChildAt(i).isClickable = newState == SlidingUpPanelLayout.PanelState.EXPANDED
-                }
-                if (newState == SlidingUpPanelLayout.PanelState.EXPANDED && findViewById<View>(R.id.waveformView).visibility == View.VISIBLE) {
-                    ShowcaseViewManager.introduce(ShowcaseViewManager.ShowcaseFunction.WAVEFORM_SEEKING, this@MusicPlayerActivity)
-                    ShowcaseViewManager.introduce(ShowcaseViewManager.ShowcaseFunction.CUE_POINT, this@MusicPlayerActivity)
                 }
             }
         })
