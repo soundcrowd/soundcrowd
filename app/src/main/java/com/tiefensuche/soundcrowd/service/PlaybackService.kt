@@ -59,6 +59,7 @@ import com.tiefensuche.soundcrowd.plugins.MediaMetadataCompatExt
 import com.tiefensuche.soundcrowd.plugins.MediaMetadataCompatExt.COMMAND_LIKE
 import com.tiefensuche.soundcrowd.sources.LocalSource
 import com.tiefensuche.soundcrowd.sources.MusicProvider
+import com.tiefensuche.soundcrowd.sources.MusicProvider.Companion.MEDIA_ID
 import com.tiefensuche.soundcrowd.sources.MusicProvider.Cues.POSITION
 import com.tiefensuche.soundcrowd.ui.MusicPlayerActivity
 import io.github.tiefensuche.SongRec
@@ -203,11 +204,11 @@ class PlaybackService : MediaLibraryService() {
                     return Futures.immediateFuture(SessionResult(SessionResult.RESULT_SUCCESS))
                 }
                 COMMAND_CUE_EDIT -> {
-                    musicProvider.setCuePoint(session.player.currentMediaItem!!.mediaId, args.getInt(POSITION), args.getString(MusicProvider.Cues.DESCRIPTION))
+                    musicProvider.setCuePoint(args.getString(MEDIA_ID)!!, args.getInt(POSITION), args.getString(MusicProvider.Cues.DESCRIPTION))
                     return Futures.immediateFuture(SessionResult(SessionResult.RESULT_SUCCESS))
                 }
                 COMMAND_CUE_DELETE -> {
-                    musicProvider.deleteCuePoint(session.player.currentMediaItem!!.mediaId, args.getInt(POSITION))
+                    musicProvider.deleteCuePoint(args.getString(MEDIA_ID)!!, args.getInt(POSITION))
                     return Futures.immediateFuture(SessionResult(SessionResult.RESULT_SUCCESS))
                 }
                 COMMAND_LIKE -> {

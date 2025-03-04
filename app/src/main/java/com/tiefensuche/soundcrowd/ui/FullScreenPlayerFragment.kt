@@ -49,6 +49,7 @@ import com.tiefensuche.soundcrowd.service.PlaybackService.Companion.COMMAND_CUE_
 import com.tiefensuche.soundcrowd.service.PlaybackService.Companion.COMMAND_START_TAGGING
 import com.tiefensuche.soundcrowd.service.PlaybackService.Companion.RESULT
 import com.tiefensuche.soundcrowd.service.Share
+import com.tiefensuche.soundcrowd.sources.MusicProvider.Companion.MEDIA_ID
 import com.tiefensuche.soundcrowd.sources.MusicProvider.Cues.DESCRIPTION
 import com.tiefensuche.soundcrowd.sources.MusicProvider.Cues.POSITION
 import com.tiefensuche.soundcrowd.ui.intro.ShowcaseViewManager
@@ -433,6 +434,7 @@ internal class FullScreenPlayerFragment : Fragment() {
 
     private fun setCuePoint(position: Int, text: String) {
         val bundle = Bundle()
+        bundle.putString(MEDIA_ID, mediaController.currentMediaItem!!.mediaId)
         bundle.putInt(POSITION, position)
         bundle.putString(DESCRIPTION, text)
         actionCuePoint(COMMAND_CUE_EDIT, bundle)
@@ -440,6 +442,7 @@ internal class FullScreenPlayerFragment : Fragment() {
 
     private fun deleteCuePoint(position: Int) {
         val bundle = Bundle()
+        bundle.putString(MEDIA_ID, mediaController.currentMediaItem!!.mediaId)
         bundle.putInt(POSITION, position)
         actionCuePoint(COMMAND_CUE_DELETE, bundle)
     }
