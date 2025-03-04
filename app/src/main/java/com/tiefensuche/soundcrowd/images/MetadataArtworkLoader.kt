@@ -1,6 +1,5 @@
 package com.tiefensuche.soundcrowd.images
 
-import android.support.v4.media.MediaDescriptionCompat
 import androidx.media3.common.MediaItem
 import com.bumptech.glide.Priority
 import com.bumptech.glide.load.DataSource
@@ -12,7 +11,7 @@ import com.bumptech.glide.load.model.MultiModelLoaderFactory
 import com.tiefensuche.soundcrowd.waveform.StringKey
 
 /**
- * Returns the artwork bitmap from [MediaDescriptionCompat] if existent.
+ * Returns the artwork ByteArray from [MediaItem] if existent.
  */
 internal class MetadataArtworkLoader private constructor() : ModelLoader<MediaItem, ByteArray> {
 
