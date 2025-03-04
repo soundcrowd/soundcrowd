@@ -64,7 +64,6 @@ dependencies {
     kapt 'com.github.bumptech.glide:compiler:4.14.2'
     implementation 'com.sothree.slidinguppanel:library:3.4.0'
     implementation 'com.github.AppIntro:AppIntro:6.2.0'
-    implementation 'com.github.amlcurran.showcaseview:library:5.4.3'
     implementation 'com.github.myinnos:AlphabetIndex-Fast-Scroll-RecyclerView:1.0.95'
 }
 

@@ -52,7 +52,6 @@ import com.tiefensuche.soundcrowd.service.Share
 import com.tiefensuche.soundcrowd.sources.MusicProvider.Companion.MEDIA_ID
 import com.tiefensuche.soundcrowd.sources.MusicProvider.Cues.DESCRIPTION
 import com.tiefensuche.soundcrowd.sources.MusicProvider.Cues.POSITION
-import com.tiefensuche.soundcrowd.ui.intro.ShowcaseViewManager
 import com.tiefensuche.soundcrowd.waveform.WaveformHandler
 import com.tiefensuche.soundcrowd.waveform.WaveformView
 import java.util.concurrent.Executors
@@ -175,12 +174,7 @@ internal class FullScreenPlayerFragment : Fragment() {
                 deleteCuePoint(position)
             }
 
-            override fun onWaveformLoaded() {
-                if (activity().slidingUpPanelLayout.panelState == SlidingUpPanelLayout.PanelState.EXPANDED) {
-                    ShowcaseViewManager.introduce(ShowcaseViewManager.ShowcaseFunction.WAVEFORM_SEEKING, activity())
-                    ShowcaseViewManager.introduce(ShowcaseViewManager.ShowcaseFunction.CUE_POINT, activity())
-                }
-            }
+            override fun onWaveformLoaded() {}
         })
 
         mSkipNext.setOnClickListener {
