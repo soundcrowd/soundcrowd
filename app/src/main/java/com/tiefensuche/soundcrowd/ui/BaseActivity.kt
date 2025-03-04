@@ -159,6 +159,7 @@ abstract class BaseActivity : ActionBarCastActivity(), MediaBrowserProvider {
             Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU && ContextCompat.checkSelfPermission(this,
                 Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
             startActivity(Intent(this, IntroActivity::class.java))
+            finish()
         } else {
             connectMediaBrowser()
         }

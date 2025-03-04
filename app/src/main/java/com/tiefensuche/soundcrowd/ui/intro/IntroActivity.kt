@@ -5,6 +5,7 @@
 package com.tiefensuche.soundcrowd.ui.intro
 
 import android.Manifest
+import android.content.Intent
 import android.os.Build
 import android.os.Bundle
 import androidx.fragment.app.Fragment
@@ -12,6 +13,7 @@ import com.github.appintro.AppIntro
 import com.github.appintro.AppIntroFragment.Companion.createInstance
 import com.github.appintro.model.SliderPage
 import com.tiefensuche.soundcrowd.R
+import com.tiefensuche.soundcrowd.ui.MusicPlayerActivity
 
 /**
  * Intro that will be shown on first start to introduce into the activity
@@ -51,6 +53,7 @@ internal class IntroActivity : AppIntro() {
 
     override fun onDonePressed(currentFragment: Fragment?) {
         super.onDonePressed(currentFragment)
+        startActivity(Intent(this, MusicPlayerActivity::class.java))
         finish()
     }
 }
