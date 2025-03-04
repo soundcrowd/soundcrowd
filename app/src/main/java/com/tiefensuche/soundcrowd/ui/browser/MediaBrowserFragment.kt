@@ -6,7 +6,6 @@ package com.tiefensuche.soundcrowd.ui.browser
 import android.annotation.SuppressLint
 import android.app.Activity
 import android.os.Bundle
-import android.support.v4.media.MediaBrowserCompat
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
@@ -33,12 +32,10 @@ import `in`.myinnos.alphabetsindexfastscrollrecycler.IndexFastScrollRecyclerView
 
 /**
  * A Fragment that lists all the various browsable queues available
- * from a [android.service.media.MediaBrowserService].
+ * from a [androidx.media3.session.MediaBrowser].
  *
- *
- * It uses a [MediaBrowserCompat] to connect to the [MusicService].
- * Once connected, the fragment subscribes to get all the children.
- * All [MediaBrowserCompat.MediaItem]'s that can be browsed are shown in a ListView.
+ * Once connected, the fragment requests to get all the children.
+ * All [MediaItem]'s that can be browsed are shown in a ListView.
  */
 internal abstract class MediaBrowserFragment : Fragment() {
 
