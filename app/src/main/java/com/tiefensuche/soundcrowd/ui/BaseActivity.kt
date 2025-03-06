@@ -32,6 +32,7 @@ import com.tiefensuche.soundcrowd.ui.intro.IntroActivity
 abstract class BaseActivity : ActionBarCastActivity(), MediaBrowserProvider {
 
     override lateinit var mediaBrowser: MediaBrowser
+    private var connected = false
     private var mFullScreenPlayerFragment: FullScreenPlayerFragment? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -58,6 +59,10 @@ abstract class BaseActivity : ActionBarCastActivity(), MediaBrowserProvider {
         Log.d(TAG, "Activity onStart")
 
         mFullScreenPlayerFragment = supportFragmentManager.findFragmentById(R.id.fragment_fullscreen_player) as? FullScreenPlayerFragment
+        if (connected && shouldShowControls()) {
+            mFullScreenPlayerFragment?.onMetadataChanged(mediaBrowser.currentMediaItem!!.mediaMetadata, true)
+            showPlaybackControls()
+        }
     }
 
     override fun onNewIntent(intent: Intent) {
@@ -80,7 +85,6 @@ abstract class BaseActivity : ActionBarCastActivity(), MediaBrowserProvider {
 
     private fun startFullScreenActivityIfNeeded(intent: Intent?) {
         if (intent != null && intent.getBooleanExtra(MusicPlayerActivity.EXTRA_START_FULLSCREEN, false)) {
-            showPlaybackControls()
             sheetBehavior.state = BottomSheetBehavior.STATE_EXPANDED
         }
     }
@@ -119,7 +123,6 @@ abstract class BaseActivity : ActionBarCastActivity(), MediaBrowserProvider {
         val browserFuture = MediaBrowser.Builder(this, sessionToken).buildAsync()
         browserFuture.addListener({
             mediaBrowser = browserFuture.get()
-            mFullScreenPlayerFragment?.onPlaybackStateChanged()
             mediaBrowser.addListener(object : Player.Listener {
                 override fun onPlaybackStateChanged(playbackState: Int) {
                     if (shouldShowControls()) {
@@ -148,6 +151,12 @@ abstract class BaseActivity : ActionBarCastActivity(), MediaBrowserProvider {
             })
             handleIntent(intent)
             getPlugins()
+            connected = true
+            if (shouldShowControls()) {
+                mFullScreenPlayerFragment?.onPlaybackStateChanged()
+                mFullScreenPlayerFragment?.onMetadataChanged(mediaBrowser.currentMediaItem!!.mediaMetadata, true)
+                showPlaybackControls()
+            }
         }, ContextCompat.getMainExecutor(this))
     }
 

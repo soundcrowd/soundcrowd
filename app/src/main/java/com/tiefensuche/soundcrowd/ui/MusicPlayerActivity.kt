@@ -61,7 +61,6 @@ internal class MusicPlayerActivity : BaseActivity(), MediaBrowserFragment.MediaF
 
             sheetBehavior.addBottomSheetCallback(object : BottomSheetBehavior.BottomSheetCallback() {
                 override fun onStateChanged(bottomSheet: View, newState: Int) {
-                    mPanelState = newState
                     playPauseButton.isClickable = newState != BottomSheetBehavior.STATE_EXPANDED
                     for (i in 0 until controlsContainer.childCount) {
                         controlsContainer.getChildAt(i).isClickable = newState == BottomSheetBehavior.STATE_EXPANDED
@@ -74,7 +73,7 @@ internal class MusicPlayerActivity : BaseActivity(), MediaBrowserFragment.MediaF
 
             })
 
-            if (mPanelState == BottomSheetBehavior.STATE_EXPANDED) {
+            if (sheetBehavior.state == BottomSheetBehavior.STATE_EXPANDED) {
                 controls.alpha = 0f
             }
         }
@@ -197,6 +196,5 @@ internal class MusicPlayerActivity : BaseActivity(), MediaBrowserFragment.MediaF
          * while the [android.support.v4.media.session.MediaControllerCompat] is connecting.
          */
         private val TAG = MusicPlayerActivity::class.simpleName
-        private var mPanelState = BottomSheetBehavior.STATE_COLLAPSED
     }
 }

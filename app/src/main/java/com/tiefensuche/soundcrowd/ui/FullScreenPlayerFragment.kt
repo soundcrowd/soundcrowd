@@ -5,7 +5,6 @@ package com.tiefensuche.soundcrowd.ui
 
 import android.animation.ArgbEvaluator
 import android.animation.ValueAnimator
-import android.app.Activity
 import android.graphics.Color
 import android.graphics.Point
 import android.graphics.PorterDuff
@@ -64,15 +63,11 @@ import java.util.concurrent.TimeUnit
  */
 internal class FullScreenPlayerFragment : Fragment() {
 
-    private fun activity() : MusicPlayerActivity {
-        return super.getActivity() as MusicPlayerActivity
-    }
-
     private val mHandler = Handler()
     private val mExecutorService = Executors.newSingleThreadScheduledExecutor()
 
     private lateinit var mControllers: View
-    private lateinit var mMediaBrowserProvider: MediaBrowserProvider
+    private lateinit var activity: MusicPlayerActivity
     private var mCurrentMediaId: String? = null
     private lateinit var waveformView: WaveformView
     private lateinit var requests: GlideRequests
@@ -107,7 +102,7 @@ internal class FullScreenPlayerFragment : Fragment() {
     private var mScheduleFuture: ScheduledFuture<*>? = null
 
     private val mediaController: MediaController
-            get() = activity().mediaBrowser
+            get() = activity.mediaBrowser
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         val rootView = inflater.inflate(R.layout.fragment_full_player, container, false)
@@ -150,7 +145,7 @@ internal class FullScreenPlayerFragment : Fragment() {
 
         // Init waveform
         val displaySize = Point()
-        activity?.windowManager?.defaultDisplay?.getSize(displaySize)
+        activity.windowManager?.defaultDisplay?.getSize(displaySize)
 
         waveformView = rootView.findViewById(R.id.waveformView)
         mWaveformHandler = WaveformHandler(waveformView)
@@ -158,11 +153,11 @@ internal class FullScreenPlayerFragment : Fragment() {
         waveformView.setCallback(object : WaveformView.Callback {
             override fun onSeek(position: Long) {
                 mediaController.seekTo(position)
-                activity().sheetBehavior.isDraggable = true
+                activity.sheetBehavior.isDraggable = true
             }
 
             override fun onSeeking() {
-                activity().sheetBehavior.isDraggable = false
+                activity.sheetBehavior.isDraggable = false
             }
 
             override fun onCuePointSetText(mediaId: String, position: Int, text: String) {
@@ -233,11 +228,11 @@ internal class FullScreenPlayerFragment : Fragment() {
         }
 
         rootView.findViewById<View>(R.id.replay).setOnClickListener {
-            activity().mediaBrowser.seekTo(activity().mediaBrowser.currentPosition - 10000)
+            mediaController.seekTo(mediaController.currentPosition - 10000)
         }
 
         rootView.findViewById<View>(R.id.forward).setOnClickListener {
-            activity().mediaBrowser.seekTo(activity().mediaBrowser.currentPosition + 10000)
+            mediaController.seekTo(mediaController.currentPosition + 10000)
         }
 
         val startTagging = rootView.findViewById<ImageView>(R.id.shazam)
@@ -270,7 +265,7 @@ internal class FullScreenPlayerFragment : Fragment() {
             }
 
             override fun onStopTrackingTouch(seekBar: SeekBar) {
-                activity().mediaBrowser.seekTo(seekBar.progress.toLong())
+                mediaController.seekTo(seekBar.progress.toLong())
                 scheduleSeekbarUpdate()
             }
         })
@@ -278,16 +273,14 @@ internal class FullScreenPlayerFragment : Fragment() {
         return rootView
     }
 
-    override fun onAttach(activity: Activity) {
-        super.onAttach(activity)
-
-        if (activity is MediaBrowserProvider)
-            mMediaBrowserProvider = activity
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        if (super.getActivity() is MusicPlayerActivity)
+            activity = super.getActivity() as MusicPlayerActivity
     }
 
-    internal fun onMetadataChanged(metadata: MediaMetadata) {
-        if (mediaController.currentMediaItem?.mediaId != mCurrentMediaId) {
-            // Small sliding-up bar
+    internal fun onMetadataChanged(metadata: MediaMetadata, force: Boolean = false) {
+        if (force || mediaController.currentMediaItem?.mediaId != mCurrentMediaId) {
             mLine1.text = metadata.title
             mLine2.text = metadata.artist
 
@@ -321,10 +314,10 @@ internal class FullScreenPlayerFragment : Fragment() {
     internal fun onPlaybackStateChanged() {
         if (mediaController.isPlaying) {
             mPlayPauseSmall.setImageDrawable(
-                ContextCompat.getDrawable(requireContext(), R.drawable.ic_round_pause_24))
+                ContextCompat.getDrawable(activity, R.drawable.ic_round_pause_24))
         } else {
             mPlayPauseSmall.setImageDrawable(
-                ContextCompat.getDrawable(requireContext(), R.drawable.ic_round_play_arrow_24))
+                ContextCompat.getDrawable(activity, R.drawable.ic_round_play_arrow_24))
         }
         updatePlaybackState()
     }
@@ -384,7 +377,7 @@ internal class FullScreenPlayerFragment : Fragment() {
         if (mediaController.playbackState == Player.STATE_BUFFERING) {
             mPlayPause.visibility = INVISIBLE
             mLoading.visibility = VISIBLE
-            mLine3.text = getString(R.string.loading)
+            mLine3.text = activity.getString(R.string.loading)
             mSeekbar.isEnabled = false
             stopSeekbarUpdate()
         } else if (mediaController.isPlaying) {
