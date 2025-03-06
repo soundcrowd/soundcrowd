@@ -15,11 +15,6 @@
 #-keepclassmembers class fqcn.of.javascript.interface.for.webview {
 #   public *;
 #}
--keep class com.tiefensuche.soundcrowd.plugins.** { *; }
--keep class com.tiefensuche.soundcrowd.extensions.** { *; }
--keep class android.support.v4.media.** { *; }
--keep class androidx.preference.** { *; }
--keep class kotlin.** { *; }
 -assumenosideeffects class android.util.Log {
     public static boolean isLoggable(java.lang.String, int);
     public static int wtf(...);
