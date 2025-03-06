@@ -59,7 +59,11 @@ internal class WaveformHandler(private val waveformView: WaveformView) {
             val json = JSONArray(cues)
             for (i in 0 until json.length()) {
                 val pos = json.getJSONObject(i).getLong(MusicProvider.Cues.POSITION)
-                val desc = json.getJSONObject(i).getString(MusicProvider.Cues.DESCRIPTION)
+                val desc = json.getJSONObject(i).run {
+                    if (has(MusicProvider.Cues.DESCRIPTION))
+                        getString(MusicProvider.Cues.DESCRIPTION)
+                    else ""
+                }
                 waveformView.drawCuePoint(CuePoint("unneeded", pos.toInt(), desc), duration, cuePoint!!)
             }
         }

@@ -17,6 +17,7 @@ import androidx.core.database.getStringOrNull
 import androidx.media3.common.MediaItem
 import com.tiefensuche.soundcrowd.plugins.MediaItemUtils
 import com.tiefensuche.soundcrowd.plugins.MediaMetadataCompatExt
+import com.tiefensuche.soundcrowd.utils.MediaIDHelper.extractMusicIDFromMediaID
 import com.tiefensuche.soundcrowd.waveform.CuePoint
 
 /**
@@ -39,10 +40,11 @@ internal class Database(context: Context) : SQLiteOpenHelper(context, DATABASE_N
         const val ALBUM_ART_URL = "album_art_url"
         const val WAVEFORM_URL = "waveform_url"
         const val PLUGIN = "plugin"
+        const val DATASOURCE = "datasource"
 
         const val DATABASE_MEDIA_ITEMS_NAME = "MediaItems"
 
-        private const val DATABASE_MEDIA_ITEMS_CREATE = "create table if not exists $DATABASE_MEDIA_ITEMS_NAME ($ID text primary key, $ARTIST text not null, $TITLE text not null, $DURATION long not null, $SOURCE text not null unique, $DOWNLOAD text unique, $ALBUM_ART_URL text not null, $WAVEFORM_URL text, $PLUGIN text);"
+        private const val DATABASE_MEDIA_ITEMS_CREATE = "create table if not exists $DATABASE_MEDIA_ITEMS_NAME ($ID text primary key, $ARTIST text not null, $TITLE text not null, $DURATION long not null, $SOURCE text not null unique, $DOWNLOAD text unique, $ALBUM_ART_URL text not null, $WAVEFORM_URL text, $PLUGIN text, $DATASOURCE boolean default false);"
 
         private var TAG = Database::class.simpleName
 
@@ -61,14 +63,15 @@ internal class Database(context: Context) : SQLiteOpenHelper(context, DATABASE_N
         try {
             val values = ContentValues()
             val mediaId = item.mediaId
-            values.put(ID, mediaId.substring(mediaId.indexOf('|') + 1))
-            values.put(SOURCE, item.requestMetadata.mediaUri.toString())
+            values.put(ID, extractMusicIDFromMediaID(mediaId))
             values.put(ARTIST, item.mediaMetadata.artist.toString())
-            values.put(ALBUM_ART_URL, item.mediaMetadata.artworkUri.toString())
             values.put(TITLE, item.mediaMetadata.title.toString())
-            values.put(WAVEFORM_URL, item.mediaMetadata.extras?.getString(MediaMetadataCompatExt.METADATA_KEY_WAVEFORM_URL))
             values.put(DURATION, item.mediaMetadata.durationMs)
+            values.put(SOURCE, item.requestMetadata.mediaUri.toString())
+            values.put(ALBUM_ART_URL, if (item.mediaMetadata.artworkUri != null) item.mediaMetadata.artworkUri.toString() else null)
+            values.put(WAVEFORM_URL, item.mediaMetadata.extras?.getString(MediaMetadataCompatExt.METADATA_KEY_WAVEFORM_URL))
             values.put(PLUGIN, item.mediaMetadata.extras?.getString(MediaMetadataCompatExt.METADATA_KEY_PLUGIN))
+            values.put(DATASOURCE, item.mediaMetadata.extras?.getBoolean(MediaMetadataCompatExt.METADATA_KEY_DATASOURCE))
             writableDatabase.insertOrThrow(DATABASE_MEDIA_ITEMS_NAME, null, values)
         } catch (e: Exception) {
             // ignore
@@ -89,11 +92,12 @@ internal class Database(context: Context) : SQLiteOpenHelper(context, DATABASE_N
             Uri.parse(cursor.getString(cursor.getColumnIndexOrThrow(SOURCE))),
             cursor.getString(cursor.getColumnIndexOrThrow(TITLE)),
             cursor.getLong(cursor.getColumnIndexOrThrow(DURATION)),
-            cursor.getString(cursor.getColumnIndexOrThrow(ARTIST)),
+            cursor.getStringOrNull(cursor.getColumnIndexOrThrow(ARTIST)),
             null,
-            Uri.parse(cursor.getString(cursor.getColumnIndexOrThrow(ALBUM_ART_URL))),
-            cursor.getString(cursor.getColumnIndexOrThrow(WAVEFORM_URL)),
-            plugin = cursor.getString(cursor.getColumnIndexOrThrow(PLUGIN))
+            cursor.getStringOrNull(cursor.getColumnIndexOrThrow(ALBUM_ART_URL))?.let { Uri.parse(it) },
+            cursor.getStringOrNull(cursor.getColumnIndexOrThrow(WAVEFORM_URL)),
+            plugin = cursor.getStringOrNull(cursor.getColumnIndexOrThrow(PLUGIN)),
+            isDataSource = cursor.getInt(cursor.getColumnIndexOrThrow(DATASOURCE)) == 1
         )
     }
 
@@ -111,6 +115,7 @@ internal class Database(context: Context) : SQLiteOpenHelper(context, DATABASE_N
             }
             2 -> {
                 sqLiteDatabase.execSQL("ALTER TABLE $DATABASE_MEDIA_ITEMS_NAME ADD COLUMN $PLUGIN text")
+                sqLiteDatabase.execSQL("ALTER TABLE $DATABASE_MEDIA_ITEMS_NAME ADD COLUMN $DATASOURCE boolean default false")
             }
         }
     }
@@ -197,10 +202,13 @@ internal class Database(context: Context) : SQLiteOpenHelper(context, DATABASE_N
                     null, "$MEDIA_ID=?", arrayOf(mediaId),
                     null, null, null)
             while (cursor.moveToNext()) {
-                result.add(CuePoint(cursor.getString(cursor.getColumnIndexOrThrow(MEDIA_ID)),
+                result.add(
+                    CuePoint(
+                        cursor.getString(cursor.getColumnIndexOrThrow(MEDIA_ID)),
                         cursor.getInt(cursor.getColumnIndexOrThrow(POSITION)),
-                    cursor.getStringOrNull(cursor.getColumnIndexOrThrow(DESCRIPTION)).toString()
-                ))
+                        cursor.getStringOrNull(cursor.getColumnIndexOrThrow(DESCRIPTION)) ?: ""
+                    )
+                )
             }
             cursor.close()
         } catch (e: Exception) {
