@@ -24,3 +24,12 @@ pluginManagement {
 }
 
 include ':app'
+include ':soundcloud'
+include ':spotify'
+include ':tidal'
+include ':youtube'
+
+project(':soundcloud').projectDir = new File('soundcloud/soundcloud')
+project(':spotify').projectDir = new File('spotify/spotify')
+project(':tidal').projectDir = new File('tidal/tidal')
+project(':youtube').projectDir = new File('youtube/youtube')
