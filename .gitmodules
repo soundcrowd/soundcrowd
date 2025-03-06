@@ -1,0 +1,12 @@
+[submodule "soundcloud"]
+	path = soundcloud
+	url = https://github.com/soundcrowd/soundcrowd-plugin-soundcloud
+[submodule "spotify"]
+	path = spotify
+	url = https://github.com/soundcrowd/soundcrowd-plugin-spotify
+[submodule "tidal"]
+	path = tidal
+	url = https://github.com/soundcrowd/soundcrowd-plugin-tidal
+[submodule "youtube"]
+	path = youtube
+	url = https://github.com/soundcrowd/soundcrowd-plugin-youtube
