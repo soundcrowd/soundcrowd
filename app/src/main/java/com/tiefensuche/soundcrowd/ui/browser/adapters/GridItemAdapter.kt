@@ -13,9 +13,7 @@ import com.tiefensuche.soundcrowd.images.ArtworkHelper
 import com.tiefensuche.soundcrowd.images.GlideApp
 import com.tiefensuche.soundcrowd.images.GlideRequests
 import com.tiefensuche.soundcrowd.plugins.MediaMetadataCompatExt
-import com.tiefensuche.soundcrowd.service.PlaybackService
 import com.tiefensuche.soundcrowd.service.Share
-import com.tiefensuche.soundcrowd.utils.MediaIDHelper.extractMusicIDFromMediaID
 
 internal class GridItemAdapter(private val requests: GlideRequests, private val listener: OnItemClickListener, private val defaultColor: Int) : MediaItemAdapter<GridItemAdapter.ViewHolder>() {
 
@@ -71,8 +69,8 @@ internal class GridItemAdapter(private val requests: GlideRequests, private val 
 
     private fun shareMedia(holder: ViewHolder) {
         if (holder.adapterPosition >= 0) {
-            val metadata = PlaybackService.getMusic(extractMusicIDFromMediaID(mDataset[holder.adapterPosition].mediaId))
-            metadata?.mediaMetadata?.extras?.getString(MediaMetadataCompatExt.METADATA_KEY_URL)?.let { url ->
+            val metadata =  mDataset[holder.adapterPosition].mediaMetadata
+            metadata.extras?.getString(MediaMetadataCompatExt.METADATA_KEY_URL)?.let { url ->
                 Share.shareText(holder.itemView.context, url)
             }
         }
