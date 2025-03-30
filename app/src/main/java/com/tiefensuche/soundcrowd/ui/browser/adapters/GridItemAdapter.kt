@@ -69,6 +69,15 @@ internal class GridItemAdapter(private val requests: GlideRequests, private val 
         holder.mDuration.setTextColor(text)
     }
 
+    private fun shareMedia(holder: ViewHolder) {
+        if (holder.adapterPosition >= 0) {
+            val metadata = PlaybackService.getMusic(extractMusicIDFromMediaID(mDataset[holder.adapterPosition].mediaId))
+            metadata?.mediaMetadata?.extras?.getString(MediaMetadataCompatExt.METADATA_KEY_URL)?.let { url ->
+                Share.shareText(holder.itemView.context, url)
+            }
+        }
+    }
+
     inner class ViewHolder internal constructor(holder: View) : RecyclerView.ViewHolder(holder) {
 
         val mBackground: ImageView = holder.findViewById(R.id.background)
@@ -81,15 +90,12 @@ internal class GridItemAdapter(private val requests: GlideRequests, private val 
 
         init {
             // Play on clicking
-            holder.setOnClickListener { listener.onItemClick(mDataset, mediaItem) }
+            holder.setOnClickListener { listener.onItemClick(mDataset, 0) }
 
             // Open the sharing board on long clicking
-            val metadata = PlaybackService.getMusic(extractMusicIDFromMediaID(mDataset[mediaItem].mediaId))
-            metadata?.mediaMetadata?.extras?.getString(MediaMetadataCompatExt.METADATA_KEY_URL)?.let { url ->
-                holder.setOnLongClickListener {
-                    Share.shareText(holder.context, url)
-                    return@setOnLongClickListener true
-                }
+            holder.setOnLongClickListener {
+                shareMedia(this)
+                return@setOnLongClickListener true
             }
         }
     }
