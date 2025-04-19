@@ -13,9 +13,7 @@ import com.tiefensuche.soundcrowd.images.ArtworkHelper
 import com.tiefensuche.soundcrowd.images.GlideApp
 import com.tiefensuche.soundcrowd.images.GlideRequests
 import com.tiefensuche.soundcrowd.plugins.MediaMetadataCompatExt
-import com.tiefensuche.soundcrowd.service.PlaybackService
 import com.tiefensuche.soundcrowd.service.Share
-import com.tiefensuche.soundcrowd.utils.MediaIDHelper.extractMusicIDFromMediaID
 
 internal class GridItemAdapter(private val requests: GlideRequests, private val listener: OnItemClickListener, private val defaultColor: Int) : MediaItemAdapter<GridItemAdapter.ViewHolder>() {
 
@@ -69,6 +67,15 @@ internal class GridItemAdapter(private val requests: GlideRequests, private val 
         holder.mDuration.setTextColor(text)
     }
 
+    private fun shareMedia(holder: ViewHolder) {
+        if (holder.adapterPosition >= 0) {
+            val metadata =  mDataset[holder.adapterPosition].mediaMetadata
+            metadata.extras?.getString(MediaMetadataCompatExt.METADATA_KEY_URL)?.let { url ->
+                Share.shareText(holder.itemView.context, url)
+            }
+        }
+    }
+
     inner class ViewHolder internal constructor(holder: View) : RecyclerView.ViewHolder(holder) {
 
         val mBackground: ImageView = holder.findViewById(R.id.background)
@@ -81,15 +88,12 @@ internal class GridItemAdapter(private val requests: GlideRequests, private val 
 
         init {
             // Play on clicking
-            holder.setOnClickListener { listener.onItemClick(mDataset, mediaItem) }
+            holder.setOnClickListener { listener.onItemClick(mDataset, 0) }
 
             // Open the sharing board on long clicking
-            val metadata = PlaybackService.getMusic(extractMusicIDFromMediaID(mDataset[mediaItem].mediaId))
-            metadata?.mediaMetadata?.extras?.getString(MediaMetadataCompatExt.METADATA_KEY_URL)?.let { url ->
-                holder.setOnLongClickListener {
-                    Share.shareText(holder.context, url)
-                    return@setOnLongClickListener true
-                }
+            holder.setOnLongClickListener {
+                shareMedia(this)
+                return@setOnLongClickListener true
             }
         }
     }
