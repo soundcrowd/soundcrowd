@@ -88,7 +88,7 @@ internal class GridItemAdapter(private val requests: GlideRequests, private val 
 
         init {
             // Play on clicking
-            holder.setOnClickListener { listener.onItemClick(mDataset, 0) }
+            holder.setOnClickListener { listener.onItemClick(mDataset, mediaItem) }
 
             // Open the sharing board on long clicking
             holder.setOnLongClickListener {
