@@ -143,7 +143,7 @@ internal class GridItemAdapter(private val requests: GlideRequests, private val 
                 lateinit var text : EditText
                 val alert = AlertDialog.Builder(context)
                     .setView(R.layout.menu_playlist)
-                    .setTitle("Playlist")
+                    .setTitle("Add to playlist")
                     .setCancelable(false)
                     .setPositiveButton("Create") { _, _ ->
                         listener.mediaBrowser.sendCustomCommand(
