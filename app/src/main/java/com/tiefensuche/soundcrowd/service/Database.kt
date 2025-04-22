@@ -299,7 +299,7 @@ internal class Database(context: Context) : SQLiteOpenHelper(context, DATABASE_N
 
     fun getPlaylists(): List<MediaItem> {
         val result = ArrayList<MediaItem>()
-        val cursor = readableDatabase.query(DATABASE_PLAYLISTS_NAME, arrayOf(ID, "name"), "name is not null", null, null, null, null, null)
+        val cursor = readableDatabase.query(DATABASE_PLAYLISTS_NAME, arrayOf(ID, "name"), "name is not null", null, null, null, "name", null)
         while (cursor.moveToNext()) {
             result.add(MediaItemUtils.createBrowsableItem(cursor.getInt(cursor.getColumnIndex(ID)).toString(), cursor.getString(cursor.getColumnIndex("name")), MediaMetadataCompatExt.MediaType.COLLECTION))
         }

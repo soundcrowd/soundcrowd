@@ -88,7 +88,7 @@ class PlaybackService : MediaLibraryService() {
         internal const val COMMAND_PLAYLIST_ADD = "COMMAND_PLAYLIST_ADD"
         internal const val COMMAND_PLAYLIST_MOVE = "COMMAND_PLAYLIST_MOVE"
         internal const val COMMAND_PLAYLIST_REMOVE = "COMMAND_PLAYLIST_REMOVE"
-        private const val COMMAND_PLAYLIST_DELETE = "COMMAND_PLAYLIST_DELETE"
+        internal const val COMMAND_PLAYLIST_DELETE = "COMMAND_PLAYLIST_DELETE"
         internal const val COMMAND_START_TAGGING = "COMMAND_START_TAGGING"
 
         internal const val ARG_NAME = "NAME"
@@ -262,7 +262,7 @@ class PlaybackService : MediaLibraryService() {
                     return Futures.immediateFuture(SessionResult(SessionResult.RESULT_SUCCESS))
                 }
                 COMMAND_PLAYLIST_DELETE -> {
-                    musicProvider.deletePlaylist(args.getString(ARG_PLAYLIST_ID)!!)
+                    musicProvider.deletePlaylist(args.getString(MediaConstants.EXTRA_KEY_MEDIA_ID)!!)
                     return Futures.immediateFuture(SessionResult(SessionResult.RESULT_SUCCESS))
                 }
             }

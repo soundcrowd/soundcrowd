@@ -24,15 +24,12 @@ import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.google.android.material.color.DynamicColors
 import com.google.android.material.navigation.NavigationView
 import com.tiefensuche.soundcrowd.R
-import com.tiefensuche.soundcrowd.sources.MusicProvider.Companion.MEDIA_ID
-import com.tiefensuche.soundcrowd.sources.MusicProvider.Media.CUE_POINTS
-import com.tiefensuche.soundcrowd.sources.MusicProvider.Media.PLAYLISTS
 import com.tiefensuche.soundcrowd.sources.MusicProvider.PluginMetadata.CATEGORY
 import com.tiefensuche.soundcrowd.sources.MusicProvider.PluginMetadata.ICON
 import com.tiefensuche.soundcrowd.sources.MusicProvider.PluginMetadata.NAME
 import com.tiefensuche.soundcrowd.ui.browser.CueMediaBrowserFragment
-import com.tiefensuche.soundcrowd.ui.browser.ListMediaBrowserFragment
 import com.tiefensuche.soundcrowd.ui.browser.MediaBrowserFragment
+import com.tiefensuche.soundcrowd.ui.browser.PlaylistsMediaBrowserFragment
 import com.tiefensuche.soundcrowd.ui.preferences.EqualizerFragment
 import com.tiefensuche.soundcrowd.ui.preferences.PreferenceFragment
 
@@ -223,18 +220,8 @@ abstract class ActionBarCastActivity : AppCompatActivity() {
         when (id) {
             R.id.navigation_allmusic -> setFragment(LocalTabFragment())
             R.id.navigation_playing_queue -> setFragment(QueueFragment())
-            R.id.navigation_playlists -> setFragment(ListMediaBrowserFragment().apply {
-                arguments = Bundle().apply {
-                    putString(MEDIA_ID, PLAYLISTS)
-                    putString(NAME, "Playlists")
-                }
-            })
-            R.id.navigation_cue_points -> setFragment(CueMediaBrowserFragment().apply {
-                arguments = Bundle().apply {
-                    putString(MEDIA_ID, CUE_POINTS)
-                    putString(NAME, "Cue Points")
-                }
-            })
+            R.id.navigation_playlists -> setFragment(PlaylistsMediaBrowserFragment())
+            R.id.navigation_cue_points -> setFragment(CueMediaBrowserFragment())
             R.id.navigation_equalizer -> setFragment(EqualizerFragment())
             R.id.navigation_preferences -> setFragment(PreferenceFragment())
             else -> {
