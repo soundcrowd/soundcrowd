@@ -139,11 +139,13 @@ internal class MusicPlayerActivity : BaseActivity(), MediaBrowserFragment.MediaF
     override fun setToolbarTitle(title: CharSequence?) {
         collapsingToolbarLayout?.title = title
         headerLineTitle?.text = title
+        headerLineTitle?.visibility = if (title?.isNotEmpty() == true) View.VISIBLE else View.GONE
         setTitle(title)
     }
 
     override fun setSubtitle(title: CharSequence?) {
         headerLineSubtitle?.text = title
+        headerLineSubtitle?.visibility = if (title?.isNotEmpty() == true) View.VISIBLE else View.GONE
     }
 
     override fun setBackground(description: MediaItem) {
