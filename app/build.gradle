@@ -46,9 +46,9 @@ android {
 
 dependencies {
     // own modules
-    implementation 'com.tiefensuche.soundcrowd:plugin:1.0.0'
-    implementation 'com.tiefensuche.soundcrowd:waveform:1.0'
-    implementation 'io.github.tiefensuche:songrec-android:0.1'
+    implementation 'com.github.soundcrowd:soundcrowd-plugin:v1.0.0'
+    implementation 'com.github.soundcrowd:soundcrowd-waveform:v1.0'
+    implementation 'com.github.0xf4b1:songrec-android:v0.1'
 
     // service plugins
     implementation project(':soundcloud')
@@ -76,25 +76,4 @@ repositories {
     google()
     mavenCentral()
     maven { url 'https://jitpack.io' }
-    maven {
-        url = uri("https://maven.pkg.github.com/soundcrowd/soundcrowd-plugin")
-        credentials {
-            username = System.getenv("GITHUB_ACTOR")
-            password = System.getenv("GITHUB_TOKEN")
-        }
-    }
-    maven {
-        url = uri("https://maven.pkg.github.com/soundcrowd/soundcrowd-waveform")
-        credentials {
-            username = System.getenv("GITHUB_ACTOR")
-            password = System.getenv("GITHUB_TOKEN")
-        }
-    }
-    maven {
-        url = uri("https://maven.pkg.github.com/0xf4b1/songrec-android")
-        credentials {
-            username = System.getenv("GITHUB_ACTOR")
-            password = System.getenv("GITHUB_TOKEN")
-        }
-    }
 }
