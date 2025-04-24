@@ -30,6 +30,7 @@ internal class PluginManager(private val context: Context) {
 
     internal fun init() {
         for (plugin in listOf(
+            com.tiefensuche.soundcrowd.plugins.beatport.Plugin(context),
             com.tiefensuche.soundcrowd.plugins.soundcloud.Plugin(context),
             com.tiefensuche.soundcrowd.plugins.spotify.Plugin(context),
             com.tiefensuche.soundcrowd.plugins.tidal.Plugin(context),
