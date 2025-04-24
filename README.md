@@ -16,9 +16,6 @@ Want to know the track id of a specific part in a mix? SoundCrowd comes with bui
 
 ## Download
 
-[<img src="https://play.google.com/intl/en_us/badges/images/generic/en_badge_web_generic.png"
-      alt="Download from Google Play"
-      height="80">](https://play.google.com/store/apps/details?id=com.tiefensuche.soundcrowd)
 [<img src="https://f-droid.org/badge/get-it-on.png"
       alt="Get it on F-Droid"
       height="80">](https://soundcrowd.github.io/fdroid/repo)
