@@ -293,7 +293,7 @@ internal class FullScreenPlayerFragment : Fragment() {
             mSeekbar.progress = 0
             mWaveformHandler.loadWaveform(requests, metadata, metadata.durationMs!!.toInt())
 
-            mShare.visibility = if (metadata.extras?.containsKey(MediaMetadataCompatExt.METADATA_KEY_URL) == true) VISIBLE else GONE
+            mShare.visibility = if (metadata.extras?.getString(MediaMetadataCompatExt.METADATA_KEY_URL) != null) VISIBLE else GONE
 
             mCurrentMediaId = mediaController.currentMediaItem?.mediaId
             fetchImageAsync(mediaController.currentMediaItem!!)
