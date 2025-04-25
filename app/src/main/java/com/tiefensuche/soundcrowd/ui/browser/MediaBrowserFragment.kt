@@ -99,7 +99,7 @@ internal abstract class MediaBrowserFragment : Fragment() {
             mMediaFragmentListener = activity
     }
 
-    internal fun requestMedia(offset: Int = 0, refresh: Boolean = false) {
+    open fun requestMedia(offset: Int = 0, refresh: Boolean = false) {
         mProgressBar.visibility = View.VISIBLE
 
         val bundle = Bundle()

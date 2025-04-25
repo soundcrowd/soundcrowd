@@ -25,8 +25,10 @@ import com.tiefensuche.soundcrowd.sources.MusicProvider.Companion.MEDIA_ID
 import com.tiefensuche.soundcrowd.sources.MusicProvider.Companion.QUERY
 import com.tiefensuche.soundcrowd.sources.MusicProvider.Media.CUE_POINTS
 import com.tiefensuche.soundcrowd.sources.MusicProvider.Media.LOCAL
+import com.tiefensuche.soundcrowd.sources.MusicProvider.Media.PLAYLISTS
 import com.tiefensuche.soundcrowd.ui.browser.GridMediaBrowserFragment
 import com.tiefensuche.soundcrowd.ui.browser.MediaBrowserFragment
+import com.tiefensuche.soundcrowd.ui.browser.PlaylistMediaBrowserFragment
 import com.tiefensuche.soundcrowd.ui.browser.StreamMediaBrowserFragment
 import com.tiefensuche.soundcrowd.utils.MediaIDHelper
 import com.tiefensuche.soundcrowd.utils.MediaIDHelper.CATEGORY_SEPARATOR
@@ -137,11 +139,13 @@ internal class MusicPlayerActivity : BaseActivity(), MediaBrowserFragment.MediaF
     override fun setToolbarTitle(title: CharSequence?) {
         collapsingToolbarLayout?.title = title
         headerLineTitle?.text = title
+        headerLineTitle?.visibility = if (title?.isNotEmpty() == true) View.VISIBLE else View.GONE
         setTitle(title)
     }
 
     override fun setSubtitle(title: CharSequence?) {
         headerLineSubtitle?.text = title
+        headerLineSubtitle?.visibility = if (title?.isNotEmpty() == true) View.VISIBLE else View.GONE
     }
 
     override fun setBackground(description: MediaItem) {
@@ -162,7 +166,13 @@ internal class MusicPlayerActivity : BaseActivity(), MediaBrowserFragment.MediaF
         val currentMediaId = currentFragmentMediaId ?: return
 
         if (!TextUtils.equals(currentMediaId, mediaId)) {
-            val fragment = if (currentMediaId.startsWith(LOCAL)) GridMediaBrowserFragment() else StreamMediaBrowserFragment()
+            val fragment =
+                if (currentMediaId.startsWith(LOCAL))
+                    GridMediaBrowserFragment()
+                else if (currentMediaId.startsWith(PLAYLISTS))
+                    PlaylistMediaBrowserFragment()
+                else
+                    StreamMediaBrowserFragment()
             val bundle = Bundle()
             if (mediaId != null) {
                 var path = currentMediaId

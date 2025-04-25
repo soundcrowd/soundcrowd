@@ -11,10 +11,13 @@ import com.tiefensuche.soundcrowd.R
 import com.tiefensuche.soundcrowd.service.PlaybackService.Companion.COMMAND_CUE_DELETE
 import com.tiefensuche.soundcrowd.sources.MusicProvider.Companion.MEDIA_ID
 import com.tiefensuche.soundcrowd.sources.MusicProvider.Cues.POSITION
+import com.tiefensuche.soundcrowd.sources.MusicProvider.Media.CUE_POINTS
 import com.tiefensuche.soundcrowd.ui.browser.adapters.CueListItemAdapter
 import com.tiefensuche.soundcrowd.utils.MediaIDHelper.extractMusicIDFromMediaID
 
 internal class CueMediaBrowserFragment : CollectionMediaBrowserFragment() {
+
+    override val mediaId = CUE_POINTS
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
