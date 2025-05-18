@@ -10,3 +10,6 @@
 [submodule "youtube"]
 	path = youtube
 	url = https://github.com/soundcrowd/soundcrowd-plugin-youtube
+[submodule "beatport"]
+	path = beatport
+	url = https://github.com/soundcrowd/soundcrowd-plugin-beatport

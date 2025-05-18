@@ -51,6 +51,7 @@ dependencies {
     implementation 'com.github.0xf4b1:songrec-android:v0.1'
 
     // service plugins
+    implementation project(':beatport')
     implementation project(':soundcloud')
     implementation project(':spotify')
     implementation project(':tidal')
