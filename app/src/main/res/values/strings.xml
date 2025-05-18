@@ -30,7 +30,16 @@
     <string name="no_cue_points">No Cue Points found. Hit the star button for your favorite positions in your tracks to list them here.</string>
     <string name="permission">Need permission to read your storage to retrieve all your music.</string>
     <string name="last_position">Last position</string>
-    <string name="share_via">Share via</string>
+
+    <!-- Media item popup -->
+    <string name="like">Like</string>
+    <string name="unlike">Unlike</string>
+    <string name="queue_next">Play next</string>
+    <string name="queue_add">Add to playing queue</string>
+    <string name="playlist_add">Add to playlist…</string>
+    <string name="share_via">Share…</string>
+    <string name="playlist_create">Create</string>
+    <string name="playlist_cancel">Cancel</string>
 
     <!-- Equalizer -->
     <string name="reverb">Reverb</string>
