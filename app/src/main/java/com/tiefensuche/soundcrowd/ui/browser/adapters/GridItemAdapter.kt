@@ -16,6 +16,7 @@ import android.widget.ListView
 import android.widget.PopupMenu
 import android.widget.TextView
 import androidx.core.content.ContextCompat
+import androidx.media3.common.HeartRating
 import androidx.media3.common.MediaItem
 import androidx.media3.session.SessionCommand
 import androidx.recyclerview.widget.RecyclerView
@@ -24,11 +25,13 @@ import com.tiefensuche.soundcrowd.images.ArtworkHelper
 import com.tiefensuche.soundcrowd.images.GlideApp
 import com.tiefensuche.soundcrowd.images.GlideRequests
 import com.tiefensuche.soundcrowd.plugins.MediaMetadataCompatExt
+import com.tiefensuche.soundcrowd.plugins.MediaMetadataCompatExt.COMMAND_LIKE
 import com.tiefensuche.soundcrowd.service.PlaybackService.Companion.ARG_NAME
 import com.tiefensuche.soundcrowd.service.PlaybackService.Companion.ARG_PLAYLIST_ID
 import com.tiefensuche.soundcrowd.service.PlaybackService.Companion.COMMAND_PLAYLIST_ADD
 import com.tiefensuche.soundcrowd.service.PlaybackService.Companion.COMMAND_PLAYLIST_CREATE
 import com.tiefensuche.soundcrowd.service.Share
+import com.tiefensuche.soundcrowd.sources.MusicProvider.Companion.MEDIA_ID
 import com.tiefensuche.soundcrowd.sources.MusicProvider.Media.PLAYLISTS
 import com.tiefensuche.soundcrowd.ui.browser.MediaBrowserFragment.MediaFragmentListener
 
@@ -101,19 +104,43 @@ internal class GridItemAdapter(private val requests: GlideRequests, private val 
         val mArtistView: TextView = holder.findViewById(R.id.description)
         val mDuration: TextView = holder.findViewById(R.id.duration)
         val mImageViewSource: ImageView = holder.findViewById(R.id.source)
+        val mMenu: ImageView = holder.findViewById(R.id.menu)
         var mediaItem = 0
 
         init {
             // Play on clicking
             holder.setOnClickListener { listener.onMediaItemSelected(mDataset, mediaItem) }
 
-            // Open menu on long clicking
+            // Open context menu when clicking menu button
+            mMenu.visibility = View.GONE
             if (mDataset[mediaItem].mediaMetadata.isPlayable == true) {
-                holder.setOnLongClickListener {
-                    val menu = PopupMenu(holder.context, mBackground)
+                mMenu.visibility = View.VISIBLE
+                mMenu.setOnClickListener {
+                    val menu = PopupMenu(holder.context, mMenu)
                     menu.menuInflater.inflate(R.menu.popup_mediaitem, menu.menu)
+                    val like = menu.menu.findItem(R.id.like)
+                    val rating = mDataset[adapterPosition].mediaMetadata.userRating as? HeartRating
+                    like.setVisible(rating != null)
+                    if (rating != null) {
+                        if (rating.isHeart) {
+                            like.setTitle(R.string.unlike)
+                            like.setIcon(androidx.media3.session.R.drawable.media3_icon_heart_filled)
+                        } else {
+                            like.setTitle(R.string.like)
+                            like.setIcon(androidx.media3.session.R.drawable.media3_icon_heart_unfilled)
+                        }
+                    }
+                    menu.menu.findItem(R.id.share).setVisible(
+                        mDataset[adapterPosition].mediaMetadata.extras?.getString(
+                            MediaMetadataCompatExt.METADATA_KEY_URL
+                        ) != null
+                    )
                     menu.setOnMenuItemClickListener { menuItem ->
                         when (menuItem.itemId) {
+                            R.id.like -> {
+                                listener.mediaBrowser.sendCustomCommand(SessionCommand(COMMAND_LIKE, Bundle.EMPTY), Bundle().also { it.putString(
+                                    MEDIA_ID, mDataset[mediaItem].mediaId) })
+                            }
                             R.id.addToQueue -> {
                                 listener.mediaBrowser.addMediaItem(mDataset[mediaItem])
                             }
@@ -129,8 +156,8 @@ internal class GridItemAdapter(private val requests: GlideRequests, private val 
                         }
                         true
                     }
+                    menu.setForceShowIcon(true)
                     menu.show()
-                    true
                 }
             }
         }
@@ -143,9 +170,9 @@ internal class GridItemAdapter(private val requests: GlideRequests, private val 
                 lateinit var text : EditText
                 val alert = AlertDialog.Builder(context)
                     .setView(R.layout.menu_playlist)
-                    .setTitle("Add to playlist")
+                    .setTitle(R.string.playlist_add)
                     .setCancelable(false)
-                    .setPositiveButton("Create") { _, _ ->
+                    .setPositiveButton(R.string.playlist_create) { _, _ ->
                         listener.mediaBrowser.sendCustomCommand(
                             SessionCommand(
                                 COMMAND_PLAYLIST_CREATE,
@@ -157,7 +184,7 @@ internal class GridItemAdapter(private val requests: GlideRequests, private val 
                                 )
                             })
                     }
-                    .setNegativeButton("Cancel") { _, _ -> }
+                    .setNegativeButton(R.string.playlist_cancel) { _, _ -> }
                     .create()
 
                 alert.show()
