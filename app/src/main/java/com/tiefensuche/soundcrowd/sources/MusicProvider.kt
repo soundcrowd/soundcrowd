@@ -441,8 +441,9 @@ internal class MusicProvider(context: Context) {
     }
 
     fun favorite(
-        metadata: MediaItem,
+        musicId: String,
     ): Boolean {
+        val metadata = getMusic(musicId) ?: return false
         val result = PluginManager.plugins[metadata.mediaMetadata.extras!!.getString(MediaMetadataCompatExt.METADATA_KEY_PLUGIN)]!!.favorite(metadata.mediaId)
         if (result)
             updateMetadata(

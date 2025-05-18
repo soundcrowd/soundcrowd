@@ -230,9 +230,8 @@ class PlaybackService : MediaLibraryService() {
                 COMMAND_LIKE -> {
                     val settableFuture = SettableFuture.create<SessionResult>()
                     CoroutineScope(Dispatchers.Main).launch {
-                        val mediaItem = session.player.currentMediaItem!!
                         val result = withContext(Dispatchers.IO) {
-                            musicProvider.favorite(mediaItem)
+                            musicProvider.favorite(args.getString(MEDIA_ID)!!)
                         }
                         if (result)
                             session.player.replaceMediaItem(session.player.currentMediaItemIndex, musicProvider.getMusic(session.player.currentMediaItem!!.mediaId)!!)
