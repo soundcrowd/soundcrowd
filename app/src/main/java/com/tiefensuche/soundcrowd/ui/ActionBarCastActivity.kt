@@ -78,7 +78,7 @@ abstract class ActionBarCastActivity : AppCompatActivity() {
     internal val currentFragmentMediaId: String?
         get() = (supportFragmentManager.findFragmentByTag(MediaBrowserFragment::class.java.name) as? MediaBrowserFragment)?.mediaId ?:
         (supportFragmentManager.findFragmentByTag(TabFragment::class.java.name) as? TabFragment)?.mediaId
-    
+
     public override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         PreferenceFragment.applyTheme(getDefaultSharedPreferences(this).getString(getString(R.string.preference_theme_key), "System")!!)
