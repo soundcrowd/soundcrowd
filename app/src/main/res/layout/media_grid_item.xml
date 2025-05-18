@@ -8,14 +8,28 @@
     android:layout_margin="2dp"
     android:orientation="vertical">
 
-    <com.google.android.material.imageview.ShapeableImageView
-        android:id="@+id/album_art"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:scaleType="centerCrop"
-        android:src="@drawable/ic_default_art"
-        android:layout_weight="1"
-        app:shapeAppearanceOverlay="@style/ShapeAppearanceOverlay.App.roundedImageView" />
+    <RelativeLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_weight="1">
+
+        <com.google.android.material.imageview.ShapeableImageView
+            android:id="@+id/album_art"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:scaleType="centerCrop"
+            android:src="@drawable/ic_default_art"
+            app:shapeAppearanceOverlay="@style/ShapeAppearanceOverlay.App.roundedImageView" />
+
+        <ImageView
+            android:id="@+id/menu"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentEnd="true"
+            android:layout_margin="8dp"
+            app:srcCompat="@drawable/baseline_more_vert_24" />
+
+    </RelativeLayout>
 
     <FrameLayout
         android:layout_width="match_parent"
@@ -25,10 +39,10 @@
 
         <com.google.android.material.imageview.ShapeableImageView
             android:id="@+id/background"
-            android:background="@android:color/transparent"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:alpha="1"
+            android:background="@android:color/transparent"
             app:shapeAppearanceOverlay="@style/ShapeAppearanceOverlay.App.roundedImageView" />
 
         <LinearLayout
@@ -53,10 +67,10 @@
                     android:layout_height="match_parent"
                     android:layout_gravity="start"
                     android:layout_weight="1"
+                    android:autoSizeStepGranularity="1sp"
+                    android:autoSizeTextType="uniform"
                     android:ellipsize="end"
                     android:maxLines="1"
-                    android:autoSizeTextType="uniform"
-                    android:autoSizeStepGranularity="1sp"
                     android:textAlignment="center"
                     android:textColor="?android:attr/textColorSecondary" />
 
@@ -77,13 +91,13 @@
                 android:layout_width="match_parent"
                 android:layout_height="30dp"
                 android:layout_gravity="bottom"
+                android:autoSizeStepGranularity="1sp"
+                android:autoSizeTextType="uniform"
                 android:ellipsize="end"
                 android:maxLines="2"
-                android:autoSizeTextType="uniform"
-                android:autoSizeStepGranularity="1sp"
                 android:textAlignment="center"
-                android:textStyle="bold"
-                android:textColor="?android:attr/textColorPrimary" />
+                android:textColor="?android:attr/textColorPrimary"
+                android:textStyle="bold" />
 
         </LinearLayout>
 

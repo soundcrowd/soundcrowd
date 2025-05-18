@@ -9,6 +9,14 @@
             android:icon="@drawable/baseline_library_music_24"
             android:title="@string/drawer_allmusic_title" />
         <item
+            android:id="@+id/navigation_playing_queue"
+            android:icon="@drawable/queue_music_24"
+            android:title="@string/drawer_playing_queue_title" />
+        <item
+            android:id="@+id/navigation_playlists"
+            android:icon="@drawable/list_24"
+            android:title="@string/drawer_playlists_title" />
+        <item
             android:id="@+id/navigation_cue_points"
             android:icon="@drawable/ic_round_star_24"
             android:title="@string/drawer_cue_points_title" />

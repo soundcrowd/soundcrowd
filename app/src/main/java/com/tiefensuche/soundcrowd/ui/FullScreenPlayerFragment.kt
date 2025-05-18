@@ -303,7 +303,8 @@ internal class FullScreenPlayerFragment : Fragment() {
             mLike.setColorFilter(if (rating.isHeart) Color.RED else Color.WHITE)
             if (metadata.supportedCommands.contains(COMMAND_LIKE))
                 mLike.setOnClickListener {
-                    mediaController.sendCustomCommand(SessionCommand(COMMAND_LIKE, Bundle.EMPTY), Bundle())
+                    mediaController.sendCustomCommand(SessionCommand(COMMAND_LIKE, Bundle.EMPTY), Bundle().also { it.putString(
+                        MEDIA_ID, mCurrentMediaId) })
                 }
             mLike.visibility = VISIBLE
         } ?: run {

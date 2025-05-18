@@ -18,6 +18,7 @@ import androidx.media3.common.HeartRating
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
 import androidx.media3.common.Player
+import androidx.media3.common.Timeline
 import androidx.media3.database.StandaloneDatabaseProvider
 import androidx.media3.datasource.DataSpec
 import androidx.media3.datasource.DefaultHttpDataSource
@@ -40,6 +41,7 @@ import androidx.media3.exoplayer.upstream.LoadErrorHandlingPolicy
 import androidx.media3.exoplayer.util.EventLogger
 import androidx.media3.session.CommandButton
 import androidx.media3.session.LibraryResult
+import androidx.media3.session.MediaConstants
 import androidx.media3.session.MediaLibraryService
 import androidx.media3.session.MediaSession
 import androidx.media3.session.MediaSession.MediaItemsWithStartPosition
@@ -56,7 +58,6 @@ import com.tiefensuche.soundcrowd.R
 import com.tiefensuche.soundcrowd.playback.EqualizerControl
 import com.tiefensuche.soundcrowd.playback.RecordAudioBufferSink
 import com.tiefensuche.soundcrowd.plugins.MediaMetadataCompatExt
-import com.tiefensuche.soundcrowd.plugins.MediaMetadataCompatExt.COMMAND_LIKE
 import com.tiefensuche.soundcrowd.sources.LocalSource
 import com.tiefensuche.soundcrowd.sources.MusicProvider
 import com.tiefensuche.soundcrowd.sources.MusicProvider.Companion.MEDIA_ID
@@ -82,7 +83,17 @@ class PlaybackService : MediaLibraryService() {
         internal const val COMMAND_CUE_CREATE = "COMMAND_CUE_CREATE"
         internal const val COMMAND_CUE_EDIT = "COMMAND_CUE_EDIT"
         internal const val COMMAND_CUE_DELETE = "COMMAND_CUE_DELETE"
+        internal const val COMMAND_LIKE = "COMMAND_LIKE"
+        internal const val COMMAND_PLAYLIST_CREATE = "COMMAND_PLAYLIST_CREATE"
+        internal const val COMMAND_PLAYLIST_ADD = "COMMAND_PLAYLIST_ADD"
+        internal const val COMMAND_PLAYLIST_MOVE = "COMMAND_PLAYLIST_MOVE"
+        internal const val COMMAND_PLAYLIST_REMOVE = "COMMAND_PLAYLIST_REMOVE"
+        internal const val COMMAND_PLAYLIST_DELETE = "COMMAND_PLAYLIST_DELETE"
         internal const val COMMAND_START_TAGGING = "COMMAND_START_TAGGING"
+
+        internal const val ARG_NAME = "NAME"
+        internal const val ARG_PLAYLIST_ID = "PLAYLIST_ID"
+        internal const val ARG_POSITION = "POSITION"
 
         internal const val RESULT = "RESULT"
         internal const val ARG_ERROR = "ARG_ERROR"
@@ -111,11 +122,16 @@ class PlaybackService : MediaLibraryService() {
                 result.availableSessionCommands
                     .buildUpon()
                     .add(SessionCommand(COMMAND_GET_PLUGINS, Bundle.EMPTY))
+                    .add(SessionCommand(COMMAND_RESOLVE, Bundle.EMPTY))
                     .add(SessionCommand(COMMAND_CUE_CREATE, Bundle.EMPTY))
                     .add(SessionCommand(COMMAND_CUE_EDIT, Bundle.EMPTY))
                     .add(SessionCommand(COMMAND_CUE_DELETE, Bundle.EMPTY))
                     .add(SessionCommand(COMMAND_LIKE, Bundle.EMPTY))
-                    .add(SessionCommand(COMMAND_RESOLVE, Bundle.EMPTY))
+                    .add(SessionCommand(COMMAND_PLAYLIST_CREATE, Bundle.EMPTY))
+                    .add(SessionCommand(COMMAND_PLAYLIST_ADD, Bundle.EMPTY))
+                    .add(SessionCommand(COMMAND_PLAYLIST_MOVE, Bundle.EMPTY))
+                    .add(SessionCommand(COMMAND_PLAYLIST_REMOVE, Bundle.EMPTY))
+                    .add(SessionCommand(COMMAND_PLAYLIST_DELETE, Bundle.EMPTY))
                     .add(SessionCommand(COMMAND_START_TAGGING, Bundle.EMPTY))
                     .build(), result.availablePlayerCommands
             )
@@ -214,9 +230,8 @@ class PlaybackService : MediaLibraryService() {
                 COMMAND_LIKE -> {
                     val settableFuture = SettableFuture.create<SessionResult>()
                     CoroutineScope(Dispatchers.Main).launch {
-                        val mediaItem = session.player.currentMediaItem!!
                         val result = withContext(Dispatchers.IO) {
-                            musicProvider.favorite(mediaItem)
+                            musicProvider.favorite(args.getString(MEDIA_ID)!!)
                         }
                         if (result)
                             session.player.replaceMediaItem(session.player.currentMediaItemIndex, musicProvider.getMusic(session.player.currentMediaItem!!.mediaId)!!)
@@ -228,6 +243,26 @@ class PlaybackService : MediaLibraryService() {
                     val settableFuture = SettableFuture.create<SessionResult>()
                     tag(filesDir.path + "/rec.wav", settableFuture)
                     return settableFuture
+                }
+                COMMAND_PLAYLIST_CREATE -> {
+                    musicProvider.createPlaylist(args.getString(ARG_NAME)!!, args.getString(MediaConstants.EXTRA_KEY_MEDIA_ID)!!)
+                    return Futures.immediateFuture(SessionResult(SessionResult.RESULT_SUCCESS))
+                }
+                COMMAND_PLAYLIST_ADD -> {
+                    musicProvider.addPlaylist(args.getString(ARG_PLAYLIST_ID)!!, args.getString(MediaConstants.EXTRA_KEY_MEDIA_ID)!!)
+                    return Futures.immediateFuture(SessionResult(SessionResult.RESULT_SUCCESS))
+                }
+                COMMAND_PLAYLIST_MOVE -> {
+                    musicProvider.movePlaylist(args.getString(ARG_PLAYLIST_ID)!!, args.getString(MediaConstants.EXTRA_KEY_MEDIA_ID)!!, args.getInt(ARG_POSITION))
+                    return Futures.immediateFuture(SessionResult(SessionResult.RESULT_SUCCESS))
+                }
+                COMMAND_PLAYLIST_REMOVE -> {
+                    musicProvider.removePlaylist(args.getString(ARG_PLAYLIST_ID)!!, args.getString(MediaConstants.EXTRA_KEY_MEDIA_ID)!!)
+                    return Futures.immediateFuture(SessionResult(SessionResult.RESULT_SUCCESS))
+                }
+                COMMAND_PLAYLIST_DELETE -> {
+                    musicProvider.deletePlaylist(args.getString(MediaConstants.EXTRA_KEY_MEDIA_ID)!!)
+                    return Futures.immediateFuture(SessionResult(SessionResult.RESULT_SUCCESS))
                 }
             }
             return Futures.immediateFailedFuture(Exception("Can not handle: ${customCommand.customAction}"))
@@ -345,6 +380,10 @@ class PlaybackService : MediaLibraryService() {
                     return
                 musicProvider.updateExtendedMetadata(mediaItem)
             }
+
+            override fun onTimelineChanged(timeline: Timeline, reason: Int) {
+                musicProvider.updatePlaylist("0", MutableList(player.mediaItemCount, player::getMediaItemAt))
+            }
         })
 
         mediaLibrarySession = MediaLibrarySession.Builder(this, player, callback)
@@ -352,6 +391,7 @@ class PlaybackService : MediaLibraryService() {
             .build()
 
         musicProvider = MusicProvider(this)
+        player.setMediaItems(musicProvider.getPlaylist("0"))
     }
 
     override fun onDestroy() {

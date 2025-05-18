@@ -33,6 +33,11 @@ internal abstract class MediaItemAdapter<T : RecyclerView.ViewHolder?> : Recycle
         mDataset.add(item)
     }
 
+    internal fun remove(position: Int) {
+        mDataset.removeAt(position)
+        notifyItemRemoved(position)
+    }
+
     internal fun clear() {
         mDataset.clear()
     }
@@ -90,10 +95,6 @@ internal abstract class MediaItemAdapter<T : RecyclerView.ViewHolder?> : Recycle
             mFilter = filter
         }
         return filter
-    }
-
-    interface OnItemClickListener {
-        fun onItemClick(items: List<MediaItem>, position: Int)
     }
 
     /**

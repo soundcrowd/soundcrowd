@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/like"
+        android:icon="@drawable/media3_icon_heart_unfilled"
+        android:title="@string/like" />
+    <item
+        android:id="@+id/playNext"
+        android:icon="@drawable/media3_icon_queue_next"
+        android:title="@string/queue_next" />
+    <item
+        android:id="@+id/addToQueue"
+        android:icon="@drawable/media3_icon_queue_add"
+        android:title="@string/queue_add" />
+    <item
+        android:id="@+id/addToPlaylist"
+        android:icon="@drawable/media3_icon_playlist_add"
+        android:title="@string/playlist_add" />
+    <item
+        android:id="@+id/share"
+        android:icon="@drawable/media3_icon_share"
+        android:title="@string/share_via" />
+</menu>

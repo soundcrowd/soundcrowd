@@ -19,6 +19,7 @@ import com.tiefensuche.soundcrowd.service.PluginManager
 import com.tiefensuche.soundcrowd.sources.MusicProvider.Media.CUE_POINTS
 import com.tiefensuche.soundcrowd.sources.MusicProvider.Media.LAST_MEDIA
 import com.tiefensuche.soundcrowd.sources.MusicProvider.Media.LOCAL
+import com.tiefensuche.soundcrowd.sources.MusicProvider.Media.PLAYLISTS
 import com.tiefensuche.soundcrowd.sources.MusicProvider.Media.TEMP
 import com.tiefensuche.soundcrowd.utils.MediaIDHelper
 import com.tiefensuche.soundcrowd.utils.MediaIDHelper.CATEGORY_SEPARATOR
@@ -274,6 +275,8 @@ internal class MusicProvider(context: Context) {
     private fun hasItems(request: Request): Boolean {
         if (request.refresh)
             return false
+        if (request.source == PLAYLISTS)
+            return false
 
         return try {
             library.getPath(request, false).items.size > request.offset
@@ -370,6 +373,26 @@ internal class MusicProvider(context: Context) {
                     throw Exception("error when loading local media", e)
                 }
             }
+
+            PLAYLISTS -> {
+                if (request.query != null) {
+                    (if (request.path != null)
+                        getPlaylist(request.path!!)
+                    else
+                        searchMusic(
+                            library.root.edges[PLAYLISTS]!!,
+                            request.query!!
+                        )).forEach { dir.add(it) }
+                    return
+                }
+                dir.clear()
+                (request.category?.let {
+                    getPlaylist(it)
+                } ?: database.getPlaylists()).forEach {
+                    dir.add(it)
+                }
+            }
+
             CUE_POINTS -> {
                 if (request.query != null) {
                     searchMusic(library.root.edges[CUE_POINTS]!!, request.query!!).forEach { dir.add(it) }
@@ -418,8 +441,9 @@ internal class MusicProvider(context: Context) {
     }
 
     fun favorite(
-        metadata: MediaItem,
+        musicId: String,
     ): Boolean {
+        val metadata = getMusic(musicId) ?: return false
         val result = PluginManager.plugins[metadata.mediaMetadata.extras!!.getString(MediaMetadataCompatExt.METADATA_KEY_PLUGIN)]!!.favorite(metadata.mediaId)
         if (result)
             updateMetadata(
@@ -430,6 +454,36 @@ internal class MusicProvider(context: Context) {
                 ).build()
             )
         return result
+    }
+
+    fun createPlaylist(name: String, musicId: String) {
+        val metadata = getMusic(musicId) ?: return
+        database.createPlaylist(name, metadata)
+    }
+
+    fun updatePlaylist(playlistId: String, tracks: List<MediaItem>) {
+        database.updatePlaylist(playlistId, tracks)
+    }
+
+    fun addPlaylist(playlistId: String, musicId: String) {
+        val metadata = getMusic(musicId) ?: return
+        database.addPlaylist(playlistId, metadata)
+    }
+
+    fun movePlaylist(playlistId: String, musicId: String, position: Int) {
+        database.movePlaylist(playlistId, musicId, position)
+    }
+
+    fun removePlaylist(playlistId: String, musicId: String) {
+        database.removePlaylist(playlistId, musicId)
+    }
+
+    fun deletePlaylist(playlistId: String) {
+        database.deletePlaylist(playlistId)
+    }
+
+    fun getPlaylist(playlistId: String): List<MediaItem> {
+        return database.getPlaylist(playlistId).mapNotNull { getMusic(it) ?: database.getMediaItem(it) }
     }
 
     private fun getCuePoints(): BrowsableItem {
@@ -509,6 +563,7 @@ internal class MusicProvider(context: Context) {
 
     object Media {
         const val LOCAL = "LOCAL"
+        const val PLAYLISTS = "PLAYLISTS"
         const val CUE_POINTS = "CUE_POINTS"
         const val LAST_MEDIA = "LAST_MEDIA"
         const val TEMP = "TEMP"
