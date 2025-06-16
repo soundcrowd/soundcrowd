@@ -22,6 +22,7 @@ android {
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_17
         targetCompatibility JavaVersion.VERSION_17
+        coreLibraryDesugaringEnabled = true
     }
     kotlinOptions {
         jvmTarget = "17"
@@ -58,6 +59,9 @@ dependencies {
     implementation project(':youtube')
 
     // android support
+    // needed for newpipe extractor in youtube plugin on older android api
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs_nio:2.1.5")
+
     // material 1.12.0 requires minSdk 19
     implementation 'com.google.android.material:material:1.12.0'
     implementation 'androidx.palette:palette-ktx:1.0.0'
