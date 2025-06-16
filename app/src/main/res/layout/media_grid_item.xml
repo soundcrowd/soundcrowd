@@ -21,12 +21,13 @@
             android:src="@drawable/ic_default_art"
             app:shapeAppearanceOverlay="@style/ShapeAppearanceOverlay.App.roundedImageView" />
 
-        <ImageView
+        <ImageButton
             android:id="@+id/menu"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_alignParentEnd="true"
-            android:layout_margin="8dp"
+            android:background="?selectableItemBackgroundBorderless"
+            android:padding="8dp"
             app:srcCompat="@drawable/baseline_more_vert_24" />
 
     </RelativeLayout>
