@@ -27,7 +27,7 @@
             android:focusable="true"
             tools:layout="@layout/fragment_full_player"
             app:behavior_hideable="true"
-            app:behavior_peekHeight="0dp"
+            app:behavior_peekHeight="@dimen/playback_controls_peek_size"
             app:layout_behavior="@string/bottom_sheet_behavior" />
 
     </androidx.coordinatorlayout.widget.CoordinatorLayout>

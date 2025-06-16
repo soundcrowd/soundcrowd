@@ -6,6 +6,7 @@
     <dimen name="statusbar_height">56dp</dimen>
 
     <!-- playback controls -->
+    <dimen name="playback_controls_peek_size">80dp</dimen>
     <dimen name="playback_controls_albumart_horizontal_margin">8dp</dimen>
     <dimen name="playback_controls_albumart_size">64dp</dimen>
     <dimen name="playback_controls_padding">8dp</dimen>

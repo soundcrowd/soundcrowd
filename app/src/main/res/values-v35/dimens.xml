@@ -1,0 +1,4 @@
+<resources>
+    <dimen name="playback_controls_peek_size">96dp</dimen>
+    <dimen name="playback_controls_albumart_size">80dp</dimen>
+</resources>
