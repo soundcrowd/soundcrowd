@@ -68,7 +68,7 @@ abstract class BaseActivity : ActionBarCastActivity(), MediaBrowserProvider {
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         startFullScreenActivityIfNeeded(intent)
-        if (lifecycle.currentState.isAtLeast(Lifecycle.State.STARTED)) {
+        if (lifecycle.currentState.isAtLeast(Lifecycle.State.CREATED)) {
             handleIntent(intent)
         } else {
             setIntent(intent)
