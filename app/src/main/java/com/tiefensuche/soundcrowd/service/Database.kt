@@ -44,7 +44,7 @@ internal class Database(context: Context) : SQLiteOpenHelper(context, DATABASE_N
 
         const val DATABASE_MEDIA_ITEMS_NAME = "MediaItems"
 
-        private const val DATABASE_MEDIA_ITEMS_CREATE = "create table if not exists $DATABASE_MEDIA_ITEMS_NAME ($ID text primary key, $ARTIST text not null, $TITLE text not null, $DURATION long not null, $SOURCE text not null unique, $DOWNLOAD text unique, $ALBUM_ART_URL text not null, $WAVEFORM_URL text, $PLUGIN text, $DATASOURCE boolean default false);"
+        private const val DATABASE_MEDIA_ITEMS_CREATE = "create table if not exists $DATABASE_MEDIA_ITEMS_NAME ($ID text primary key, $ARTIST text not null, $TITLE text not null, $DURATION long not null, $SOURCE text not null unique, $DOWNLOAD text unique, $ALBUM_ART_URL text not null, $WAVEFORM_URL text, $PLUGIN text, $DATASOURCE boolean default 0);"
 
         private var TAG = Database::class.simpleName
 
@@ -112,18 +112,21 @@ internal class Database(context: Context) : SQLiteOpenHelper(context, DATABASE_N
     }
 
     override fun onUpgrade(sqLiteDatabase: SQLiteDatabase, oldVersion: Int, newVersion: Int) {
-        when (oldVersion) {
-            1 -> {
-                sqLiteDatabase.execSQL("ALTER TABLE $DATABASE_MEDIA_ITEMS_METADATA_NAME ADD COLUMN vibrant_color int")
-                sqLiteDatabase.execSQL("ALTER TABLE $DATABASE_MEDIA_ITEMS_METADATA_NAME ADD COLUMN text_color int")
-            }
-            2 -> {
-                sqLiteDatabase.execSQL("ALTER TABLE $DATABASE_MEDIA_ITEMS_NAME ADD COLUMN $PLUGIN text")
-                sqLiteDatabase.execSQL("ALTER TABLE $DATABASE_MEDIA_ITEMS_NAME ADD COLUMN $DATASOURCE boolean default false")
-            }
-            3 -> {
-                sqLiteDatabase.execSQL(DATABASE_PLAYLISTS_CREATE)
-            }
+        if (oldVersion < 2) {
+            sqLiteDatabase.execSQL("ALTER TABLE $DATABASE_MEDIA_ITEMS_METADATA_NAME ADD COLUMN vibrant_color int")
+            sqLiteDatabase.execSQL("ALTER TABLE $DATABASE_MEDIA_ITEMS_METADATA_NAME ADD COLUMN text_color int")
+        }
+        if (oldVersion < 3) {
+            sqLiteDatabase.execSQL("ALTER TABLE $DATABASE_MEDIA_ITEMS_NAME ADD COLUMN $PLUGIN text")
+        }
+        if (oldVersion < 4) {
+            // needed since 4.1.0
+            sqLiteDatabase.execSQL(DATABASE_PLAYLISTS_CREATE)
+
+            // needed since 4.0.0 but database upgrade was missing in release
+            try {
+                sqLiteDatabase.execSQL("ALTER TABLE $DATABASE_MEDIA_ITEMS_NAME ADD COLUMN $DATASOURCE boolean default 0")
+            } catch (_: Exception) {}
         }
     }
 
@@ -268,6 +271,7 @@ internal class Database(context: Context) : SQLiteOpenHelper(context, DATABASE_N
             values.put("items", if (items.isEmpty()) metadata.mediaId else "$items,${metadata.mediaId}")
             writableDatabase.update(DATABASE_PLAYLISTS_NAME, values, "$ID=?", arrayOf(playlistId))
         }
+        cursor.close()
     }
 
     fun movePlaylist(playlistId: String, musicId: String, position: Int) {
@@ -282,6 +286,7 @@ internal class Database(context: Context) : SQLiteOpenHelper(context, DATABASE_N
             values.put("items", items.joinToString(","))
             writableDatabase.update(DATABASE_PLAYLISTS_NAME, values, "$ID=?", arrayOf(playlistId))
         }
+        cursor.close()
     }
 
     fun removePlaylist(playlistId: String, musicId: String) {
@@ -295,6 +300,7 @@ internal class Database(context: Context) : SQLiteOpenHelper(context, DATABASE_N
             values.put("items", items.joinToString(","))
             writableDatabase.update(DATABASE_PLAYLISTS_NAME, values, "$ID=?", arrayOf(playlistId))
         }
+        cursor.close()
     }
 
     fun getPlaylists(): List<MediaItem> {
