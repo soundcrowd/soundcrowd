@@ -40,10 +40,10 @@ import com.tiefensuche.soundcrowd.images.ArtworkHelper
 import com.tiefensuche.soundcrowd.images.GlideApp
 import com.tiefensuche.soundcrowd.images.GlideRequests
 import com.tiefensuche.soundcrowd.plugins.MediaMetadataCompatExt
-import com.tiefensuche.soundcrowd.plugins.MediaMetadataCompatExt.COMMAND_LIKE
 import com.tiefensuche.soundcrowd.service.PlaybackService.Companion.COMMAND_CUE_CREATE
 import com.tiefensuche.soundcrowd.service.PlaybackService.Companion.COMMAND_CUE_DELETE
 import com.tiefensuche.soundcrowd.service.PlaybackService.Companion.COMMAND_CUE_EDIT
+import com.tiefensuche.soundcrowd.service.PlaybackService.Companion.COMMAND_LIKE
 import com.tiefensuche.soundcrowd.service.PlaybackService.Companion.COMMAND_START_TAGGING
 import com.tiefensuche.soundcrowd.service.PlaybackService.Companion.RESULT
 import com.tiefensuche.soundcrowd.service.Share

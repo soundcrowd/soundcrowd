@@ -441,15 +441,14 @@ internal class MusicProvider(context: Context) {
     }
 
     fun favorite(
-        musicId: String,
+        mediaItem: MediaItem
     ): Boolean {
-        val metadata = getMusic(musicId) ?: return false
-        val result = PluginManager.plugins[metadata.mediaMetadata.extras!!.getString(MediaMetadataCompatExt.METADATA_KEY_PLUGIN)]!!.favorite(metadata.mediaId)
+        val result = PluginManager.plugins[mediaItem.mediaMetadata.extras!!.getString(MediaMetadataCompatExt.METADATA_KEY_PLUGIN)]!!.favorite(mediaItem.mediaId)
         if (result)
             updateMetadata(
-                metadata.buildUpon().setMediaMetadata(
-                    metadata.mediaMetadata.buildUpon()
-                        .setUserRating(HeartRating(!(metadata.mediaMetadata.userRating as HeartRating).isHeart))
+                mediaItem.buildUpon().setMediaMetadata(
+                    mediaItem.mediaMetadata.buildUpon()
+                        .setUserRating(HeartRating(!(mediaItem.mediaMetadata.userRating as HeartRating).isHeart))
                         .build()
                 ).build()
             )

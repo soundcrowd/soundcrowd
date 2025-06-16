@@ -229,12 +229,18 @@ class PlaybackService : MediaLibraryService() {
                 }
                 COMMAND_LIKE -> {
                     val settableFuture = SettableFuture.create<SessionResult>()
+                    val mediaId = args.getString(MEDIA_ID)!!
+                    val mediaItem =
+                        if (session.player.currentMediaItem?.mediaId == mediaId)
+                            session.player.currentMediaItem!!
+                        else
+                            getMusic(mediaId)!!
                     CoroutineScope(Dispatchers.Main).launch {
                         val result = withContext(Dispatchers.IO) {
-                            musicProvider.favorite(args.getString(MEDIA_ID)!!)
+                            musicProvider.favorite(mediaItem)
                         }
-                        if (result)
-                            session.player.replaceMediaItem(session.player.currentMediaItemIndex, musicProvider.getMusic(session.player.currentMediaItem!!.mediaId)!!)
+                        if (result && session.player.currentMediaItem == mediaItem)
+                            session.player.replaceMediaItem(session.player.currentMediaItemIndex, getMusic(mediaId)!!)
                         settableFuture.set(SessionResult(if (result) SessionResult.RESULT_SUCCESS else SessionError.ERROR_UNKNOWN))
                     }
                     return settableFuture
@@ -366,7 +372,7 @@ class PlaybackService : MediaLibraryService() {
                                 CommandButton.Builder(CommandButton.ICON_HEART_FILLED)
                                     .setDisplayName(getString(R.string.favorite))
                                     .setIconResId(if (it) androidx.media3.session.R.drawable.media3_icon_heart_filled else androidx.media3.session.R.drawable.media3_icon_heart_unfilled)
-                                    .setSessionCommand(SessionCommand(COMMAND_LIKE, Bundle.EMPTY))
+                                    .setSessionCommand(SessionCommand(COMMAND_LIKE, Bundle().apply { putString(MEDIA_ID, player.currentMediaItem!!.mediaId) }))
                                     .build()
                             )
                         } ?: emptyList()
