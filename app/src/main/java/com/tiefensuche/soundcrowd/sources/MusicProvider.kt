@@ -174,7 +174,9 @@ internal class MusicProvider(context: Context) {
      * @param musicId The unique, non-hierarchical music ID.
      */
     internal fun getMusic(musicId: String): MediaItem? {
-        return library.keys[musicId]
+        if (library.keys.containsKey(musicId))
+            return library.keys[musicId]
+        return database.getMediaItem(musicId)
     }
 
     internal fun updateExtendedMetadata(item: MediaItem) {
