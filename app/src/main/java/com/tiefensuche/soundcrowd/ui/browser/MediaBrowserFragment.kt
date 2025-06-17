@@ -5,6 +5,7 @@ package com.tiefensuche.soundcrowd.ui.browser
 
 import android.annotation.SuppressLint
 import android.app.Activity
+import android.content.Context
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
@@ -92,11 +93,9 @@ internal abstract class MediaBrowserFragment : Fragment() {
         return rootView
     }
 
-    override fun onAttach(activity: Activity) {
-        super.onAttach(activity)
-
-        if (activity is MediaFragmentListener)
-            mMediaFragmentListener = activity
+    override fun onAttach(context: Context) {
+        super.onAttach(context)
+        mMediaFragmentListener = activity as MediaFragmentListener
     }
 
     open fun requestMedia(offset: Int = 0, refresh: Boolean = false) {
@@ -120,7 +119,7 @@ internal abstract class MediaBrowserFragment : Fragment() {
 
     override fun onStart() {
         super.onStart()
-        if (mMediaFragmentListener.mediaBrowser.isConnected && mBrowserAdapter.isEmpty)
+        if (mMediaFragmentListener.connected && mBrowserAdapter.isEmpty)
             requestMedia()
     }
 
@@ -134,6 +133,8 @@ internal abstract class MediaBrowserFragment : Fragment() {
     }
 
     open fun updateDescription() {
+        if (!mMediaFragmentListener.connected)
+            return
         val childrenFuture =
             mMediaFragmentListener.mediaBrowser.getItem(mediaId)
         childrenFuture.addListener({

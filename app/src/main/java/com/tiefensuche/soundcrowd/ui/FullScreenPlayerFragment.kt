@@ -279,6 +279,12 @@ internal class FullScreenPlayerFragment : Fragment() {
             activity = super.getActivity() as MusicPlayerActivity
     }
 
+    override fun onStart() {
+        super.onStart()
+        if (activity.connected)
+            updatePlaybackState()
+    }
+
     internal fun onMetadataChanged(metadata: MediaMetadata, force: Boolean = false) {
         if (force || mediaController.currentMediaItem?.mediaId != mCurrentMediaId) {
             mLine1.text = metadata.title
@@ -360,7 +366,7 @@ internal class FullScreenPlayerFragment : Fragment() {
             }
 
             override fun onError() {
-                activity?.let {
+                activity.let {
                     for (view in listOf(mSeekbar.progressDrawable, mSeekbar.thumb)) {
                         view.setColorFilter(ContextCompat.getColor(it, R.color.colorPrimary), PorterDuff.Mode.SRC_IN)
                     }

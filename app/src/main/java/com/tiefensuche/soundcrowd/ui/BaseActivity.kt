@@ -31,8 +31,13 @@ import com.tiefensuche.soundcrowd.ui.intro.IntroActivity
  */
 abstract class BaseActivity : ActionBarCastActivity(), MediaBrowserProvider {
 
-    override lateinit var mediaBrowser: MediaBrowser
-    private var connected = false
+    private var _mediaBrowser: MediaBrowser? = null
+    override val mediaBrowser: MediaBrowser
+        get() {
+            return _mediaBrowser!!
+        }
+    override val connected: Boolean
+        get() = _mediaBrowser != null
     private var mFullScreenPlayerFragment: FullScreenPlayerFragment? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -122,7 +127,7 @@ abstract class BaseActivity : ActionBarCastActivity(), MediaBrowserProvider {
 
         val browserFuture = MediaBrowser.Builder(this, sessionToken).buildAsync()
         browserFuture.addListener({
-            mediaBrowser = browserFuture.get()
+            _mediaBrowser = browserFuture.get()
             mediaBrowser.addListener(object : Player.Listener {
                 override fun onPlaybackStateChanged(playbackState: Int) {
                     if (shouldShowControls()) {
@@ -151,7 +156,6 @@ abstract class BaseActivity : ActionBarCastActivity(), MediaBrowserProvider {
             })
             handleIntent(intent)
             getPlugins()
-            connected = true
             if (shouldShowControls()) {
                 mFullScreenPlayerFragment?.onPlaybackStateChanged()
                 mFullScreenPlayerFragment?.onMetadataChanged(mediaBrowser.currentMediaItem!!.mediaMetadata, true)

@@ -35,6 +35,9 @@ internal class QueueFragment : Fragment() {
         requests = GlideApp.with(this)
         mBrowserAdapter = ListItemAdapter(requests, mMediaFragmentListener)
 
+        if (!mMediaFragmentListener.connected)
+            return
+
         for (i in 0 until mMediaFragmentListener.mediaBrowser.mediaItemCount) {
             mBrowserAdapter.add(mMediaFragmentListener.mediaBrowser.getMediaItemAt(i))
         }
