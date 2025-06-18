@@ -60,10 +60,8 @@ internal class EqualizerFragment : Fragment() {
         setupEqualizer(rootView.findViewById(R.id.spinnerPreset), rootView.findViewById(R.id.checkBoxEqualizer), rootView.findViewById(R.id.layoutEqualizer))
         setupBassBoost(rootView.findViewById(R.id.checkBoxBassBoost), rootView.findViewById(R.id.seekBarBassBoost))
         setupReverb(rootView.findViewById(R.id.spinnerReverb), rootView.findViewById(R.id.checkBoxReverb))
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
-            rootView.findViewById<View>(R.id.areaLoudness).visibility = View.VISIBLE
-            setupLoudnessEnhancer(rootView.findViewById(R.id.checkBoxLoudness), rootView.findViewById(R.id.seekBarLoudness))
-        }
+        rootView.findViewById<View>(R.id.areaLoudness).visibility = View.VISIBLE
+        setupLoudnessEnhancer(rootView.findViewById(R.id.checkBoxLoudness), rootView.findViewById(R.id.seekBarLoudness))
         return rootView
     }
 
@@ -218,7 +216,6 @@ internal class EqualizerFragment : Fragment() {
         }
     }
 
-    @RequiresApi(api = Build.VERSION_CODES.KITKAT)
     private fun setupLoudnessEnhancer(checkBox: CheckBox, seekBar: SeekBar) {
         checkBox.visibility = View.VISIBLE
         setupViews(checkBox, seekBar, CONFIG_LOUDNESS_ENABLED, CONFIG_LOUDNESS_GAIN) { enabled, value ->
