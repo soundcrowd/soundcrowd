@@ -17,7 +17,7 @@ import com.tiefensuche.soundcrowd.plugins.MediaMetadataCompatExt
 import com.tiefensuche.soundcrowd.service.Database
 import com.tiefensuche.soundcrowd.service.PluginManager
 import com.tiefensuche.soundcrowd.sources.MusicProvider.Media.CUE_POINTS
-import com.tiefensuche.soundcrowd.sources.MusicProvider.Media.LAST_MEDIA
+import com.tiefensuche.soundcrowd.sources.MusicProvider.Media.HISTORY
 import com.tiefensuche.soundcrowd.sources.MusicProvider.Media.LOCAL
 import com.tiefensuche.soundcrowd.sources.MusicProvider.Media.PLAYLISTS
 import com.tiefensuche.soundcrowd.sources.MusicProvider.Media.TEMP
@@ -288,6 +288,9 @@ internal class MusicProvider(context: Context) {
     }
 
     internal fun getChildren(request: Request): List<MediaItem> {
+        if (request.mediaId == HISTORY)
+            return database.getHistory()
+
         if (request.cmd == SUGGESTIONS)
             return getSuggestions(request)
 
@@ -320,16 +323,6 @@ internal class MusicProvider(context: Context) {
             }
         }
         return result
-    }
-
-    internal fun loadLastMedia(musicId: String): Boolean {
-        database.getMediaItem(musicId)?.let { track ->
-            val request = Request(LAST_MEDIA + LEAF_SEPARATOR + track.mediaId)
-            val dir = library.getPath(request, true)
-            dir.add(track)
-            return true
-        }
-        return false
     }
 
     fun getPlugins(): ArrayList<Bundle> {
@@ -390,7 +383,6 @@ internal class MusicProvider(context: Context) {
                     throw Exception("error when loading local media", e)
                 }
             }
-
             PLAYLISTS -> {
                 if (request.query != null) {
                     (if (request.path != null)
@@ -409,7 +401,6 @@ internal class MusicProvider(context: Context) {
                     dir.add(it)
                 }
             }
-
             CUE_POINTS -> {
                 if (request.query != null) {
                     searchMusic(library.root.edges[CUE_POINTS]!!, request.query!!).forEach { dir.add(it) }
@@ -606,17 +597,23 @@ internal class MusicProvider(context: Context) {
         }
     }
 
-    fun updateLastPosition(metadata: MediaItem, position: Long) {
-        database.updatePosition(metadata, position)
-        val musicId = metadata.mediaId
+    fun updateLastPosition(mediaItem: MediaItem?, position: Long) {
+        if (mediaItem == null)
+            return
+        database.updatePosition(mediaItem, position)
+        val musicId = mediaItem.mediaId
         library.keys[musicId]?.mediaMetadata?.extras?.putLong(Cues.LAST_POSITION, position)
+    }
+
+    internal fun increasePlayCount(item: MediaItem) {
+        database.increasePlayCount(item)
     }
 
     object Media {
         const val LOCAL = "LOCAL"
         const val PLAYLISTS = "PLAYLISTS"
         const val CUE_POINTS = "CUE_POINTS"
-        const val LAST_MEDIA = "LAST_MEDIA"
+        const val HISTORY = "HISTORY"
         const val TEMP = "TEMP"
     }
 

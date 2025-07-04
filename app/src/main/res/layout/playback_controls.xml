@@ -7,7 +7,10 @@
     android:background="?attr/colorSurface"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:padding="@dimen/playback_controls_padding">
+    android:paddingTop="@dimen/playback_controls_padding"
+    android:paddingBottom="@dimen/playback_controls_bottom_padding"
+    android:paddingStart="@dimen/playback_controls_padding"
+    android:paddingEnd="@dimen/playback_controls_padding">
 
     <ImageView
         android:id="@+id/album_art"
@@ -23,7 +26,6 @@
         android:id="@+id/content"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_centerVertical="true"
         android:layout_marginStart="@dimen/playback_controls_albumart_horizontal_margin"
         android:layout_marginLeft="@dimen/playback_controls_albumart_horizontal_margin"
         android:layout_toStartOf="@+id/play_pause"

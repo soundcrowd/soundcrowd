@@ -21,6 +21,10 @@
             android:icon="@drawable/ic_round_star_24"
             android:title="@string/drawer_cue_points_title" />
         <item
+            android:id="@+id/navigation_history"
+            android:icon="@drawable/history_24px"
+            android:title="@string/drawer_history_title" />
+        <item
             android:id="@+id/navigation_equalizer"
             android:icon="@drawable/ic_round_equalizer_24"
             android:title="@string/equalizer_title" />

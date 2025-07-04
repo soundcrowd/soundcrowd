@@ -14,11 +14,13 @@ import android.os.Bundle
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.media3.common.AudioAttributes
+import androidx.media3.common.ForwardingPlayer
 import androidx.media3.common.HeartRating
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
 import androidx.media3.common.Player
 import androidx.media3.common.Timeline
+import androidx.media3.common.util.UnstableApi
 import androidx.media3.database.StandaloneDatabaseProvider
 import androidx.media3.datasource.DataSpec
 import androidx.media3.datasource.DefaultHttpDataSource
@@ -70,7 +72,10 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
 import java.io.File
+import androidx.core.content.edit
+import androidx.media3.common.C
 
+@UnstableApi
 class PlaybackService : MediaLibraryService() {
 
     companion object {
@@ -341,7 +346,7 @@ class PlaybackService : MediaLibraryService() {
         }
 
         sink = RecordAudioBufferSink(this.filesDir.path + "/rec.wav")
-        val player = ExoPlayer.Builder(this)
+        val exoPlayer = ExoPlayer.Builder(this)
             .setAudioAttributes(AudioAttributes.DEFAULT, /* handleAudioFocus= */ true)
             .setMediaSourceFactory(CustomMediaSourceFactory())
             .setHandleAudioBecomingNoisy(true)
@@ -359,9 +364,37 @@ class PlaybackService : MediaLibraryService() {
                 }
             })
             .build()
-        player.addAnalyticsListener(EventLogger())
+
+        class CustomPlayer : ForwardingPlayer(exoPlayer) {
+
+            override fun setMediaItems(
+                mediaItems: List<MediaItem>,
+                startIndex: Int,
+                startPositionMs: Long
+            ) {
+                musicProvider.updateLastPosition(currentMediaItem, currentPosition)
+                super.setMediaItems(mediaItems, startIndex, startPositionMs)
+            }
+
+            override fun seekToNextMediaItem() {
+                musicProvider.updateLastPosition(currentMediaItem, currentPosition)
+                super.seekToNextMediaItem()
+            }
+
+            override fun seekToPreviousMediaItem() {
+                musicProvider.updateLastPosition(currentMediaItem, currentPosition)
+                super.seekToPreviousMediaItem()
+            }
+
+            override fun pause() {
+                musicProvider.updateLastPosition(currentMediaItem, currentPosition)
+                super.pause()
+            }
+        }
+        val player = CustomPlayer()
+        exoPlayer.addAnalyticsListener(EventLogger())
         setListener(MediaSessionServiceListener())
-        EqualizerControl.setupEqualizerFX(player.audioSessionId, this)
+        EqualizerControl.setupEqualizerFX(exoPlayer.audioSessionId, this)
 
         player.addListener(object : Player.Listener {
             override fun onMediaMetadataChanged(mediaMetadata: MediaMetadata) {
@@ -385,10 +418,17 @@ class PlaybackService : MediaLibraryService() {
                 if (mediaItem == null)
                     return
                 musicProvider.updateExtendedMetadata(mediaItem)
+                musicProvider.increasePlayCount(mediaItem)
             }
 
             override fun onTimelineChanged(timeline: Timeline, reason: Int) {
                 musicProvider.updatePlaylist("0", MutableList(player.mediaItemCount, player::getMediaItemAt))
+                getDefaultSharedPreferences(this@PlaybackService).edit {
+                    putInt(
+                        "playing_queue_position",
+                        player.currentMediaItemIndex
+                    )
+                }
             }
         })
 
@@ -397,7 +437,11 @@ class PlaybackService : MediaLibraryService() {
             .build()
 
         musicProvider = MusicProvider(this)
-        player.setMediaItems(musicProvider.getPlaylist("0"))
+        player.setMediaItems(
+            musicProvider.getPlaylist("0"),
+            getDefaultSharedPreferences(this).getInt("playing_queue_position", 0),
+            C.TIME_UNSET
+        )
     }
 
     override fun onDestroy() {

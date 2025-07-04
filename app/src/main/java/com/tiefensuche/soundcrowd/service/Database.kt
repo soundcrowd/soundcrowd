@@ -52,12 +52,13 @@ internal class Database(context: Context) : SQLiteOpenHelper(context, DATABASE_N
         private const val POSITION = "position"
         private const val DESCRIPTION = "description"
         private const val LAST_TIMESTAMP = "last"
+        private const val COUNT = "count"
 
         private const val DATABASE_MEDIA_ITEM_CUE_POINTS_NAME = "MediaItemStars"
         private const val DATABASE_MEDIA_ITEMS_CUE_POINTS_CREATE = "create table if not exists $DATABASE_MEDIA_ITEM_CUE_POINTS_NAME ($MEDIA_ID text not null, $POSITION int not null, $DESCRIPTION text, CONSTRAINT pk_media_item_star PRIMARY KEY ($MEDIA_ID,$POSITION))"
 
         private const val DATABASE_MEDIA_ITEMS_METADATA_NAME = "MediaItemsMetadata"
-        private const val DATABASE_MEDIA_ITEMS_METADATA_CREATE = "create table if not exists $DATABASE_MEDIA_ITEMS_METADATA_NAME ($ID text primary key, $POSITION long, $ALBUM_ART_URL text, vibrant_color int, text_color int)"
+        private const val DATABASE_MEDIA_ITEMS_METADATA_CREATE = "create table if not exists $DATABASE_MEDIA_ITEMS_METADATA_NAME ($ID text primary key, $POSITION long, $ALBUM_ART_URL text, vibrant_color int, text_color int, $COUNT int default 1, $LAST_TIMESTAMP date default current_timestamp)"
 
         private const val DATABASE_PLAYLISTS_NAME = "Playlists"
         private const val DATABASE_PLAYLISTS_CREATE = "create table if not exists $DATABASE_PLAYLISTS_NAME ($ID integer primary key not null, name text, items text)"
@@ -135,6 +136,8 @@ internal class Database(context: Context) : SQLiteOpenHelper(context, DATABASE_N
         }
         if (oldVersion < 5) {
             sqLiteDatabase.execSQL(DATABASE_SEARCH_HISTORY_CREATE)
+            sqLiteDatabase.execSQL("ALTER TABLE $DATABASE_MEDIA_ITEMS_METADATA_NAME ADD COLUMN $COUNT int default 1")
+            sqLiteDatabase.execSQL("ALTER TABLE $DATABASE_MEDIA_ITEMS_METADATA_NAME ADD COLUMN $LAST_TIMESTAMP date default current_timestamp")
 
             // needed since 4.0.0 but database upgrade was missing in release
             try {
@@ -189,6 +192,27 @@ internal class Database(context: Context) : SQLiteOpenHelper(context, DATABASE_N
                 values.remove(ID)
                 try {
                     writableDatabase.update(DATABASE_MEDIA_ITEMS_METADATA_NAME, values, "$ID=?", arrayOf(it))
+                } catch (e1: SQLiteException) {
+                    Log.e(TAG, "error while updating position", e1)
+                }
+            }
+        }
+    }
+
+    internal fun increasePlayCount(mediaItem: MediaItem) {
+        addMediaItem(mediaItem)
+        mediaItem.mediaId.let {
+            val values = ContentValues()
+            values.put(ID, it)
+            try {
+                writableDatabase.insertOrThrow(DATABASE_MEDIA_ITEMS_METADATA_NAME, null, values)
+            } catch (e: SQLException) {
+                values.remove(ID)
+                try {
+                    writableDatabase.execSQL(
+                        "update $DATABASE_MEDIA_ITEMS_METADATA_NAME set $LAST_TIMESTAMP=current_timestamp, $COUNT=$COUNT+1 where $ID=?",
+                        arrayOf(it)
+                    )
                 } catch (e1: SQLiteException) {
                     Log.e(TAG, "error while updating position", e1)
                 }
@@ -359,13 +383,31 @@ internal class Database(context: Context) : SQLiteOpenHelper(context, DATABASE_N
         val items = ArrayList<MediaItem>()
         try {
             val cursor = readableDatabase.query(DATABASE_SEARCH_HISTORY_NAME,
-                null, "$ID like ?", arrayOf("%$query%"), null, null, "last desc", "50")
+                null, "$ID like ?", arrayOf("%$query%"), null, null, "$LAST_TIMESTAMP desc", "50")
             while (cursor.moveToNext()) {
                 items.add(MediaItemUtils.createTextItem(cursor.getString(cursor.getColumnIndex(ID)), true))
             }
             cursor.close()
         } catch (e: SQLException) {
             Log.e(TAG, "error while querying recent search queries", e)
+        }
+        return items
+    }
+
+    fun getHistory(): List<MediaItem> {
+        val items = ArrayList<MediaItem>()
+        try {
+            val cursor = readableDatabase.query("$DATABASE_MEDIA_ITEMS_METADATA_NAME JOIN $DATABASE_MEDIA_ITEMS_NAME ON ($DATABASE_MEDIA_ITEMS_METADATA_NAME.id = $DATABASE_MEDIA_ITEMS_NAME.id)",
+                null, null, null, null, null, "$LAST_TIMESTAMP desc")
+            while (cursor.moveToNext()) {
+                val item = buildItem(cursor)
+                item.mediaMetadata.extras?.putLong(LAST_TIMESTAMP, cursor.getLong(cursor.getColumnIndexOrThrow(LAST_TIMESTAMP)))
+                item.mediaMetadata.extras?.putInt(COUNT, cursor.getInt(cursor.getColumnIndexOrThrow(COUNT)))
+                items.add(item)
+            }
+            cursor.close()
+        } catch (e: SQLException) {
+            Log.e(TAG, "error while querying history", e)
         }
         return items
     }
