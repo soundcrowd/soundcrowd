@@ -30,6 +30,7 @@ import com.tiefensuche.soundcrowd.sources.MusicProvider.PluginMetadata.ICON
 import com.tiefensuche.soundcrowd.sources.MusicProvider.PluginMetadata.NAME
 import com.tiefensuche.soundcrowd.sources.MusicProvider.PluginMetadata.SEARCH_TYPES
 import com.tiefensuche.soundcrowd.ui.browser.CueMediaBrowserFragment
+import com.tiefensuche.soundcrowd.ui.browser.HistoryMediaBrowserFragment
 import com.tiefensuche.soundcrowd.ui.browser.MediaBrowserFragment
 import com.tiefensuche.soundcrowd.ui.browser.PlaylistsMediaBrowserFragment
 import com.tiefensuche.soundcrowd.ui.browser.SuggestionMediaBrowserFragment
@@ -244,6 +245,7 @@ abstract class ActionBarCastActivity : AppCompatActivity() {
             R.id.navigation_playing_queue -> setFragment(QueueFragment())
             R.id.navigation_playlists -> setFragment(PlaylistsMediaBrowserFragment())
             R.id.navigation_cue_points -> setFragment(CueMediaBrowserFragment())
+            R.id.navigation_history -> setFragment(HistoryMediaBrowserFragment())
             R.id.navigation_equalizer -> setFragment(EqualizerFragment())
             R.id.navigation_preferences -> setFragment(PreferenceFragment())
             else -> {
