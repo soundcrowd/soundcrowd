@@ -15,7 +15,7 @@ import com.tiefensuche.soundcrowd.sources.MusicProvider.Media.CUE_POINTS
 import com.tiefensuche.soundcrowd.ui.browser.adapters.CueListItemAdapter
 import com.tiefensuche.soundcrowd.utils.MediaIDHelper.extractMusicIDFromMediaID
 
-internal class CueMediaBrowserFragment : CollectionMediaBrowserFragment() {
+internal class CueMediaBrowserFragment : SortedMediaBrowserFragment() {
 
     override val mediaId = CUE_POINTS
 
@@ -52,5 +52,6 @@ internal class CueMediaBrowserFragment : CollectionMediaBrowserFragment() {
     override fun updateDescription() {
         mMediaFragmentListener.setToolbarTitle(getString(R.string.drawer_cue_points_title))
         mMediaFragmentListener.enableCollapse(false)
+        mMediaFragmentListener.showSearchButton(false)
     }
 }

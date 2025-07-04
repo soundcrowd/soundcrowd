@@ -1,19 +1,17 @@
+/*
+ * SPDX-License-Identifier: GPL-3.0-only
+ */
+
 package com.tiefensuche.soundcrowd.ui.browser
 
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import androidx.media3.common.MediaItem
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.tiefensuche.soundcrowd.ui.browser.adapters.ListItemAdapter
 
-internal open class ListMediaBrowserFragment : MediaBrowserFragment() {
-
-    override fun onResult(items: List<MediaItem>) {
-        super.onResult(items)
-        mBrowserAdapter.notifyDataChanged()
-    }
+internal open class SortedListMediaBrowserFragment : SortedMediaBrowserFragment() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

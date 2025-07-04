@@ -9,7 +9,7 @@ import com.tiefensuche.soundcrowd.R
 import com.tiefensuche.soundcrowd.ui.browser.adapters.GridItemAdapter
 import kotlin.math.round
 
-internal open class GridMediaBrowserFragment : CollectionMediaBrowserFragment() {
+internal open class GridMediaBrowserFragment : SortedMediaBrowserFragment() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

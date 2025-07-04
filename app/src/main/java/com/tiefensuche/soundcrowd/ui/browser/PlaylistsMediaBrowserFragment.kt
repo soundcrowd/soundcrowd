@@ -11,7 +11,7 @@ import com.tiefensuche.soundcrowd.R
 import com.tiefensuche.soundcrowd.service.PlaybackService.Companion.COMMAND_PLAYLIST_DELETE
 import com.tiefensuche.soundcrowd.sources.MusicProvider.Media.PLAYLISTS
 
-internal class PlaylistsMediaBrowserFragment : ListMediaBrowserFragment() {
+internal class PlaylistsMediaBrowserFragment : SortedListMediaBrowserFragment() {
 
     override val mediaId = PLAYLISTS
 

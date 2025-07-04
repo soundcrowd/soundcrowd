@@ -14,7 +14,7 @@ import com.tiefensuche.soundcrowd.sources.MusicProvider.Companion.MEDIA_ID
 import com.tiefensuche.soundcrowd.sources.MusicProvider.PluginMetadata.CATEGORY
 import com.tiefensuche.soundcrowd.sources.MusicProvider.PluginMetadata.NAME
 import com.tiefensuche.soundcrowd.ui.browser.GridMediaBrowserFragment
-import com.tiefensuche.soundcrowd.ui.browser.ListMediaBrowserFragment
+import com.tiefensuche.soundcrowd.ui.browser.SortedListMediaBrowserFragment
 import com.tiefensuche.soundcrowd.ui.browser.StreamMediaBrowserFragment
 import com.tiefensuche.soundcrowd.utils.MediaIDHelper
 
@@ -111,7 +111,7 @@ internal class LocalTabFragment : TabFragment() {
     override fun createFragment(position: Int): Fragment {
         return when (position) {
             0 -> GridMediaBrowserFragment()
-            else -> ListMediaBrowserFragment()
+            else -> SortedListMediaBrowserFragment()
         }
     }
 }

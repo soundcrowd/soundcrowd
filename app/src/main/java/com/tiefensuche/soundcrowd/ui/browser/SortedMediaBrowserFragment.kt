@@ -7,7 +7,7 @@ import android.view.ViewGroup
 import androidx.media3.common.MediaItem
 import androidx.recyclerview.widget.RecyclerView
 
-internal open class CollectionMediaBrowserFragment : MediaBrowserFragment() {
+internal open class SortedMediaBrowserFragment : MediaBrowserFragment() {
 
     override fun onResult(items: List<MediaItem>) {
         super.onResult(items)
