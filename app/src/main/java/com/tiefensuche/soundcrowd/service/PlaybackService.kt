@@ -109,6 +109,7 @@ class PlaybackService : MediaLibraryService() {
     }
 
     var mediaLibrarySession: MediaLibrarySession? = null
+    private lateinit var cache: SimpleCache
     private val songRec = SongRec()
     lateinit var sink: RecordAudioBufferSink
     private var callback: MediaLibrarySession.Callback =
@@ -280,19 +281,18 @@ class PlaybackService : MediaLibraryService() {
 
     override fun onCreate() {
         super.onCreate()
-        val downloadCache =
-            SimpleCache(
-                File(this.cacheDir, "exoplayer"),
-                LeastRecentlyUsedCacheEvictor(
-                    1024L * 1024 * getDefaultSharedPreferences(this).getInt(
-                        getString(R.string.cache_size_key),
-                        512
-                    )
-                ),
-                StandaloneDatabaseProvider(this)
-            )
+        cache = SimpleCache(
+            File(this.cacheDir, "exoplayer"),
+            LeastRecentlyUsedCacheEvictor(
+                1024L * 1024 * getDefaultSharedPreferences(this).getInt(
+                    getString(R.string.cache_size_key),
+                    512
+                )
+            ),
+            StandaloneDatabaseProvider(this)
+        )
         val cacheSink = CacheDataSink.Factory()
-            .setCache(downloadCache)
+            .setCache(cache)
         val upstreamFactory =
             ResolvingDataSource.Factory(DefaultHttpDataSource.Factory()) { dataSpec: DataSpec ->
                 // Provide just-in-time URI resolution logic.
@@ -301,7 +301,7 @@ class PlaybackService : MediaLibraryService() {
         val downStreamFactory = FileDataSource.Factory()
         val cacheDataSourceFactory  =
             CacheDataSource.Factory()
-                .setCache(downloadCache)
+                .setCache(cache)
                 .setCacheWriteDataSinkFactory(cacheSink)
                 .setCacheReadDataSourceFactory(downStreamFactory)
                 .setUpstreamDataSourceFactory(upstreamFactory)
@@ -404,6 +404,7 @@ class PlaybackService : MediaLibraryService() {
         mediaLibrarySession?.run {
             player.release()
             release()
+            cache.release()
             mediaLibrarySession = null
         }
         super.onDestroy()
