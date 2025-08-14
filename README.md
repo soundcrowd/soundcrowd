@@ -10,9 +10,14 @@ It features the generation of waveforms that visualize your music tracks during 
 
 You can create cue points at your favorite positions in your music tracks. With these markers in the waveform, you can remember them and easily jump back to them.
 
-The app contains build-in plugin modules to support various online streaming services, namely SoundCloud, Spotify, Tidal, and YouTube.
+Want to know the track id of a specific part in a mix? SoundCrowd comes with build-in audio tagging support by using [SongRec](https://github.com/marin-m/SongRec), an open-source Shazam client implementation, and creates cue points for found track ids. Unlike Shazam, the app records the internal audio of the player, so you don't need to grant access to the microphone or play the music loud!
 
-Want to know the track id of a specific part in a mix? SoundCrowd comes with build-in audio tagging support by using [SongRec](https://github.com/marin-m/SongRec), an open-source Shazam client implementation, and records the internal audio so you don't need to play the music loud!
+The app contains build-in plugin modules to support the following online streaming services:
+- SoundCloud
+- YouTube
+- Spotify
+- Beatport
+- Tidal
 
 ## Download
 
@@ -21,18 +26,6 @@ Want to know the track id of a specific part in a mix? SoundCrowd comes with bui
       height="80">](https://soundcrowd.github.io/fdroid/repo)
 
 or download the apk directly from the [GitHub releases](https://github.com/soundcrowd/soundcrowd/releases) page.
-
-## Online Streaming Services
-
-The following plugins for online streaming services are currently available:
-
-| Service    | Download                                                                                                                                                                    |
-|------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| SoundCloud | [![GitHub release](https://img.shields.io/github/release/soundcrowd/soundcrowd-plugin-soundcloud.svg)](https://github.com/soundcrowd/soundcrowd-plugin-soundcloud/releases) |
-| YouTube    | [![GitHub release](https://img.shields.io/github/release/soundcrowd/soundcrowd-plugin-youtube.svg)](https://github.com/soundcrowd/soundcrowd-plugin-youtube/releases)       |
-| Spotify    | [![GitHub release](https://img.shields.io/github/release/soundcrowd/soundcrowd-plugin-spotify.svg)](https://github.com/soundcrowd/soundcrowd-plugin-spotify/releases)       |
-| Beatport   | [![GitHub release](https://img.shields.io/github/release/soundcrowd/soundcrowd-plugin-beatport.svg)](https://github.com/soundcrowd/soundcrowd-plugin-beatport/releases)     |
-| Tidal      | [![GitHub release](https://img.shields.io/github/release/soundcrowd/soundcrowd-plugin-tidal.svg)](https://github.com/soundcrowd/soundcrowd-plugin-tidal/releases)           |
 
 ## Screenshots
 
