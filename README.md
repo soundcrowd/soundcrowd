@@ -2,8 +2,8 @@
 
 [![android](https://github.com/soundcrowd/soundcrowd/actions/workflows/android.yml/badge.svg)](https://github.com/soundcrowd/soundcrowd/actions/workflows/android.yml)
 [![GitHub release](https://img.shields.io/github/release/soundcrowd/soundcrowd.svg)](https://github.com/soundcrowd/soundcrowd/releases)
-[![GitHub](https://img.shields.io/github/license/soundcrowd/soundcrowd.svg)](LICENSE)
 [![RB Status](https://shields.rbtlog.dev/simple/com.tiefensuche.soundcrowd)](https://shields.rbtlog.dev/com.tiefensuche.soundcrowd)
+[![GitHub](https://img.shields.io/github/license/soundcrowd/soundcrowd.svg)](LICENSE)
 
 SoundCrowd is a free, open-source and lightweight music player for Android in modern material design, specialized for playing long music tracks (DJ mixes, live sets, audio books).
 
