@@ -1,1 +1,1 @@
-Music player with waveform support for music sets
+Music player with support for SoundCloud, YouTube, Spotify, Beatport, and Tidal
