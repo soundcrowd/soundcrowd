@@ -56,7 +56,7 @@ dependencies {
     implementation project(':soundcloud')
     implementation project(':spotify')
     implementation project(':tidal')
-    implementation project(':youtube')
+    implementation(project(':youtube')) {exclude group: 'com.google.protobuf'}
 
     // android support
     // needed for newpipe extractor in youtube plugin on older android api
