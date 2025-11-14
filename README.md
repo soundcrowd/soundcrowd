@@ -14,11 +14,11 @@ You can create cue points at your favorite positions in your music tracks. With 
 Want to know the track id of a specific part in a mix? SoundCrowd comes with build-in audio tagging support by using [SongRec](https://github.com/marin-m/SongRec), an open-source Shazam client implementation, and creates cue points for found track ids. Unlike Shazam, the app records the internal audio of the player, so you don't need to grant access to the microphone or play the music loud!
 
 The app contains build-in plugin modules to support the following online streaming services:
-- SoundCloud
+- SoundCloud (requires free account)
 - YouTube
-- Spotify
-- Beatport
-- Tidal
+- Spotify (requires account with active premium subscription)
+- Beatport (requires free account, requires subscription to play full-length tracks)
+- Tidal (requires account with active subscription)
 
 ## Download
 
