@@ -49,7 +49,7 @@ dependencies {
     // own modules
     implementation 'com.github.soundcrowd:soundcrowd-plugin:v1.0.0'
     implementation 'com.github.soundcrowd:soundcrowd-waveform:v1.0'
-    implementation 'com.github.0xf4b1:songrec-android:v0.1'
+    implementation 'com.github.0xf4b1:songrec-android:6ba5ee9749'
 
     // service plugins
     implementation project(':beatport')
