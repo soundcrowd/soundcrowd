@@ -13,7 +13,9 @@ import android.os.Build
 import android.os.Bundle
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
+import androidx.core.content.edit
 import androidx.media3.common.AudioAttributes
+import androidx.media3.common.C
 import androidx.media3.common.ForwardingPlayer
 import androidx.media3.common.HeartRating
 import androidx.media3.common.MediaItem
@@ -22,6 +24,8 @@ import androidx.media3.common.Player
 import androidx.media3.common.Timeline
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.database.StandaloneDatabaseProvider
+import androidx.media3.datasource.ByteArrayDataSource
+import androidx.media3.datasource.DataSource
 import androidx.media3.datasource.DataSpec
 import androidx.media3.datasource.DefaultHttpDataSource
 import androidx.media3.datasource.FileDataSource
@@ -35,6 +39,8 @@ import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.audio.AudioSink
 import androidx.media3.exoplayer.audio.DefaultAudioSink
 import androidx.media3.exoplayer.audio.TeeAudioProcessor
+import androidx.media3.exoplayer.dash.DashMediaSource
+import androidx.media3.exoplayer.dash.DefaultDashChunkSource
 import androidx.media3.exoplayer.drm.DrmSessionManagerProvider
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.media3.exoplayer.source.MediaSource
@@ -72,8 +78,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
 import java.io.File
-import androidx.core.content.edit
-import androidx.media3.common.C
 
 @UnstableApi
 class PlaybackService : MediaLibraryService() {
@@ -286,6 +290,11 @@ class PlaybackService : MediaLibraryService() {
 
     override fun onCreate() {
         super.onCreate()
+
+        // Playback of local media files
+        val defaultMediaSourceFactory = DefaultMediaSourceFactory(this)
+
+        // Setup cache for remote media streams
         cache = SimpleCache(
             File(this.cacheDir, "exoplayer"),
             LeastRecentlyUsedCacheEvictor(
@@ -296,23 +305,36 @@ class PlaybackService : MediaLibraryService() {
             ),
             StandaloneDatabaseProvider(this)
         )
-        val cacheSink = CacheDataSink.Factory()
-            .setCache(cache)
+        val cacheSink = CacheDataSink.Factory().setCache(cache)
+        val downStreamFactory = FileDataSource.Factory()
+
+        // Playback of remote media streams
         val upstreamFactory =
             ResolvingDataSource.Factory(DefaultHttpDataSource.Factory()) { dataSpec: DataSpec ->
                 // Provide just-in-time URI resolution logic.
                 dataSpec.withUri(musicProvider.resolveMusic(dataSpec.key!!)!!)
             }
-        val downStreamFactory = FileDataSource.Factory()
-        val cacheDataSourceFactory  =
+        val cacheDataSourceFactory =
             CacheDataSource.Factory()
                 .setCache(cache)
                 .setCacheWriteDataSinkFactory(cacheSink)
                 .setCacheReadDataSourceFactory(downStreamFactory)
                 .setUpstreamDataSourceFactory(upstreamFactory)
                 .setFlags(CacheDataSource.FLAG_IGNORE_CACHE_ON_ERROR)
-        val dataSourceFactory = ProgressiveMediaSource.Factory(cacheDataSourceFactory)
-        val defaultMediaSourceFactory = DefaultMediaSourceFactory(this)
+        val streamMediaSourceFactory = ProgressiveMediaSource.Factory(cacheDataSourceFactory)
+
+        // Playback of dash media steams
+        val upstreamManifestFactory = DataSource.Factory {
+            ByteArrayDataSource { uri ->
+                musicProvider.resolveMusic(
+                    uri.toString()
+                ).toString().replace("http", "https").encodeToByteArray()
+            }
+        }
+        val dashMediaSourceFactory = DashMediaSource.Factory(
+            DefaultDashChunkSource.Factory(DefaultHttpDataSource.Factory()),
+            upstreamManifestFactory
+        )
 
         class CustomMediaSourceFactory : MediaSource.Factory {
             override fun setDrmSessionManagerProvider(drmSessionManagerProvider: DrmSessionManagerProvider): MediaSource.Factory {
@@ -328,19 +350,31 @@ class PlaybackService : MediaLibraryService() {
             }
 
             override fun createMediaSource(mediaItem: MediaItem): MediaSource {
-                val plugin = mediaItem.mediaMetadata.extras?.getString(MediaMetadataCompatExt.METADATA_KEY_PLUGIN)
-                val isDataSource = mediaItem.mediaMetadata.extras?.getBoolean(MediaMetadataCompatExt.METADATA_KEY_DATASOURCE) ?: false
+                val plugin =
+                    mediaItem.mediaMetadata.extras?.getString(MediaMetadataCompatExt.METADATA_KEY_PLUGIN)
+                val isDataSource =
+                    mediaItem.mediaMetadata.extras?.getBoolean(MediaMetadataCompatExt.METADATA_KEY_DATASOURCE)
+                        ?: false
                 return when (plugin) {
-                    LocalSource.NAME -> {
-                        defaultMediaSourceFactory.createMediaSource(mediaItem.buildUpon().setUri(mediaItem.requestMetadata.mediaUri).build())
-                    }
-                    else -> {
+                    LocalSource.NAME -> defaultMediaSourceFactory.createMediaSource(
+                        mediaItem.buildUpon().setUri(mediaItem.requestMetadata.mediaUri).build()
+                    )
+
+                    com.tiefensuche.soundcrowd.plugins.tidal.Plugin.NAME -> dashMediaSourceFactory.createMediaSource(
+                        mediaItem.buildUpon().setUri(mediaItem.mediaId).build()
+                    )
+
+                    else ->
                         if (!isDataSource)
-                            dataSourceFactory.createMediaSource(mediaItem.buildUpon().setUri(mediaItem.mediaId).build())
+                            streamMediaSourceFactory.createMediaSource(
+                                mediaItem.buildUpon().setUri(mediaItem.mediaId).build()
+                            )
                         else
                             ProgressiveMediaSource.Factory { musicProvider.getDataSource(mediaItem.mediaId)!! }
-                                .createMediaSource(mediaItem.buildUpon().setUri(mediaItem.requestMetadata.mediaUri).build())
-                    }
+                                .createMediaSource(
+                                    mediaItem.buildUpon().setUri(mediaItem.requestMetadata.mediaUri)
+                                        .build()
+                                )
                 }
             }
         }
