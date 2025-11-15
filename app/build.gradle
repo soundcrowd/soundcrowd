@@ -14,8 +14,8 @@ android {
         compileSdk 36
         minSdk 21
         targetSdk 36
-        versionCode 82
-        versionName "4.2.1"
+        versionCode 83
+        versionName "4.3.0"
         proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
     }
 
