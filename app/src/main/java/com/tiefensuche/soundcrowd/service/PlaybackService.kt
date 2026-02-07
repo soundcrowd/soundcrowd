@@ -349,7 +349,14 @@ class PlaybackService : MediaLibraryService() {
 
         val hlsMediaSourceFactory = HlsMediaSource.Factory(hlsCacheDataSourceFactory)
 
-        // Playback of dash media steams
+        // Playback of dash media streams
+        val dashCacheDataSourceFactory =
+            CacheDataSource.Factory()
+                .setCache(cache)
+                .setCacheWriteDataSinkFactory(cacheSink)
+                .setCacheReadDataSourceFactory(downStreamFactory)
+                .setUpstreamDataSourceFactory(DefaultHttpDataSource.Factory())
+
         val upstreamManifestFactory = DataSource.Factory {
             ByteArrayDataSource { uri ->
                 musicProvider.resolveMusic(
@@ -357,9 +364,17 @@ class PlaybackService : MediaLibraryService() {
                 ).toString().replace("http", "https").encodeToByteArray()
             }
         }
+
+        val manifestCacheDataSourceFactory =
+            CacheDataSource.Factory()
+                .setCache(cache)
+                .setCacheWriteDataSinkFactory(cacheSink)
+                .setCacheReadDataSourceFactory(downStreamFactory)
+                .setUpstreamDataSourceFactory(upstreamManifestFactory)
+
         val dashMediaSourceFactory = DashMediaSource.Factory(
-            DefaultDashChunkSource.Factory(DefaultHttpDataSource.Factory()),
-            upstreamManifestFactory
+            DefaultDashChunkSource.Factory(dashCacheDataSourceFactory),
+            manifestCacheDataSourceFactory
         )
 
         class CustomMediaSourceFactory : MediaSource.Factory {
