@@ -14,6 +14,13 @@ jobs:
       - run: ./gradlew assemble
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          BEATPORT_CLIENT_ID: ${{ secrets.BEATPORT_CLIENT_ID }}
+          BEATPORT_REDIRECT_URI: ${{ secrets.BEATPORT_REDIRECT_URI }}
+          SOUNDCLOUD_CLIENT_ID: ${{ secrets.SOUNDCLOUD_CLIENT_ID }}
+          SOUNDCLOUD_CLIENT_SECRET: ${{ secrets.SOUNDCLOUD_CLIENT_SECRET }}
+          SOUNDCLOUD_REDIRECT_URI: ${{ secrets.SOUNDCLOUD_REDIRECT_URI }}
+          TIDAL_CLIENT_ID: ${{ secrets.TIDAL_CLIENT_ID }}
+          TIDAL_CLIENT_SECRET: ${{ secrets.TIDAL_CLIENT_SECRET }}
       - uses: actions/upload-artifact@v4
         with:
           name: soundcrowd.apk
