@@ -14,6 +14,8 @@ import android.os.Bundle
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.edit
+import androidx.core.net.toUri
+import androidx.core.text.isDigitsOnly
 import androidx.media3.common.AudioAttributes
 import androidx.media3.common.C
 import androidx.media3.common.ForwardingPlayer
@@ -42,6 +44,7 @@ import androidx.media3.exoplayer.audio.TeeAudioProcessor
 import androidx.media3.exoplayer.dash.DashMediaSource
 import androidx.media3.exoplayer.dash.DefaultDashChunkSource
 import androidx.media3.exoplayer.drm.DrmSessionManagerProvider
+import androidx.media3.exoplayer.hls.HlsMediaSource
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.media3.exoplayer.source.MediaSource
 import androidx.media3.exoplayer.source.ProgressiveMediaSource
@@ -323,6 +326,29 @@ class PlaybackService : MediaLibraryService() {
                 .setFlags(CacheDataSource.FLAG_IGNORE_CACHE_ON_ERROR)
         val streamMediaSourceFactory = ProgressiveMediaSource.Factory(cacheDataSourceFactory)
 
+        // Playback of hls media streams (soundcloud only)
+        var accessToken = ""
+        val soundcloudUpstreamFactory =
+            ResolvingDataSource.Factory(DefaultHttpDataSource.Factory()) { dataSpec: DataSpec ->
+                // Provide just-in-time URI resolution logic.
+                if (dataSpec.key!!.isDigitsOnly()) {
+                    val uri = musicProvider.resolveMusic(dataSpec.key!!).toString().split(",")
+                    accessToken = uri[1]
+                    dataSpec.withUri(uri[0].toUri()).withRequestHeaders(mapOf("Authorization" to "Bearer $accessToken"))
+                } else {
+                    dataSpec.withRequestHeaders(mapOf("Authorization" to "Bearer $accessToken"))
+                }
+            }
+
+        val hlsCacheDataSourceFactory =
+            CacheDataSource.Factory()
+                .setCache(cache)
+                .setCacheWriteDataSinkFactory(cacheSink)
+                .setCacheReadDataSourceFactory(downStreamFactory)
+                .setUpstreamDataSourceFactory(soundcloudUpstreamFactory)
+
+        val hlsMediaSourceFactory = HlsMediaSource.Factory(hlsCacheDataSourceFactory)
+
         // Playback of dash media steams
         val upstreamManifestFactory = DataSource.Factory {
             ByteArrayDataSource { uri ->
@@ -359,11 +385,12 @@ class PlaybackService : MediaLibraryService() {
                     LocalSource.NAME -> defaultMediaSourceFactory.createMediaSource(
                         mediaItem.buildUpon().setUri(mediaItem.requestMetadata.mediaUri).build()
                     )
-
                     com.tiefensuche.soundcrowd.plugins.tidal.Plugin.NAME -> dashMediaSourceFactory.createMediaSource(
                         mediaItem.buildUpon().setUri(mediaItem.mediaId).build()
                     )
-
+                    com.tiefensuche.soundcrowd.plugins.soundcloud.Plugin.NAME -> hlsMediaSourceFactory.createMediaSource(
+                        mediaItem.buildUpon().setUri(mediaItem.mediaId).build()
+                    )
                     else ->
                         if (!isDataSource)
                             streamMediaSourceFactory.createMediaSource(
