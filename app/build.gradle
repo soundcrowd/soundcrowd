@@ -17,6 +17,14 @@ android {
         versionCode 83
         versionName "4.3.0"
         proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+
+        resValue "string", "beatport_client_id", "${System.getenv("BEATPORT_CLIENT_ID")}"
+        resValue "string", "beatport_redirect_uri", "${System.getenv("BEATPORT_REDIRECT_URI")}"
+        resValue "string", "client_id", "${System.getenv("SOUNDCLOUD_CLIENT_ID")}"
+        resValue "string", "client_secret", "${System.getenv("SOUNDCLOUD_CLIENT_SECRET")}"
+        resValue "string", "redirect_uri", "${System.getenv("SOUNDCLOUD_REDIRECT_URI")}"
+        resValue "string", "tidal_client_id", "${System.getenv("TIDAL_CLIENT_ID")}"
+        resValue "string", "tidal_client_secret", "${System.getenv("TIDAL_CLIENT_SECRET")}"
     }
 
     compileOptions {
