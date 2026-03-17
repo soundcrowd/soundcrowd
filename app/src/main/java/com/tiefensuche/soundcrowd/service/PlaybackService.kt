@@ -361,7 +361,7 @@ class PlaybackService : MediaLibraryService() {
             ByteArrayDataSource { uri ->
                 musicProvider.resolveMusic(
                     uri.toString()
-                ).toString().replace("http", "https").encodeToByteArray()
+                ).toString().encodeToByteArray()
             }
         }
 
@@ -400,9 +400,9 @@ class PlaybackService : MediaLibraryService() {
                     LocalSource.NAME -> defaultMediaSourceFactory.createMediaSource(
                         mediaItem.buildUpon().setUri(mediaItem.requestMetadata.mediaUri).build()
                     )
-                    com.tiefensuche.soundcrowd.plugins.tidal.Plugin.NAME -> dashMediaSourceFactory.createMediaSource(
-                        mediaItem.buildUpon().setUri(mediaItem.mediaId).build()
-                    )
+//                    com.tiefensuche.soundcrowd.plugins.tidal.Plugin.NAME -> dashMediaSourceFactory.createMediaSource(
+//                        mediaItem.buildUpon().setUri(mediaItem.mediaId).build()
+//                    )
                     com.tiefensuche.soundcrowd.plugins.soundcloud.Plugin.NAME -> hlsMediaSourceFactory.createMediaSource(
                         mediaItem.buildUpon().setUri(mediaItem.mediaId).build()
                     )
