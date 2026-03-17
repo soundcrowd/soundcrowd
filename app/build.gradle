@@ -14,8 +14,8 @@ android {
         compileSdk 36
         minSdk 21
         targetSdk 36
-        versionCode 84
-        versionName "4.3.1"
+        versionCode 85
+        versionName "4.3.2"
         proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
 
         resValue "string", "beatport_client_id", "${System.getenv("BEATPORT_CLIENT_ID")}"
