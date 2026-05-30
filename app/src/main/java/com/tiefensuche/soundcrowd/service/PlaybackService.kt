@@ -8,7 +8,6 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
-import android.os.AsyncTask
 import android.os.Build
 import android.os.Bundle
 import androidx.core.app.NotificationCompat
@@ -75,10 +74,7 @@ import com.tiefensuche.soundcrowd.sources.MusicProvider.Companion.MEDIA_ID
 import com.tiefensuche.soundcrowd.sources.MusicProvider.Cues.POSITION
 import com.tiefensuche.soundcrowd.ui.MusicPlayerActivity
 import io.github.tiefensuche.SongRec
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.*
 import org.json.JSONObject
 import java.io.File
 
@@ -122,8 +118,10 @@ class PlaybackService : MediaLibraryService() {
 
     var mediaLibrarySession: MediaLibrarySession? = null
     private lateinit var cache: SimpleCache
-    private val songRec = SongRec()
-    lateinit var sink: RecordAudioBufferSink
+    private var songRec: SongRec? = null
+    private var sink: RecordAudioBufferSink? = null
+    private val serviceScope = CoroutineScope(Dispatchers.Main + SupervisorJob())
+
     private var callback: MediaLibrarySession.Callback =
     object : MediaLibrarySession.Callback {
         override fun onConnect(
@@ -171,7 +169,7 @@ class PlaybackService : MediaLibraryService() {
             params: LibraryParams?
         ): ListenableFuture<LibraryResult<ImmutableList<MediaItem>>> {
             val settableFuture = SettableFuture.create<LibraryResult<ImmutableList<MediaItem>>>()
-            CoroutineScope(Dispatchers.Main).launch {
+            serviceScope.launch {
                 withContext(Dispatchers.IO) {
                     val request = musicProvider.Request(parentId, page, params?.extras?.getBoolean(MusicProvider.OPTION_REFRESH) ?: false)
                     try {
@@ -248,7 +246,7 @@ class PlaybackService : MediaLibraryService() {
                             session.player.currentMediaItem!!
                         else
                             getMusic(mediaId)!!
-                    CoroutineScope(Dispatchers.Main).launch {
+                    serviceScope.launch {
                         val result = withContext(Dispatchers.IO) {
                             musicProvider.favorite(mediaItem)
                         }
@@ -421,12 +419,16 @@ class PlaybackService : MediaLibraryService() {
             }
         }
 
-        sink = RecordAudioBufferSink(this.filesDir.path + "/rec.wav")
-        val exoPlayer = ExoPlayer.Builder(this)
+        val builder = ExoPlayer.Builder(this)
             .setAudioAttributes(AudioAttributes.DEFAULT, /* handleAudioFocus= */ true)
             .setMediaSourceFactory(CustomMediaSourceFactory())
             .setHandleAudioBecomingNoisy(true)
-            .setRenderersFactory(object : DefaultRenderersFactory(this) {
+
+        // SongRec init
+        try {
+            songRec = SongRec()
+            sink = RecordAudioBufferSink(this.filesDir.path + "/rec.wav")
+            builder.setRenderersFactory(object : DefaultRenderersFactory(this) {
                 override fun buildAudioSink(
                     context: Context,
                     enableFloatOutput: Boolean,
@@ -435,11 +437,15 @@ class PlaybackService : MediaLibraryService() {
                     return DefaultAudioSink.Builder(context)
                         .setEnableFloatOutput(enableFloatOutput)
                         .setEnableAudioTrackPlaybackParams(enableAudioTrackPlaybackParams)
-                        .setAudioProcessors(arrayOf(TeeAudioProcessor(sink)))
+                        .setAudioProcessors(arrayOf(TeeAudioProcessor(sink!!)))
                         .build()
                 }
             })
-            .build()
+        } catch (_: Exception) {
+            println("Could not initialize SongRec")
+        }
+
+        val exoPlayer = builder.build()
 
         class CustomPlayer : ForwardingPlayer(exoPlayer) {
 
@@ -521,6 +527,7 @@ class PlaybackService : MediaLibraryService() {
     }
 
     override fun onDestroy() {
+        serviceScope.cancel()
         mediaLibrarySession?.run {
             player.release()
             release()
@@ -531,22 +538,38 @@ class PlaybackService : MediaLibraryService() {
     }
 
     internal fun tag(filename: String, result: SettableFuture<SessionResult>) {
-        val mediaId = mediaLibrarySession!!.player.currentMediaItem!!.mediaId
-        val position = mediaLibrarySession!!.player.currentPosition
-        AsyncTask.execute {
+        val sink = sink
+        val songRec = songRec
+        if (sink == null || songRec == null) {
+            result.set(SessionResult(SessionError.ERROR_NOT_SUPPORTED))
+            return
+        }
+
+        val session = mediaLibrarySession
+        val currentMediaItem = session?.player?.currentMediaItem
+        if (session == null || currentMediaItem == null) {
+            result.set(SessionResult(SessionError.ERROR_INVALID_STATE))
+            return
+        }
+
+        val mediaId = currentMediaItem.mediaId
+        val position = session.player.currentPosition
+        serviceScope.launch {
             val data = Bundle()
-            sink.setRecord(true)
-            Thread.sleep(10000)
-            sink.setRecord(false)
-            val signature = songRec.makeSignatureFromFile(filename)
-            val response = songRec.recognizeSongFromSignature(signature)
-            val json = JSONObject(response)
-            if (json.has("track")) {
-                val track = json.getJSONObject("track")
-                val result = "${track.getString("subtitle")} - ${track.getString("title")}"
-                musicProvider.addCuePoint(mediaId, position.toInt(), result)
-                data.putInt(POSITION, position.toInt())
-                data.putString(RESULT, result)
+            withContext(Dispatchers.IO) {
+                sink.setRecord(true)
+                delay(10000)
+                sink.setRecord(false)
+                val signature = songRec.makeSignatureFromFile(filename)
+                val response = songRec.recognizeSongFromSignature(signature)
+                val json = JSONObject(response)
+                if (json.has("track")) {
+                    val track = json.getJSONObject("track")
+                    val tagResult = "${track.getString("subtitle")} - ${track.getString("title")}"
+                    musicProvider.addCuePoint(mediaId, position.toInt(), tagResult)
+                    data.putInt(POSITION, position.toInt())
+                    data.putString(RESULT, tagResult)
+                }
             }
             result.set(SessionResult(SessionResult.RESULT_SUCCESS, data))
         }
