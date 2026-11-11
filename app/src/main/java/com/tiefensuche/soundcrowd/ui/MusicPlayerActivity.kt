@@ -67,9 +67,17 @@ internal class MusicPlayerActivity : BaseActivity(), MediaBrowserFragment.MediaF
             val playPauseButton = findViewById<ImageView>(R.id.play_pause)
             val controlsContainer = findViewById<RelativeLayout>(R.id.controls_layout)
 
+            controls.setOnClickListener {
+                if (sheetBehavior.state == BottomSheetBehavior.STATE_COLLAPSED) {
+                    sheetBehavior.state = BottomSheetBehavior.STATE_EXPANDED
+                }
+            }
+            controls.isClickable = sheetBehavior.state == BottomSheetBehavior.STATE_COLLAPSED
+
             sheetBehavior.addBottomSheetCallback(object : BottomSheetBehavior.BottomSheetCallback() {
                 override fun onStateChanged(bottomSheet: View, newState: Int) {
                     playPauseButton.isClickable = newState != BottomSheetBehavior.STATE_EXPANDED
+                    controls.isClickable = newState == BottomSheetBehavior.STATE_COLLAPSED
                     for (i in 0 until controlsContainer.childCount) {
                         controlsContainer.getChildAt(i).isClickable = newState == BottomSheetBehavior.STATE_EXPANDED
                     }
